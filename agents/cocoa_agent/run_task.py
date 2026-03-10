@@ -96,6 +96,16 @@ def main():
         config = json.load(f)
 
     config.setdefault("sandbox", {}).update({"skip_docker": True, "docker_port": 8080})
+
+    # Apply env var overrides to config (supports UniAPI / custom endpoints + models)
+    env_base_url = os.environ.get("LLM_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    if env_base_url:
+        config.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
+        os.environ["OPENAI_BASE_URL"] = env_base_url  # for LLM judge (test_task.py)
+    env_model = os.environ.get("LLM_MODEL")
+    if env_model:
+        config.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
+
     max_iter = os.environ.get("COCOA_MAX_ITERATIONS")
     if max_iter is not None and max_iter != "":
         try:

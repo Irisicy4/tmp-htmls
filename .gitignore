@@ -18,10 +18,6 @@ build/
 tasks/*/environment/agents
 tasks/*/environment/configs
 
-# Modal build context (agents+configs copied into task environment/)
-tasks/*/environment/agents
-tasks/*/environment/configs
-
 # Environment & secrets
 .env
 .envrc

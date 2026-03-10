@@ -43,6 +43,8 @@ ENV="${ENV:-docker}"
 
 AK_ARGS=()
 [ -n "$OPENAI_API_KEY" ] && AK_ARGS+=(--ak "OPENAI_API_KEY=$OPENAI_API_KEY")
+[ -n "$LLM_BASE_URL" ] && AK_ARGS+=(--ak "LLM_BASE_URL=$LLM_BASE_URL" --ak "OPENAI_BASE_URL=$LLM_BASE_URL")
+[ -n "$LLM_MODEL" ] && AK_ARGS+=(--ak "LLM_MODEL=$LLM_MODEL")
 [ -n "$COCOA_MAX_ITERATIONS" ] && AK_ARGS+=(--ak "COCOA_MAX_ITERATIONS=$COCOA_MAX_ITERATIONS")
 
 if [ "$ENV" = "modal" ]; then

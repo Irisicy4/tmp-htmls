@@ -47,7 +47,7 @@ class CocoaHarborAgent(BaseInstalledAgent):
         )
 
         env: dict[str, str] = {}
-        for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "COCOA_MAX_ITERATIONS"):
+        for key in ("OPENAI_API_KEY", "OPENAI_BASE_URL", "LLM_BASE_URL", "LLM_MODEL", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "COCOA_MAX_ITERATIONS"):
             val = getattr(self, key, None) or os.environ.get(key, "")
             if val:
                 env[key] = str(val)

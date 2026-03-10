@@ -9,6 +9,8 @@ Prerequisites
 1. Install Modal:          pip install modal
 2. Authenticate:           modal setup
 3. Add your OpenAI key:    modal secret create openai-secret OPENAI_API_KEY=sk-...
+   For UniAPI/custom endpoint, include base URL and model in the secret:
+       modal secret create openai-secret OPENAI_API_KEY=sk-... LLM_BASE_URL=https://api.uniapi.io/v1 LLM_MODEL=claude-sonnet-4-20250514
 
 Usage
 -----
@@ -223,6 +225,15 @@ def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, A
 
     setup_logging(config.get("log_level", "INFO"))
     config.setdefault("sandbox", {}).update({"skip_docker": True, "docker_port": 8080})
+
+    # Apply env var overrides to config (supports UniAPI / custom endpoints + models)
+    env_base_url = os.environ.get("LLM_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    if env_base_url:
+        config.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
+        os.environ["OPENAI_BASE_URL"] = env_base_url  # for LLM judge (test_task.py)
+    env_model = os.environ.get("LLM_MODEL")
+    if env_model:
+        config.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
 
     max_iter = os.environ.get("COCOA_MAX_ITERATIONS")
     if max_iter:

@@ -12,6 +12,7 @@ timeout_sec = 300.0
 
 [verifier.env]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
+OPENAI_BASE_URL = "${LLM_BASE_URL}"
 
 [environment]
 cpus = 2
