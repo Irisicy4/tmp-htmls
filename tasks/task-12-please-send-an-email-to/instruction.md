@@ -1,0 +1,1 @@
+Please compose an email to Taehoon Kim (taehoon.kim@example.com). Tell him that the one-day basic Java class he requested last time is available on either November 29th or November 30th. Since the weather has gotten colder, write politely and include a reminder to be careful not to catch a cold. Stop just before pressing the send button — do not actually send it.

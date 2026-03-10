@@ -1,0 +1,7 @@
+# Override build to use repo root as context so we COPY directly from agents/ and configs/.
+# Paths are relative to this file (environment/); ../../.. = repo root.
+services:
+  main:
+    build:
+      context: ../../..
+      dockerfile: tasks/task-26-find-me-large-size-hip/environment/Dockerfile

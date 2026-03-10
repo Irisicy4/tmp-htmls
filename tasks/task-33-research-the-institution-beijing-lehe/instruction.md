@@ -1,0 +1,1 @@
+Research the institution: Beijing Lehe Xinyi Chronic Disease Research Center. Include but not limited to: authenticity of the institution, quality of medical staff, patient feedback, and what products and services they offer with corresponding prices.

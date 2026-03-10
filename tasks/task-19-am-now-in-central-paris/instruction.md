@@ -1,0 +1,1 @@
+I am now in central Paris. Please tell me 10 places with a good view of the Eiffel Tower, their addresses, and for each place provide directions from the city center, nearby attractions, and nearby restaurants.
