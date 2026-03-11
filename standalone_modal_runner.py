@@ -98,7 +98,6 @@ modal_image = (
         "cp /harbor-bench/agents/cocoa_agent/run_task.py /cocoa-agent-src/"
         " && cp /harbor-bench/agents/cocoa_agent/overlay.py /cocoa-agent-src/"
         " && cp /harbor-bench/agents/cocoa_agent/agents_overlay/__init__.py /cocoa-agent-src/agents/__init__.py"
-        " && cp -r /harbor-bench/agents/cocoa_agent/configs/. /cocoa-agent-src/configs/"
         " && cp -r /harbor-bench/configs/. /cocoa-agent-src/configs/"
     )
     .workdir("/cocoa-agent")

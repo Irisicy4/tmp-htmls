@@ -83,10 +83,10 @@ evolve_bench_harbor/
 │       ├── cocoa_harbor_agent.py #   Harbor wrapper
 │       ├── run_task.py           #   Multi-agent entry point (inside container)
 │       ├── overlay.py            #   skip_docker monkey-patch
-│       ├── agents_overlay/       #   Agent imports overlay
-│       └── configs/              #   Agent configs
+│       └── agents_overlay/       #   Agent imports overlay
 ├── configs/
-│   ├── skill-phase1.json         # Default config (gpt-4.1-mini, 50 iterations)
+│   ├── harbor-config.json        # Default config (gpt-4.1-mini, 50 iterations)
+│   ├── skill-phase1.json         # Skill experiment config
 │   └── uniapi.json               # UniAPI config
 └── tasks/
     └── <task-name>/
