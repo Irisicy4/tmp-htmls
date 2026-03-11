@@ -6,7 +6,7 @@
 #
 # Examples:
 #   ./harbor_runner.sh tasks                                            # all tasks on Modal (parallel)
-#   ./harbor_runner.sh tasks/task-03-busca-las-mejores-casas-rurales    # single task on Modal
+#   ./harbor_runner.sh tasks/batch-1/task-03-busca-las-mejores-casas-rurales    # single task on Modal
 #   ./harbor_runner.sh tasks results/my-run                             # custom output dir
 #   ENV=docker ./harbor_runner.sh                                       # single task, local Docker
 #
@@ -42,7 +42,13 @@ export COCOA_CONFIG="${COCOA_CONFIG:-/harness/configs/skill-phase1.json}"
 export COCOA_MAX_ITERATIONS="${COCOA_MAX_ITERATIONS:-50}"
 MODAL_SECRET="${MODAL_SECRET:-openai-secret}"
 
-TASK_PATH="${1:-tasks}"
+if [ -z "$1" ]; then
+    echo "Usage: ./harbor_runner.sh <task_path> [output_dir]"
+    echo "  e.g. ./harbor_runner.sh tasks/batch-1"
+    echo "       ./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-under"
+    exit 1
+fi
+TASK_PATH="$1"
 OUTPUT_DIR="${2:-results/$ENV}"
 AGENT="${AGENT:-agents.cocoa_harbor_agent:CocoaHarborAgent}"
 MODEL="${MODEL:-openai/gpt-4.1-mini}"

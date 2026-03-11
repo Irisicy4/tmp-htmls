@@ -207,7 +207,8 @@ def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, A
 
     # ---- Run LLM-as-judge verification ----
     eval_result = None
-    test_file = f"/harbor-bench/tasks/{task_name}/tests/test_task.py"
+    task_path = task.get("task_path", task_name)
+    test_file = f"/harbor-bench/{task_path}/tests/test_task.py"
     if os.path.exists(test_file):
         try:
             spec = importlib.util.spec_from_file_location("test_task", test_file)
@@ -249,7 +250,7 @@ def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, A
 @app.local_entrypoint()
 def main(
     config: str = "configs/skill-phase1.json",
-    tasks_dir: str = "tasks",
+    tasks_dir: str = "",
     output_dir: str = "results/modal/",
     first_n: int = 0,
     task_names: str = "",
@@ -294,6 +295,9 @@ def main(
         print(f"[.env] LLM_MODEL={env_model}")
 
     # ---- Discover tasks ----
+    if not tasks_dir:
+        print("[error] --tasks-dir is required (e.g. tasks/batch-1)")
+        sys.exit(1)
     tasks_path = Path(tasks_dir).resolve()
     tasks: List[Dict[str, Any]] = []
 
@@ -303,13 +307,20 @@ def main(
     else:
         candidates = sorted(d for d in tasks_path.iterdir() if d.is_dir())
 
+    repo_root = Path(__file__).parent.resolve()
     for task_dir in candidates:
         instruction_file = task_dir / "instruction.md"
         if not instruction_file.exists():
             print(f"  [skip] No instruction.md in {task_dir.name}")
             continue
+        # Store relative path from repo root for test file lookup inside container
+        try:
+            rel_path = str(task_dir.resolve().relative_to(repo_root))
+        except ValueError:
+            rel_path = task_dir.name
         tasks.append({
             "task_name": task_dir.name,
+            "task_path": rel_path,
             "instruction": instruction_file.read_text().strip(),
         })
 

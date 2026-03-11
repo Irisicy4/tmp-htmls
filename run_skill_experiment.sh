@@ -8,7 +8,7 @@
 #
 # Usage:
 #   ./run_skill_experiment.sh                                    # all tasks
-#   ./run_skill_experiment.sh tasks/task-01-im-looking-for-*     # single task
+#   ./run_skill_experiment.sh tasks/batch-1/task-01-im-looking-for-*     # single task
 #   ./run_skill_experiment.sh tasks --max-iter 15                # limit iterations
 #
 # Environment variables (set in .env or export before running):
@@ -28,7 +28,12 @@ if [ -f .env ]; then
   set +a
 fi
 
-TASK_PATH="${1:-tasks}"
+if [ -z "$1" ]; then
+    echo "Usage: ./run_skill_experiment.sh <task_path> [--max-iter N] [--threshold N]"
+    echo "  e.g. ./run_skill_experiment.sh tasks/batch-1"
+    exit 1
+fi
+TASK_PATH="$1"
 MAX_ITER="${COCOA_MAX_ITERATIONS:-50}"
 SKILL_THRESHOLD="${SKILL_THRESHOLD:-2.0}"
 SKILL_MODEL="${SKILL_MODEL:-gpt-4o-mini}"

@@ -32,20 +32,20 @@ With UniAPI as `LLM_BASE_URL`, you can use any model (Claude, Gemini, etc.) — 
 ## Quick Start
 
 ```bash
-# Run all 43 tasks on Modal (default):
-./harbor_runner.sh
+# Run all batch-1 tasks on Modal:
+./harbor_runner.sh tasks/batch-1
 
-# Run a single task on Modal:
-./harbor_runner.sh tasks/task-01-im-looking-for-backpack-under
+# Run a single task:
+./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-under
 
 # Run locally with Docker:
-ENV=docker ./harbor_runner.sh tasks/task-01-im-looking-for-backpack-under
+ENV=docker ./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-under
 ```
 
 ## Run Options
 
 ```bash
-./harbor_runner.sh [task_path] [output_dir]
+./harbor_runner.sh <task_path> [output_dir]
 ```
 
 | Variable | Default | Description |
@@ -114,7 +114,7 @@ evolve_bench_harbor/
 
 ## Updating Harness or Config Files
 
-`harbor_runner.sh` automatically runs `scripts/sync-harness.sh` before every run, which copies the following into each `tasks/task-*/environment/` directory:
+`harbor_runner.sh` automatically runs `scripts/sync-harness.sh` before every run, which copies the following into each task's `environment/` directory:
 
 - **Harness files:** `run_task.py`, `skill_store.py`, `skill_extractor.py`, `adapters/`
 - **Configs:** `configs/harbor-config.json`, `configs/skill-phase1.json`, `configs/skill-phase2.json`
@@ -160,9 +160,9 @@ Skills are orthogonal to agent type — combine any `agent_type` with `store_ski
 `standalone_modal_runner.py` is an alternative that bypasses Harbor and talks to Modal directly. It builds a single shared image (faster for large batches) and manages its own dispatch/aggregation.
 
 ```bash
-modal run standalone_modal_runner.py
-modal run standalone_modal_runner.py --first-n 3
-modal run standalone_modal_runner.py --task-names task-01-...,task-02-...
+modal run standalone_modal_runner.py --tasks-dir tasks/batch-1
+modal run standalone_modal_runner.py --tasks-dir tasks/batch-1 --first-n 3
+modal run standalone_modal_runner.py --tasks-dir tasks/batch-1 --task-names task-01-...,task-02-...
 ```
 
 For most use cases, prefer `./harbor_runner.sh` (uses Harbor's native Modal support).

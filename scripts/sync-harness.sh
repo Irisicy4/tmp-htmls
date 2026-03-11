@@ -32,7 +32,7 @@ CONFIG_FILES=(
 mkdir -p skills
 
 count=0
-for env_dir in tasks/task-*/environment; do
+for env_dir in tasks/*/task-*/environment; do
     [ -d "$env_dir" ] || continue
 
     # Remove stale files from old layout
