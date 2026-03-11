@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Visualization</title>
+    <!-- Prism.js for code highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .file-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-selector select {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .file-selector select:hover {
+            border-color: #58a6ff;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 45%;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            width: 55%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .trace-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .iteration-block {
+            margin-bottom: 24px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            background: #161b22;
+            overflow: hidden;
+        }
+
+        .iteration-header {
+            background: #21262d;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #58a6ff;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .think-block {
+            background: #1c2128;
+            padding: 16px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .think-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #7c3aed;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .think-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #c9d1d9;
+            white-space: pre-wrap;
+        }
+
+        .action-block {
+            background: #1c2128;
+            padding: 16px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .action-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #10b981;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .action-content {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 6px;
+            color: #c9d1d9;
+            overflow-x: auto;
+        }
+
+        .observation-block {
+            background: #1c2128;
+            padding: 16px;
+        }
+
+        .observation-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #f59e0b;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .observation-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #c9d1d9;
+            white-space: pre-wrap;
+        }
+
+        .content-viewer {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            background: #0d1117;
+        }
+
+        .content-viewer img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+
+        .content-viewer pre {
+            background: #161b22;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .content-viewer .file-content {
+            background: #161b22;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .playback-controls {
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .progress-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-info {
+            font-size: 12px;
+            color: #8b949e;
+            min-width: 80px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #58a6ff;
+            border-radius: 4px;
+            transition: width 0.1s;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .speed-selector {
+            display: flex;
+            gap: 4px;
+        }
+
+        .speed-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .speed-btn.active {
+            background: #58a6ff;
+            border-color: #58a6ff;
+            color: #fff;
+        }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .action-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .badge-browser {
+            background: #1f2937;
+            color: #60a5fa;
+        }
+
+        .badge-file {
+            background: #1f2937;
+            color: #34d399;
+        }
+
+        .badge-code {
+            background: #1f2937;
+            color: #fbbf24;
+        }
+
+        .badge-shell {
+            background: #1f2937;
+            color: #f472b6;
+        }
+    </style>
+</head>
+<body>
+    <style>
+        .compare-panel {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 0 20px;
+            display: none;
+        }
+        .compare-panel.visible { display: block; }
+        .compare-toggle {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .compare-toggle:hover { border-color: #58a6ff; color: #58a6ff; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+        .compare-table th { background: #21262d; padding: 6px 10px; text-align: left; color: #8b949e; font-weight: 600; border-bottom: 1px solid #30363d; }
+        .compare-table td { padding: 5px 10px; border-bottom: 1px solid #21262d; cursor: pointer; }
+        .compare-table tr:hover td { background: #21262d; }
+        .compare-table tr.selected td { background: #1d3a5c; }
+        .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+        .badge-pass { background: #0d4429; color: #3fb950; }
+        .badge-fail { background: #3d1d1d; color: #f85149; }
+        .badge-null { background: #21262d; color: #8b949e; }
+        .delta-pos { color: #3fb950; }
+        .delta-neg { color: #f85149; }
+        .delta-neu { color: #8b949e; }
+        .compare-summary { display: flex; gap: 24px; padding: 8px 0; font-size: 12px; color: #8b949e; }
+        .compare-summary strong { color: #c9d1d9; }
+    </style>
+
+    <div class="header">
+        <h1>Agent Visualization</h1>
+        <div class="file-selector">
+            <label for="fileSelect">Task:</label>
+            <select id="fileSelect">
+                <option value="">Loading...</option>
+            </select>
+        </div>
+        <button class="compare-toggle" id="compareToggle" style="display:none">Show Comparison Table</button>
+    </div>
+
+    <div class="compare-panel" id="comparePanel">
+        <div class="compare-summary" id="compareSummary"></div>
+        <div style="max-height: 220px; overflow-y: auto;">
+            <table class="compare-table">
+                <thead><tr>
+                    <th>Task</th>
+                    <th>Phase 1 (no skills)</th>
+                    <th>Score</th>
+                    <th>Phase 2 (with skills)</th>
+                    <th>Score</th>
+                    <th>Delta</th>
+                </tr></thead>
+                <tbody id="compareBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="panel-header">Agent Trace</div>
+            <div class="trace-container" id="traceContainer">
+                <div class="empty-state">Select a result file to view visualization</div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="panel-header" id="contentHeader">Content Viewer</div>
+            <div class="content-viewer" id="contentViewer">
+                <div class="empty-state">Select an action to view details</div>
+            </div>
+            <div class="playback-controls">
+                <div class="progress-container">
+                    <span class="progress-info" id="progressInfo">0/0</span>
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="control-buttons">
+                    <button class="control-btn" id="prevBtn">◀ Prev</button>
+                    <button class="control-btn" id="playBtn">▶ Play</button>
+                    <button class="control-btn" id="nextBtn">Next ▶</button>
+                    <button class="control-btn" id="resetBtn">↻ Reset</button>
+                </div>
+                <div class="speed-selector">
+                    <button class="speed-btn" data-speed="0.5">0.5x</button>
+                    <button class="speed-btn active" data-speed="1">1x</button>
+                    <button class="speed-btn" data-speed="2">2x</button>
+                    <button class="speed-btn" data-speed="4">4x</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let visualizationData = null;
+        let currentStep = 0;
+        let totalSteps = 0;
+        let isPlaying = false;
+        let playInterval = null;
+        let playSpeed = 1;
+
+        let compareRows = [];
+
+        // Load available files
+        async function loadFileList() {
+            try {
+                const response = await fetch('/api/list');
+                const data = await response.json();
+                const select = document.getElementById('fileSelect');
+                select.innerHTML = '<option value="">Select a task...</option>';
+                data.files.forEach(f => {
+                    const option = document.createElement('option');
+                    option.value = f.name;
+                    const icon = f.passed === true ? '✓ ' : f.passed === false ? '✗ ' : '';
+                    const score = f.score !== null ? ` (${f.score})` : '';
+                    option.textContent = icon + f.name.replace('.json', '') + score;
+                    option.style.color = f.passed === true ? '#3fb950' : f.passed === false ? '#f85149' : '';
+                    select.appendChild(option);
+                });
+
+                if (data.has_compare) {
+                    document.getElementById('compareToggle').style.display = 'inline-block';
+                    loadCompare();
+                }
+            } catch (error) {
+                console.error('Error loading file list:', error);
+            }
+        }
+
+        async function loadCompare() {
+            try {
+                const res = await fetch('/api/compare');
+                const data = await res.json();
+                compareRows = data.rows || [];
+                renderCompareTable(compareRows);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderCompareTable(rows) {
+            const tbody = document.getElementById('compareBody');
+            let p1pass = 0, p2pass = 0;
+            tbody.innerHTML = rows.map(r => {
+                if (r.p1_passed) p1pass++;
+                if (r.p2_passed) p2pass++;
+                const b = (v) => v === true ? '<span class="badge badge-pass">PASS</span>'
+                                : v === false ? '<span class="badge badge-fail">FAIL</span>'
+                                : '<span class="badge badge-null">—</span>';
+                let delta = '', deltaClass = 'delta-neu';
+                if (r.p1_score !== null && r.p2_score !== null) {
+                    const d = (r.p2_score - r.p1_score).toFixed(1);
+                    delta = (d > 0 ? '+' : '') + d;
+                    deltaClass = d > 0 ? 'delta-pos' : d < 0 ? 'delta-neg' : 'delta-neu';
+                }
+                const sc = v => v !== null ? v.toFixed(1) : '—';
+                return `<tr onclick="selectTask('${r.task}.json')">
+                    <td style="color:#c9d1d9;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.task}</td>
+                    <td>${b(r.p1_passed)}</td><td>${sc(r.p1_score)}</td>
+                    <td>${b(r.p2_passed)}</td><td>${sc(r.p2_score)}</td>
+                    <td class="${deltaClass}">${delta}</td>
+                </tr>`;
+            }).join('');
+
+            const n = rows.length;
+            document.getElementById('compareSummary').innerHTML =
+                `<span>Phase 1: <strong>${p1pass}/${n}</strong> passed (${Math.round(p1pass/n*100)}%)</span>` +
+                `<span>Phase 2: <strong>${p2pass}/${n}</strong> passed (${Math.round(p2pass/n*100)}%)</span>` +
+                `<span>Delta: <strong class="${p2pass>p1pass?'delta-pos':'delta-neg'}">${p2pass>p1pass?'+':''}${p2pass-p1pass} tasks</strong></span>`;
+        }
+
+        function selectTask(filename) {
+            const select = document.getElementById('fileSelect');
+            select.value = filename;
+            loadVisualizationData(filename);
+            // highlight row
+            document.querySelectorAll('#compareBody tr').forEach(tr => tr.classList.remove('selected'));
+            const rows = document.querySelectorAll('#compareBody tr');
+            rows.forEach(tr => { if (tr.onclick.toString().includes(filename.replace('.json',''))) tr.classList.add('selected'); });
+        }
+
+        document.getElementById('compareToggle').addEventListener('click', () => {
+            const panel = document.getElementById('comparePanel');
+            const btn = document.getElementById('compareToggle');
+            const visible = panel.classList.toggle('visible');
+            btn.textContent = visible ? 'Hide Comparison Table' : 'Show Comparison Table';
+        });
+
+        // Load visualization data
+        async function loadVisualizationData(fileName) {
+            try {
+                const response = await fetch(`/api/data?file=${encodeURIComponent(fileName)}`);
+                const data = await response.json();
+                visualizationData = data;
+                totalSteps = calculateTotalSteps(data);
+                currentStep = 0;
+                renderTrace(data);
+                navigateToStep(0); // Initialize display
+                updateProgress();
+            } catch (error) {
+                console.error('Error loading visualization data:', error);
+                document.getElementById('traceContainer').innerHTML = 
+                    '<div class="empty-state">Error loading data</div>';
+            }
+        }
+
+        // Calculate total steps (excluding think steps since we don't show them in right panel)
+        function calculateTotalSteps(data) {
+            let steps = 0;
+            if (data.iterations) {
+                data.iterations.forEach(iter => {
+                    // Don't count think steps - we skip them in right panel
+                    if (iter.actions) {
+                        iter.actions.forEach(() => steps++);
+                    }
+                });
+            }
+            // Add eval step if available
+            if (data.eval) {
+                steps++;
+            }
+            return steps;
+        }
+
+        // Get step data by index (skipping think steps)
+        function getStepData(step) {
+            if (!visualizationData || !visualizationData.iterations) return null;
+            
+            let current = 0;
+            for (let iterIdx = 0; iterIdx < visualizationData.iterations.length; iterIdx++) {
+                const iter = visualizationData.iterations[iterIdx];
+                
+                // Skip think steps - we don't show them in right panel
+                
+                // Check actions
+                if (iter.actions) {
+                    for (let actionIdx = 0; actionIdx < iter.actions.length; actionIdx++) {
+                        if (current === step) {
+                            return { type: 'action', iterIdx, iter, actionIdx, actionData: iter.actions[actionIdx] };
+                        }
+                        current++;
+                    }
+                }
+            }
+            
+            // Check if this is the eval step
+            if (visualizationData.eval && current === step) {
+                return { type: 'eval', eval: visualizationData.eval };
+            }
+            
+            return null;
+        }
+
+        // Render trace up to current step
+        function renderTrace(data) {
+            const container = document.getElementById('traceContainer');
+            if (!data.iterations || data.iterations.length === 0) {
+                container.innerHTML = '<div class="empty-state">No data available</div>';
+                return;
+            }
+
+            // Render trace up to currentStep
+            updateTraceDisplay();
+        }
+
+        // Update trace display based on currentStep
+        function updateTraceDisplay() {
+            const container = document.getElementById('traceContainer');
+            if (!visualizationData || !visualizationData.iterations) return;
+
+            let html = '';
+            let stepCount = 0;
+            
+            for (let iterIdx = 0; iterIdx < visualizationData.iterations.length; iterIdx++) {
+                const iter = visualizationData.iterations[iterIdx];
+                let iterationStarted = false;
+                let thinkShown = false;
+                
+                // Render actions if we've reached those steps
+                if (iter.actions && iter.actions.length > 0) {
+                    for (let actionIdx = 0; actionIdx < iter.actions.length; actionIdx++) {
+                        if (stepCount <= currentStep) {
+                            if (!iterationStarted) {
+                                html += `<div class="iteration-block" data-iteration="${iterIdx}">`;
+                                html += `<div class="iteration-header">Iteration ${iter.iteration}</div>`;
+                                iterationStarted = true;
+                                
+                                // Show think together with the first action
+                                if (iter.think && !thinkShown && actionIdx === 0) {
+                                    html += `<div class="think-block">`;
+                                    html += `<div class="think-label">Thought</div>`;
+                                    html += `<div class="think-content">${escapeHtml(iter.think)}</div>`;
+                                    html += `</div>`;
+                                    thinkShown = true;
+                                }
+                            }
+                            
+                            const actionData = iter.actions[actionIdx];
+                            const action = actionData.action || {};
+                            const actionType = action.action_type || 'unknown';
+                            const badgeClass = getBadgeClass(actionType);
+                            
+                            html += `<div class="action-block" data-iteration="${iterIdx}" data-action="${actionIdx}">`;
+                            html += `<div class="action-label">Action</div>`;
+                            html += `<div class="action-content">`;
+                            html += `<span class="action-type-badge ${badgeClass}">${actionType}</span>`;
+                            html += escapeHtml(JSON.stringify(action, null, 2));
+                            html += `</div>`;
+                            html += `</div>`;
+
+                            html += `<div class="observation-block">`;
+                            html += `<div class="observation-label">Observation</div>`;
+                            html += `<div class="observation-content">${escapeHtml(actionData.observation || '')}</div>`;
+                            html += `</div>`;
+                        }
+                        stepCount++;
+                    }
+                }
+                
+                if (iterationStarted) {
+                    html += `</div>`;
+                }
+            }
+
+            // Add eval block if available and we've reached the end
+            if (visualizationData.eval && currentStep >= totalSteps - 1) {
+                html += `<div class="iteration-block" style="border-color: ${visualizationData.eval.passed ? '#10b981' : '#f59e0b'};" data-eval="true">`;
+                html += `<div class="iteration-header" style="color: ${visualizationData.eval.passed ? '#10b981' : '#f59e0b'};">Evaluation ${visualizationData.eval.passed ? '✓ PASSED' : '✗ FAILED'}</div>`;
+                html += `<div class="observation-block">`;
+                html += `<div class="observation-label">Result</div>`;
+                html += `<div class="observation-content">${escapeHtml(visualizationData.eval.feedback || 'Evaluation completed')}</div>`;
+                html += `</div>`;
+                html += `</div>`;
+            }
+
+            container.innerHTML = html || '<div class="empty-state">No steps to display</div>';
+            
+            // Scroll to bottom to show latest step
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Show content for a specific action (kept for backward compatibility, but now uses navigateToStep)
+        function showContent(iterIdx, actionIdx) {
+            // Find the step index for this iteration/action
+            let step = 0;
+            for (let i = 0; i < visualizationData.iterations.length; i++) {
+                const iter = visualizationData.iterations[i];
+                if (i < iterIdx) {
+                    if (iter.think) step++;
+                    if (iter.actions) step += iter.actions.length;
+                } else if (i === iterIdx) {
+                    if (iter.think && actionIdx === null) {
+                        currentStep = step;
+                        navigateToStep(step);
+                        updateProgress();
+                        return;
+                    }
+                    if (iter.think) step++;
+                    if (iter.actions && actionIdx !== null) {
+                        currentStep = step + actionIdx;
+                        navigateToStep(currentStep);
+                        updateProgress();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Get badge class for action type
+        function getBadgeClass(actionType) {
+            if (actionType.includes('browser') || ['CLICK', 'TYPING', 'NAVIGATE', 'screenshot'].includes(actionType)) {
+                return 'badge-browser';
+            } else if (actionType.includes('file')) {
+                return 'badge-file';
+            } else if (actionType.includes('code')) {
+                return 'badge-code';
+            } else if (actionType.includes('shell')) {
+                return 'badge-shell';
+            }
+            return '';
+        }
+
+        // Update progress
+        function updateProgress() {
+            const progressInfo = document.getElementById('progressInfo');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressInfo.textContent = `${currentStep}/${totalSteps}`;
+            const percentage = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        // Playback controls
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                startPlayback();
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentStep > 0) {
+                currentStep--;
+                updateProgress();
+                navigateToStep(currentStep);
+            }
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentStep < totalSteps - 1) {
+                currentStep++;
+                updateProgress();
+                navigateToStep(currentStep);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            stopPlayback();
+            currentStep = 0;
+            updateProgress();
+            navigateToStep(0);
+        });
+
+        document.getElementById('progressBar').addEventListener('click', (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = x / rect.width;
+            currentStep = Math.floor(percentage * totalSteps);
+            updateProgress();
+            navigateToStep(currentStep);
+        });
+
+        // Speed selector
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                playSpeed = parseFloat(btn.dataset.speed);
+                if (isPlaying) {
+                    stopPlayback();
+                    startPlayback();
+                }
+            });
+        });
+
+        function startPlayback() {
+            isPlaying = true;
+            document.getElementById('playBtn').textContent = '⏸ Pause';
+            const delay = 1000 / playSpeed;
+            playInterval = setInterval(() => {
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    updateProgress();
+                    navigateToStep(currentStep);
+                } else {
+                    stopPlayback();
+                    // Ensure we show the last step (eval if available)
+                    navigateToStep(currentStep);
+                }
+            }, delay);
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            document.getElementById('playBtn').textContent = '▶ Play';
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+        }
+
+        function navigateToStep(step) {
+            // Update both left and right panels
+            updateTraceDisplay();
+            
+            const stepData = getStepData(step);
+            if (!stepData) {
+                document.getElementById('contentViewer').innerHTML = '<div class="empty-state">No data for this step</div>';
+                document.getElementById('contentHeader').textContent = 'Content Viewer';
+                return;
+            }
+
+            const viewer = document.getElementById('contentViewer');
+            const header = document.getElementById('contentHeader');
+
+            if (stepData.type === 'eval') {
+                // Show eval results
+                header.textContent = 'Evaluation Results';
+                viewer.innerHTML = renderEvalContent(stepData.eval);
+            } else if (stepData.type === 'action' && stepData.actionData) {
+                const action = stepData.actionData.action || {};
+                const actionType = action.action_type || 'unknown';
+
+                header.textContent = `${actionType} - Iteration ${stepData.iter.iteration}`;
+                viewer.innerHTML = renderActionContent(action, stepData.actionData);
+                
+                // Trigger Prism highlighting after content is added
+                setTimeout(() => {
+                    if (window.Prism) {
+                        // Highlight all code blocks in the viewer
+                        const codeBlocks = viewer.querySelectorAll('code.language-python');
+                        codeBlocks.forEach(block => {
+                            Prism.highlightElement(block);
+                        });
+                    }
+                }, 100);
+            }
+        }
+
+        // Check if observation contains base64 image
+        function observationContainsImage(observation) {
+            if (!observation) return false;
+            // Check if observation contains base64 image data
+            return observation.includes('data:image') || 
+                   (observation.length > 100 && /^[A-Za-z0-9+\/=\s]+$/.test(observation.substring(0, 100)));
+        }
+
+        // Render action content with better formatting
+        function renderActionContent(action, actionData) {
+            const actionType = action.action_type || 'unknown';
+            let content = '';
+
+            // Browser actions: show screenshot prominently (only if screenshot exists)
+            // Check if this is a browser action that should show screenshot
+            const browserActionTypes = ['browser_navigate', 'browser_screenshot', 'browser_click', 'browser_type', 
+                                       'browser_press', 'browser_scroll', 'browser_move_to', 'browser_drag_to',
+                                       'CLICK', 'TYPING', 'NAVIGATE', 'screenshot', 'SCROLL', 'MOVE_TO', 'DRAG_TO'];
+            const isBrowserAction = browserActionTypes.includes(actionType) || actionType.includes('browser');
+            const isScreenshotAction = actionType === 'browser_screenshot' || actionType === 'screenshot';
+            
+            // Show screenshot for browser actions (except DOM actions which don't have screenshots)
+            // For screenshot action itself, screenshot is in observation, not in screenshot field
+            if (isBrowserAction && !actionType.startsWith('DOM_') && !isScreenshotAction && actionData.screenshot) {
+                content += `<div style="margin-bottom: 16px;"><img src="data:image/png;base64,${actionData.screenshot}" alt="Screenshot" style="max-width: 100%; border-radius: 8px; border: 1px solid #30363d;"></div>`;
+            }
+            
+            // For screenshot action, extract image from observation if present
+            if (isScreenshotAction && actionData.observation) {
+                // Try to extract base64 image from observation
+                const imgMatch = actionData.observation.match(/data:image\/[^;]+;base64,([A-Za-z0-9+\/=\s]+)/);
+                if (imgMatch) {
+                    content += `<div style="margin-bottom: 16px;"><img src="data:image/png;base64,${imgMatch[1]}" alt="Screenshot" style="max-width: 100%; border-radius: 8px; border: 1px solid #30363d;"></div>`;
+                } else if (actionData.screenshot) {
+                    content += `<div style="margin-bottom: 16px;"><img src="data:image/png;base64,${actionData.screenshot}" alt="Screenshot" style="max-width: 100%; border-radius: 8px; border: 1px solid #30363d;"></div>`;
+                }
+            }
+
+            // Code execution: show formatted code and results
+            if (actionType === 'code_execute') {
+                const code = action.code || '';
+                const observation = actionData.observation || '';
+                
+                // Extract code and results from observation
+                content += `<div class="code-execution-viewer">`;
+                content += `<div class="code-section">`;
+                content += `<div style="background: #161b22; padding: 12px; border-bottom: 1px solid #30363d; font-size: 11px; color: #8b949e; font-weight: 600;">CODE</div>`;
+                content += `<pre style="margin: 0; padding: 16px; background: #0d1117; border-radius: 0 0 8px 8px; overflow-x: auto;"><code class="language-python">${escapeHtml(code)}</code></pre>`;
+                content += `</div>`;
+                
+                // Parse and display execution results
+                if (observation) {
+                    content += `<div class="result-section" style="margin-top: 16px;">`;
+                    content += `<div style="background: #161b22; padding: 12px; border-bottom: 1px solid #30363d; font-size: 11px; color: #8b949e; font-weight: 600;">OUTPUT</div>`;
+                    content += `<div class="terminal-output" style="padding: 16px; background: #0d1117; border-radius: 0 0 8px 8px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 12px; white-space: pre-wrap; color: #c9d1d9;">${formatCodeOutput(observation)}</div>`;
+                    content += `</div>`;
+                }
+                content += `</div>`;
+            }
+            // Shell execution: show terminal-style output
+            else if (actionType === 'shell_execute') {
+                const command = action.command || '';
+                const observation = actionData.observation || '';
+                
+                content += `<div class="terminal-viewer">`;
+                content += `<div style="background: #161b22; padding: 12px; border-bottom: 1px solid #30363d; font-size: 11px; color: #8b949e; font-weight: 600;">TERMINAL</div>`;
+                content += `<div class="terminal-output" style="padding: 16px; background: #0d1117; border-radius: 0 0 8px 8px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 12px; white-space: pre-wrap;">`;
+                content += `<span style="color: #58a6ff;">$</span> <span style="color: #c9d1d9;">${escapeHtml(command)}</span>\n`;
+                if (observation) {
+                    content += formatCodeOutput(observation);
+                }
+                content += `</div>`;
+                content += `</div>`;
+            }
+            // File operations: show formatted content
+            else if (actionType === 'file_read') {
+                const path = action.path || action.file || '';
+                const observation = actionData.observation || '';
+                
+                content += `<div class="file-viewer">`;
+                content += `<div style="background: #161b22; padding: 12px; border-bottom: 1px solid #30363d; font-size: 11px; color: #8b949e; font-weight: 600;">FILE: ${escapeHtml(path)}</div>`;
+                content += `<div class="file-content" style="padding: 16px; background: #0d1117; border-radius: 0 0 8px 8px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 12px; white-space: pre-wrap; max-height: 600px; overflow-y: auto;">${escapeHtml(observation)}</div>`;
+                content += `</div>`;
+            }
+            // Other actions: show JSON format
+            else {
+                // Only show screenshot if not already shown above and not a browser action
+                if (!isBrowserAction && actionData.screenshot) {
+                    content += `<div style="margin-bottom: 16px;"><img src="data:image/png;base64,${actionData.screenshot}" alt="Screenshot" style="max-width: 100%; border-radius: 8px; border: 1px solid #30363d;"></div>`;
+                }
+                
+                content += `<div class="action-details">`;
+                content += `<div style="background: #161b22; padding: 12px; border-bottom: 1px solid #30363d; font-size: 11px; color: #8b949e; font-weight: 600;">ACTION</div>`;
+                content += `<pre style="margin: 0; padding: 16px; background: #0d1117; border-radius: 0 0 8px 8px; overflow-x: auto;">${escapeHtml(JSON.stringify(action, null, 2))}</pre>`;
+                content += `</div>`;
+                
+                // Show observation, but skip if it contains base64 image (already shown as screenshot)
+                // Also skip for screenshot actions since we already displayed the image
+                if (actionData.observation && !isScreenshotAction && !observationContainsImage(actionData.observation)) {
+                    content += `<div class="observation-details" style="margin-top: 16px;">`;
+                    content += `<div style="background: #161b22; padding: 12px; border-bottom: 1px solid #30363d; font-size: 11px; color: #8b949e; font-weight: 600;">OBSERVATION</div>`;
+                    content += `<div class="file-content" style="padding: 16px; background: #0d1117; border-radius: 0 0 8px 8px; white-space: pre-wrap;">${escapeHtml(actionData.observation)}</div>`;
+                    content += `</div>`;
+                }
+            }
+
+            return content;
+        }
+
+        // Format code execution output (remove JSON formatting, show as terminal output)
+        function formatCodeOutput(observation) {
+            // Try to parse JSON output and extract meaningful content
+            try {
+                // Check if observation contains JSON array (like Jupyter output)
+                if (observation.includes('[{') || observation.includes('"output_type"')) {
+                    // Try to parse as JSON array
+                    const jsonMatch = observation.match(/\[[\s\S]*\]/);
+                    if (jsonMatch) {
+                        const outputs = JSON.parse(jsonMatch[0]);
+                        let formatted = '';
+                        outputs.forEach(output => {
+                            if (output.output_type === 'stream') {
+                                formatted += output.text || '';
+                            } else if (output.output_type === 'execute_result' || output.output_type === 'display_data') {
+                                formatted += output.data?.['text/plain'] || output.data?.['text/html'] || output.text || '';
+                            } else if (output.output_type === 'error') {
+                                formatted += `\x1b[31m${output.ename}: ${output.evalue}\x1b[0m\n`;
+                                if (output.traceback) {
+                                    output.traceback.forEach(line => {
+                                        formatted += line.replace(/\x1b\[[0-9;]*m/g, '') + '\n';
+                                    });
+                                }
+                            }
+                        });
+                        return escapeHtml(formatted);
+                    }
+                }
+            } catch (e) {
+                // If parsing fails, return original
+            }
+            
+            // Return original observation with ANSI color codes preserved
+            return escapeHtml(observation);
+        }
+
+        // Render eval content
+        function renderEvalContent(evalData) {
+            let content = '';
+            
+            const passed = evalData.passed || false;
+            const statusColor = passed ? '#10b981' : '#f59e0b';
+            const statusText = passed ? '✓ PASSED' : '✗ FAILED';
+            
+            content += `<div class="eval-viewer">`;
+            content += `<div style="background: ${statusColor}; padding: 16px; border-radius: 8px 8px 0 0; color: white; font-weight: 600; font-size: 14px;">${statusText}</div>`;
+            
+            // Always show feedback if available
+            if (evalData.feedback) {
+                content += `<div style="background: #161b22; padding: 16px; border-bottom: 1px solid #30363d;">`;
+                content += `<div style="font-size: 11px; color: #8b949e; font-weight: 600; margin-bottom: 8px;">FEEDBACK</div>`;
+                content += `<div style="white-space: pre-wrap; color: #c9d1d9; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 12px;">${escapeHtml(evalData.feedback)}</div>`;
+                content += `</div>`;
+            }
+            
+            // Show all details as JSON in a unified format
+            if (evalData.details) {
+                content += `<div style="background: #161b22; padding: 16px; border-radius: 0 0 8px 8px;">`;
+                content += `<div style="font-size: 11px; color: #8b949e; font-weight: 600; margin-bottom: 8px;">DETAILS</div>`;
+                content += `<pre style="background: #0d1117; padding: 16px; border-radius: 6px; overflow-x: auto; margin: 0; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 12px; color: #c9d1d9;">${escapeHtml(JSON.stringify(evalData.details, null, 2))}</pre>`;
+                content += `</div>`;
+            }
+            
+            content += `</div>`;
+            return content;
+        }
+
+        // File selector
+        document.getElementById('fileSelect').addEventListener('change', (e) => {
+            if (e.target.value) {
+                loadVisualizationData(e.target.value);
+            }
+        });
+
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        loadFileList();
+    </script>
+    <!-- Load Prism.js after DOM is ready -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>
+
+
+

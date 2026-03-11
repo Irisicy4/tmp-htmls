@@ -134,6 +134,25 @@ modal run standalone_modal_runner.py --task-names task-01-...,task-02-...
 
 For most use cases, prefer `./harbor_runner.sh` (uses Harbor's native Modal support).
 
+## Visualization
+
+**Trace visualizer** — interactive web app for replaying a single task's execution step by step (think/action/screenshot):
+
+```bash
+python visualizer/server.py --data-dir results/modal/ --port 8085
+# Open http://localhost:8085, select a task from the dropdown
+```
+
+**Report generator** — static HTML dashboard + Excel spreadsheet summarizing an experiment:
+
+```bash
+# Single experiment
+python generate_report.py results/modal/
+
+# Compare multiple experiments side by side
+python generate_report.py results/exp1/ results/exp2/ results/exp3/
+```
+
 ## License
 
 Apache 2.0
