@@ -1,7 +1,7 @@
-# Override build to use repo root as context so we COPY directly from agents/ and configs/.
-# Paths are relative to this file (environment/); ../../.. = repo root.
+# Build context is this directory (environment/).
+# All glue files are co-located — no repo-root context needed.
 services:
   main:
     build:
-      context: ../../..
-      dockerfile: tasks/task-24-use-velato-to-write-melody/environment/Dockerfile
+      context: .
+      dockerfile: Dockerfile

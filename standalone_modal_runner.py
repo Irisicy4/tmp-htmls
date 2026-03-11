@@ -1,30 +1,30 @@
 """
-Parallel Modal runner for evolve_bench_harbor.
+Standalone Modal runner — bypasses Harbor, talks to Modal directly.
 
-Runs tasks in parallel on Modal's serverless infrastructure.
-Each task executes in its own isolated container with a fresh sandbox.
+For most use cases, prefer:  harbor run -e modal -p tasks ...
+This runner is an alternative that builds a single shared image and manages
+its own parallel dispatch, result aggregation, and experiment metadata.
 
 Prerequisites
 -------------
 1. Install Modal:          pip install modal
 2. Authenticate:           modal setup
-3. Add your OpenAI key:    modal secret create openai-secret OPENAI_API_KEY=sk-...
-   For UniAPI/custom endpoint, include base URL and model in the secret:
-       modal secret create openai-secret OPENAI_API_KEY=sk-... LLM_BASE_URL=https://api.uniapi.io/v1 LLM_MODEL=claude-sonnet-4-20250514
+3. Create .env:            cp env.template .env   (set OPENAI_API_KEY, LLM_BASE_URL, LLM_MODEL)
+4. Add API key to Modal:   modal secret create openai-secret OPENAI_API_KEY=sk-...
 
 Usage
 -----
 # Run all tasks:
-    modal run modal_runner.py
+    modal run standalone_modal_runner.py
 
 # First 3 tasks (smoke test):
-    modal run modal_runner.py --first-n 3
+    modal run standalone_modal_runner.py --first-n 3
 
 # Specific tasks:
-    modal run modal_runner.py --task-names task-01-im-looking-for-backpack-under,task-02-help-me-search-xiaohongshu-for
+    modal run standalone_modal_runner.py --task-names task-01-im-looking-for-backpack-under,task-02-help-me-search-xiaohongshu-for
 
 # Override config or output:
-    modal run modal_runner.py --config configs/skill-phase1.json --output-dir results/my-run
+    modal run standalone_modal_runner.py --config configs/skill-phase1.json --output-dir results/my-run
 """
 
 import json
@@ -117,56 +117,6 @@ _SECRETS = [modal.Secret.from_name("openai-secret")]
 
 
 # ---------------------------------------------------------------------------
-# Helpers (run inside Modal containers)
-# ---------------------------------------------------------------------------
-
-def _format_execution_summary(
-    result: dict,
-    max_chars_per_feedback: int = 2000,
-    max_total_chars: int = 80000,
-) -> str:
-    """Format execution_trace for the LLM judge."""
-    trace = result.get("execution_trace", [])
-    if not trace:
-        return ""
-    lines = []
-    total_chars = 0
-    for i, entry in enumerate(trace, 1):
-        action = entry.get("action", {})
-        feedback = entry.get("feedback", {})
-        atype = action.get("action_type", "unknown")
-        param_parts = [
-            f"  {k}: {str(v)[:500]}{'...' if len(str(v)) > 500 else ''}"
-            for k, v in action.items()
-            if k not in ("action_type", "tool_call_id")
-        ]
-        params_block = "\n".join(param_parts) if param_parts else "  (no parameters)"
-        msg = feedback.get("message", "")
-        if len(msg) > max_chars_per_feedback:
-            msg = msg[:max_chars_per_feedback] + f"... [truncated, {len(msg)} total chars]"
-        step_text = f"Step {i}: {atype}\n{params_block}\n-> {msg}\n"
-        total_chars += len(step_text)
-        if total_chars > max_total_chars:
-            lines.append(f"... [trace truncated at step {i}/{len(trace)}]")
-            break
-        lines.append(step_text)
-    return "\n".join(lines)
-
-
-def _strip_images(result: dict) -> dict:
-    """Remove base64 screenshots from conversation to reduce result size."""
-    for msg in result.get("conversation", []):
-        content = msg.get("content")
-        if isinstance(content, list):
-            for part in content:
-                if part.get("type") == "image_url":
-                    url = part.get("image_url", {}).get("url", "")
-                    if url.startswith("data:"):
-                        part["image_url"]["url"] = "[screenshot stripped]"
-    return result
-
-
-# ---------------------------------------------------------------------------
 # Remote function — one invocation per task
 # ---------------------------------------------------------------------------
 
@@ -182,9 +132,9 @@ def _strip_images(result: dict) -> dict:
 def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a single task inside a Modal container.
 
-    1. Starts sandbox services (supervisord → nginx + Chromium).
-    2. Waits for sandbox health at localhost:8080.
-    3. Runs CocoaAgent with skip_docker (sandbox managed here, not by Docker).
+    1. Starts sandbox services (supervisord → nginx + Chromium) for browser agents.
+    2. Creates the appropriate agent via run_task.create_agent().
+    3. Runs the agent via run_task.run_agent_task().
     4. Runs LLM-as-judge verification via the task's test_task.py.
     5. Persists result JSON to Modal Volume and returns it.
     """
@@ -192,88 +142,52 @@ def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, A
     import subprocess
     import time as _time
 
-    import requests as _req
-
     sys.path.insert(0, "/cocoa-agent")
+
+    import overlay  # noqa: F401 — applies skip_docker monkey-patch
+    from run_task import create_agent, apply_env_overrides, run_agent_task, _strip_images
+    from executor.utils import setup_logging
 
     task_name = task["task_name"]
     instruction = task["instruction"]
-
-    # ---- Start sandbox services ----
-    setup = subprocess.run(["/bin/bash", "/opt/gem/run.sh"], check=False)
-    if setup.returncode != 0:
-        print(f"[warn] Sandbox setup exited {setup.returncode} — continuing anyway")
-
-    # ---- Wait for sandbox ----
-    for attempt in range(60):
-        try:
-            r = _req.get("http://localhost:8080/v1/ping", timeout=2)
-            if r.status_code == 200:
-                print(f"Sandbox ready after {(attempt + 1) * 2}s")
-                break
-        except Exception:
-            pass
-        _time.sleep(2)
-    else:
-        raise RuntimeError("Sandbox did not become ready within 120 seconds")
-
-    # ---- Configure agent ----
-    import overlay  # noqa: F401 — applies skip_docker monkey-patch
-
-    from agents import CocoaAgent
-    from executor.utils import setup_logging
+    agent_type = config.get("agent_type", "cocoa")
 
     setup_logging(config.get("log_level", "INFO"))
-    config.setdefault("sandbox", {}).update({"skip_docker": True, "docker_port": 8080})
+    config = apply_env_overrides(config)
 
-    # Apply env var overrides to config (supports UniAPI / custom endpoints + models)
-    env_base_url = os.environ.get("LLM_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
-    if env_base_url:
-        config.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
-        os.environ["OPENAI_BASE_URL"] = env_base_url  # for LLM judge (test_task.py)
-    env_model = os.environ.get("LLM_MODEL")
-    if env_model:
-        config.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
+    # ---- Start sandbox for browser-based agents ----
+    if agent_type in ("cocoa", "skill"):
+        setup = subprocess.run(["/bin/bash", "/opt/gem/run.sh"], check=False)
+        if setup.returncode != 0:
+            print(f"[warn] Sandbox setup exited {setup.returncode} — continuing anyway")
 
-    max_iter = os.environ.get("COCOA_MAX_ITERATIONS")
-    if max_iter:
-        try:
-            config["sandbox"]["max_iterations"] = int(max_iter)
-        except ValueError:
-            pass
+        import requests as _req
+        for attempt in range(60):
+            try:
+                r = _req.get("http://localhost:8080/v1/ping", timeout=2)
+                if r.status_code == 200:
+                    print(f"Sandbox ready after {(attempt + 1) * 2}s")
+                    break
+            except Exception:
+                pass
+            _time.sleep(2)
+        else:
+            raise RuntimeError("Sandbox did not become ready within 120 seconds")
+    else:
+        print(f"Agent type '{agent_type}' does not use the sandbox — skipping startup.")
 
-    agent = CocoaAgent(config)
-    task_data = {"task_name": task_name, "instruction": instruction, "task_dir": "/tmp"}
+    # ---- Create agent and run task ----
+    agent = create_agent(config)
+    task_data = {
+        "task_name": task_name,
+        "instruction": instruction,
+        "description": instruction,
+        "task_dir": "/tmp",
+        "use_encrypted": False,
+    }
 
-    # ---- Run task ----
-    result: Dict[str, Any] = {}
     task_start = _time.time()
-    agent.setup_environment(task_data)
-    try:
-        result = agent.run_task(task_data)
-    except Exception as exc:
-        partial: Dict[str, Any] = {}
-        try:
-            partial["conversation"] = agent.executor.controller.get_history()
-            partial["execution_trace"] = agent.executor.sandbox_client.get_history()
-            partial["execution_summary"] = _format_execution_summary(
-                {"execution_trace": partial.get("execution_trace", [])}
-            )
-        except Exception:
-            pass
-        try:
-            if hasattr(agent.executor.controller, "get_cost_stats"):
-                partial["api_cost_stats"] = agent.executor.controller.get_cost_stats()
-            partial["iterations"] = getattr(agent.executor, "_current_iteration", 0)
-        except Exception:
-            pass
-        result = {**partial, "status": "error", "error": str(exc), "task_name": task_name}
-    finally:
-        agent.cleanup_environment()
-
-    # ---- Execution summary for LLM judge ----
-    if result.get("execution_trace") and not result.get("execution_summary"):
-        result["execution_summary"] = _format_execution_summary(result)
+    result = run_agent_task(agent, task_data)
 
     # ---- Run LLM-as-judge verification ----
     test_file = f"/harbor-bench/tasks/{task_name}/tests/test_task.py"
@@ -328,6 +242,18 @@ def main(
     """
     from datetime import datetime, timezone
 
+    # ---- Load .env (same file harbor_runner.sh uses) ----
+    env_file = Path(__file__).parent / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            key, _, val = line.partition("=")
+            key, val = key.strip(), val.strip()
+            if key and val and key not in os.environ:
+                os.environ[key] = val
+
     # ---- Load config ----
     config_path = Path(config)
     if not config_path.exists():
@@ -335,6 +261,16 @@ def main(
         sys.exit(1)
     with open(config_path) as f:
         cfg: Dict[str, Any] = json.load(f)
+
+    # ---- Apply .env overrides to config ----
+    env_base_url = os.environ.get("LLM_BASE_URL")
+    env_model = os.environ.get("LLM_MODEL")
+    if env_base_url:
+        cfg.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
+        print(f"[.env] LLM_BASE_URL={env_base_url}")
+    if env_model:
+        cfg.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
+        print(f"[.env] LLM_MODEL={env_model}")
 
     # ---- Discover tasks ----
     tasks_path = Path(tasks_dir).resolve()
