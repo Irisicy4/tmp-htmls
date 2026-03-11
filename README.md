@@ -77,12 +77,12 @@ COCOA_MAX_ITERATIONS=10 ./harbor_runner.sh tasks -l 3
 evolve_bench_harbor/
 ├── harbor_runner.sh              # Main entry — runs on Modal (default) or Docker
 ├── standalone_modal_runner.py    # Alternative: direct Modal runner (bypasses Harbor)
+├── run_task.py                   # Multi-agent entry point (runs inside container)
+├── overlay.py                    # skip_docker monkey-patch (runs inside container)
 ├── env.template                  # Copy to .env for API keys
 ├── agents/
 │   └── cocoa_agent/              # CocoaAgent — default agent
 │       ├── cocoa_harbor_agent.py #   Harbor wrapper
-│       ├── run_task.py           #   Multi-agent entry point (inside container)
-│       ├── overlay.py            #   skip_docker monkey-patch
 │       └── agents_overlay/       #   Agent imports overlay
 ├── configs/
 │   ├── harbor-config.json        # Default config (gpt-4.1-mini, 50 iterations)

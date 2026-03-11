@@ -95,8 +95,8 @@ modal_image = (
     .add_local_dir(".", "/harbor-bench", copy=True, ignore=IGNORE_PATTERNS)
     # Copy Harbor glue into cocoa-agent (mirrors task Dockerfile COPY commands)
     .run_commands(
-        "cp /harbor-bench/agents/cocoa_agent/run_task.py /cocoa-agent-src/"
-        " && cp /harbor-bench/agents/cocoa_agent/overlay.py /cocoa-agent-src/"
+        "cp /harbor-bench/run_task.py /cocoa-agent-src/"
+        " && cp /harbor-bench/overlay.py /cocoa-agent-src/"
         " && cp /harbor-bench/agents/cocoa_agent/agents_overlay/__init__.py /cocoa-agent-src/agents/__init__.py"
         " && cp -r /harbor-bench/configs/. /cocoa-agent-src/configs/"
     )
