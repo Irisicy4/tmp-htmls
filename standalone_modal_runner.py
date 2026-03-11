@@ -93,14 +93,17 @@ modal_image = (
     )
     # Upload this repo (agent glue, configs, task files)
     .add_local_dir(".", "/harbor-bench", copy=True, ignore=IGNORE_PATTERNS)
-    # Copy Harbor glue into cocoa-agent (mirrors task Dockerfile COPY commands)
+    # Copy harness files into /harness/ (agent-agnostic entry point)
     .run_commands(
-        "cp /harbor-bench/run_task.py /cocoa-agent-src/"
-        " && cp /harbor-bench/overlay.py /cocoa-agent-src/"
-        " && cp /harbor-bench/agents/cocoa_agent/agents_overlay/__init__.py /cocoa-agent-src/agents/__init__.py"
-        " && cp -r /harbor-bench/configs/. /cocoa-agent-src/configs/"
+        "mkdir -p /harness/adapters /harness/configs"
+        " && cp /harbor-bench/harness/run_task.py /harness/"
+        " && cp /harbor-bench/harness/skill_store.py /harness/"
+        " && cp /harbor-bench/harness/skill_extractor.py /harness/"
+        " && cp /harbor-bench/harness/adapters/__init__.py /harness/adapters/"
+        " && cp /harbor-bench/harness/adapters/cocoa_adapter.py /harness/adapters/"
+        " && cp -r /harbor-bench/configs/. /harness/configs/"
     )
-    .workdir("/cocoa-agent")
+    .workdir("/harness")
 )
 
 # ---------------------------------------------------------------------------
@@ -131,31 +134,42 @@ _SECRETS = [modal.Secret.from_name("openai-secret")]
 def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a single task inside a Modal container.
 
-    1. Starts sandbox services (supervisord → nginx + Chromium) for browser agents.
+    1. Starts sandbox services (supervisord -> nginx + Chromium) for browser agents.
     2. Creates the appropriate agent via run_task.create_agent().
     3. Runs the agent via run_task.run_agent_task().
     4. Runs LLM-as-judge verification via the task's test_task.py.
-    5. Persists result JSON to Modal Volume and returns it.
+    5. Phase 1 skill storage (if store_skills=true in config).
+    6. Persists result JSON to Modal Volume and returns it.
     """
     import importlib.util
     import subprocess
     import time as _time
 
-    sys.path.insert(0, "/cocoa-agent")
+    sys.path.insert(0, "/harness")
 
-    import overlay  # noqa: F401 — applies skip_docker monkey-patch
-    from run_task import create_agent, apply_env_overrides, run_agent_task, _strip_images
-    from executor.utils import setup_logging
+    from run_task import (
+        create_agent, apply_env_overrides, run_agent_task, _strip_images,
+        maybe_inject_skills, maybe_store_skill, _SANDBOX_AGENTS,
+    )
 
     task_name = task["task_name"]
     instruction = task["instruction"]
     agent_type = config.get("agent_type", "cocoa")
 
-    setup_logging(config.get("log_level", "INFO"))
+    # Logging: use cocoa's setup for cocoa agent, standard logging otherwise
+    if agent_type == "cocoa":
+        from adapters.cocoa_adapter import setup_logging
+        setup_logging(config.get("log_level", "INFO"))
+    else:
+        import logging
+        logging.basicConfig(
+            level=getattr(logging, config.get("log_level", "INFO").upper(), logging.INFO),
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        )
     config = apply_env_overrides(config)
 
     # ---- Start sandbox for browser-based agents ----
-    if agent_type in ("cocoa", "skill"):
+    if agent_type in _SANDBOX_AGENTS:
         setup = subprocess.run(["/bin/bash", "/opt/gem/run.sh"], check=False)
         if setup.returncode != 0:
             print(f"[warn] Sandbox setup exited {setup.returncode} — continuing anyway")
@@ -185,10 +199,14 @@ def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, A
         "use_encrypted": False,
     }
 
+    # Phase 2: inject skills into instruction (agent-agnostic)
+    task_data = maybe_inject_skills(task_data, config)
+
     task_start = _time.time()
     result = run_agent_task(agent, task_data)
 
     # ---- Run LLM-as-judge verification ----
+    eval_result = None
     test_file = f"/harbor-bench/tasks/{task_name}/tests/test_task.py"
     if os.path.exists(test_file):
         try:
@@ -202,6 +220,10 @@ def run_single_task(task: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, A
             result["eval"] = {"passed": False, "error": str(e)}
     else:
         print(f"[warn] No test_task.py for {task_name}")
+
+    # ---- Phase 1: store skill if result is good enough ----
+    if eval_result is not None:
+        maybe_store_skill(task_data, result, eval_result, config)
 
     # ---- Finalize ----
     result = _strip_images(result)

@@ -1,6 +1,5 @@
-# Self-contained environment for cocoa-agent.
+# Self-contained environment for running agents.
 # Works with both Harbor Docker (-e docker) and Harbor Modal (-e modal).
-# No COPY from build context — all glue files are fetched or written inline.
 
 FROM ghcr.io/agent-infra/sandbox:latest
 
@@ -12,17 +11,10 @@ RUN git clone --depth 1 https://github.com/cocoabench/cocoa-agent.git /cocoa-age
     && /opt/python3.12/bin/playwright install chromium \
     && ln -sf /cocoa-agent-src /cocoa-agent
 
-# --- Harbor overlay: skip_docker monkey-patch ---
-COPY overlay.py /cocoa-agent-src/overlay.py
+# --- Harness (agent-agnostic) ---
+COPY run_task.py skill_store.py skill_extractor.py /harness/
+COPY adapters/ /harness/adapters/
+COPY configs/ /harness/configs/
+COPY skills/ /skills/
 
-# --- agents/__init__.py overlay: multi-agent support ---
-COPY agents__init__.py /cocoa-agent-src/agents/__init__.py
-
-# --- run_task.py: multi-agent entry point ---
-COPY run_task.py /cocoa-agent-src/run_task.py
-
-# --- Config files ---
-COPY harbor-config.json /cocoa-agent-src/configs/harbor-config.json
-COPY skill-phase1.json /cocoa-agent-src/configs/skill-phase1.json
-
-WORKDIR /cocoa-agent
+WORKDIR /harness

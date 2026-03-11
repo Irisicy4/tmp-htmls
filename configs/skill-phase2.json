@@ -1,0 +1,22 @@
+{
+  "agent_type": "cocoa",
+  "log_level": "DEBUG",
+  "store_skills": false,
+  "use_skills": true,
+  "skill_score_threshold": 3.0,
+  "skill_model": "gpt-4o-mini",
+  "skills_dir": "/skills",
+  "controller": {
+      "type": "gpt",
+      "args": {
+          "model": "gpt-4.1-mini",
+          "base_url": "",
+          "api_key": ""
+      }
+  },
+  "sandbox": {
+      "client_type": "unified",
+      "docker_port": 8084,
+      "max_iterations": 50
+  }
+}

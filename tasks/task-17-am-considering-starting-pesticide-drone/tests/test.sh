@@ -16,7 +16,7 @@ if [ ! -f "$RESULT_FILE" ]; then
 fi
 
 # Use skill-phase1.json (same config as agent) for api_key/base_url when not in env
-CONFIG_FILE="/cocoa-agent/configs/skill-phase1.json"
+CONFIG_FILE="/harness/configs/skill-phase1.json"
 if [ -z "$OPENAI_API_KEY" ] && [ -f "$CONFIG_FILE" ]; then
     export OPENAI_API_KEY=$(/opt/python3.12/bin/python -c "
 import json

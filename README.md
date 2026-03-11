@@ -56,16 +56,16 @@ ENV=docker ./harbor_runner.sh tasks/task-01-im-looking-for-backpack-under
 | `LLM_MODEL` | `gpt-4.1-mini` | Model override |
 | `COCOA_MAX_ITERATIONS` | `50` | Max agent iterations per task |
 | `MODAL_SECRET` | `openai-secret` | Modal secret name |
-| `AGENT` | `agents.cocoa_agent:CocoaHarborAgent` | Agent import path |
+| `AGENT` | `agents.cocoa_harbor_agent:CocoaHarborAgent` | Agent import path |
 | `MODEL` | `openai/gpt-4.1-mini` | Harbor model string |
-| `COCOA_CONFIG` | `/cocoa-agent/configs/skill-phase1.json` | Config path inside container |
+| `COCOA_CONFIG` | `/harness/configs/skill-phase1.json` | Config path inside container |
 
 ```bash
 # Override model via .env or inline:
 LLM_MODEL=claude-sonnet-4-20250514 ./harbor_runner.sh
 
 # Use a different config:
-COCOA_CONFIG=/cocoa-agent/configs/harbor-config.json ./harbor_runner.sh
+COCOA_CONFIG=/harness/configs/harbor-config.json ./harbor_runner.sh
 
 # Limit iterations for quick testing:
 COCOA_MAX_ITERATIONS=10 ./harbor_runner.sh tasks -l 3
@@ -77,29 +77,30 @@ COCOA_MAX_ITERATIONS=10 ./harbor_runner.sh tasks -l 3
 evolve_bench_harbor/
 ├── harbor_runner.sh              # Main entry — runs on Modal (default) or Docker
 ├── standalone_modal_runner.py    # Alternative: direct Modal runner (bypasses Harbor)
-├── run_task.py                   # Multi-agent entry point (runs inside container)
-├── overlay.py                    # skip_docker monkey-patch (runs inside container)
+├── scripts/
+│   └── sync-harness.sh           # Sync harness/ + configs/ to all task environments
 ├── env.template                  # Copy to .env for API keys
 ├── agents/
-│   └── cocoa_agent/              # CocoaAgent — default agent
-│       ├── cocoa_harbor_agent.py #   Harbor wrapper
-│       └── agents_overlay/       #   Agent imports overlay
+│   └── cocoa_harbor_agent.py     # Harbor wrapper for CocoaAgent
+├── harness/                      # Files injected into task containers at /harness/
+│   ├── run_task.py               #   Agent-agnostic entry point + skill middleware
+│   ├── skill_store.py            #   Skill persistence + LLM search
+│   ├── skill_extractor.py        #   Skill evaluation + extraction
+│   └── adapters/
+│       ├── __init__.py
+│       └── cocoa_adapter.py      #   All cocoa-agent-specific code (monkey-patch, imports)
 ├── configs/
-│   ├── harbor-config.json        # Default config (gpt-4.1-mini, 50 iterations)
-│   ├── skill-phase1.json         # Skill experiment config
-│   └── uniapi.json               # UniAPI config
+│   ├── harbor-config.json        # Default config (gpt-4.1-mini via UniAPI, 50 iterations)
+│   ├── skill-phase1.json         # Skill Phase 1 (store skills)
+│   └── skill-phase2.json         # Skill Phase 2 (use skills)
 └── tasks/
     └── <task-name>/
         ├── instruction.md        # Task prompt
         ├── task.toml             # Harbor task config (timeout, resources, verifier env)
         ├── environment/
-        │   ├── Dockerfile        # Self-contained: clones cocoa-agent + glue files
+        │   ├── Dockerfile        # Self-contained: clones cocoa-agent + harness files
         │   ├── docker-compose.yaml
-        │   ├── run_task.py       # Copied glue files (for Modal build context)
-        │   ├── overlay.py
-        │   ├── agents__init__.py
-        │   ├── harbor-config.json
-        │   └── skill-phase1.json
+        │   └── ...               # Synced copies of harness/, configs/, skills/ (gitignored)
         └── tests/
             ├── test.sh           # Verifier entry
             └── test_task.py      # LLM-as-judge scorer
@@ -108,19 +109,51 @@ evolve_bench_harbor/
 ## Adding a New Task
 
 1. Create `tasks/<task-name>/` with `instruction.md`, `task.toml`, `tests/`
-2. Copy `environment/` from any existing task — the Dockerfile and glue files are identical across tasks
+2. Copy `environment/` from any existing task — the Dockerfile and harness files are identical across tasks
 3. Run: `./harbor_runner.sh tasks/<task-name>`
+
+## Updating Harness or Config Files
+
+`harbor_runner.sh` automatically runs `scripts/sync-harness.sh` before every run, which copies the following into each `tasks/task-*/environment/` directory:
+
+- **Harness files:** `run_task.py`, `skill_store.py`, `skill_extractor.py`, `adapters/`
+- **Configs:** `configs/harbor-config.json`, `configs/skill-phase1.json`, `configs/skill-phase2.json`
+- **Skills:** contents of `skills/`
+
+These copies are gitignored — the source of truth is `harness/` and `configs/`. If using `standalone_modal_runner.py`, run the sync manually:
+
+```bash
+./scripts/sync-harness.sh
+```
+
+This is needed because Harbor Modal uses each task's `environment/` as the Docker build context — it can't access files outside that directory.
 
 ## Multi-Agent Support
 
 `run_task.py` supports multiple agent types via the `agent_type` field in the config JSON:
 
 - `cocoa` (default) — browser-based agent with sandbox
-- `skill` — CocoaAgent with skill store/retrieval
 - `claude_code`, `codex`, `gemini_cli`, `manus` — CLI/API agents (no sandbox needed)
 - `openai_deep_research`, `gemini_deep_research` — deep research agents
 
-Browser-based agents (`cocoa`, `skill`) start the sandbox; pure-API agents skip it.
+Browser-based agents (`cocoa`) start the sandbox; pure-API agents skip it.
+
+## Skill System (2-Phase)
+
+The skill system is agent-agnostic middleware — it works with any agent type via config flags:
+
+- **Phase 1** (`store_skills=true`): after each task, if the score meets the threshold, extracts a generalizable skill and saves it as a `.md` file.
+- **Phase 2** (`use_skills=true`): before each task, searches stored skills and injects the most relevant ones into the instruction.
+
+```bash
+# Phase 1: run tasks and store skills (works with any agent_type)
+COCOA_CONFIG=/harness/configs/skill-phase1.json ./harbor_runner.sh
+
+# Phase 2: run tasks with skill retrieval
+COCOA_CONFIG=/harness/configs/skill-phase2.json ./harbor_runner.sh
+```
+
+Skills are orthogonal to agent type — combine any `agent_type` with `store_skills`/`use_skills` in the config.
 
 ## Standalone Modal Runner
 

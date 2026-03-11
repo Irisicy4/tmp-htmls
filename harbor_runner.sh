@@ -38,13 +38,13 @@ if [ -z "$OPENAI_API_KEY" ]; then
 fi
 
 ENV="${ENV:-modal}"
-export COCOA_CONFIG="${COCOA_CONFIG:-/cocoa-agent/configs/skill-phase1.json}"
+export COCOA_CONFIG="${COCOA_CONFIG:-/harness/configs/skill-phase1.json}"
 export COCOA_MAX_ITERATIONS="${COCOA_MAX_ITERATIONS:-50}"
 MODAL_SECRET="${MODAL_SECRET:-openai-secret}"
 
 TASK_PATH="${1:-tasks}"
 OUTPUT_DIR="${2:-results/$ENV}"
-AGENT="${AGENT:-agents.cocoa_agent:CocoaHarborAgent}"
+AGENT="${AGENT:-agents.cocoa_harbor_agent:CocoaHarborAgent}"
 MODEL="${MODEL:-openai/gpt-4.1-mini}"
 
 # Agent kwargs (env vars passed into the container)
@@ -59,6 +59,9 @@ EK_ARGS=()
 if [ "$ENV" = "modal" ]; then
     EK_ARGS+=(--ek "secrets=[\"$MODAL_SECRET\"]")
 fi
+
+# Sync harness + config files into task environments (Modal build context)
+./scripts/sync-harness.sh
 
 echo "=== Harbor run: env=$ENV task=$TASK_PATH model=$MODEL ==="
 harbor run \
