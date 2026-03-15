@@ -1,125 +1,72 @@
 """
-LLM-as-judge evaluator for an evolvebench task.
-Auto-generated from spreadsheet row.
+LLM-as-judge evaluator for EvolveBench task-36.
+Category: Shopping
 """
+import os, json, re
 
-import os
-import json
-
-TASK_INSTRUCTION = """I want to buy an M5 MacBook Pro with at least 1TB SSD and 16GB RAM. Research apple.com, Amazon, and Best Buy for the best prices and detailed specs. Then open Google Docs, create a new document and add the specs, pricing and other details to it."""
-
-RUBRIC = """
-You are evaluating an AI agent's response to this task:
-"I want to buy an M5 MacBook Pro with at least 1TB SSD and 16GB RAM. Research apple.com, Amazon, and Best Buy for the best prices and detailed specs. Then open Google Docs, create a new document and add the specs, pricing and other details to it."
-
-Score on each dimension from 1 to 5:
-
-1. task_completion (weight 0.4):
-   Did the agent complete the core request?
-   5 = fully completed all required steps
-   3 = partially completed or missing minor details
-   1 = failed or gave up without completing the main task
-
-2. information_quality (weight 0.3):
-   Is the retrieved information accurate, current, and from credible sources?
-   5 = accurate, up-to-date, with credible sources cited
-   3 = mostly accurate but vague or missing some sources
-   1 = hallucinated, inaccurate, or no sources
-
-3. document_saved (weight 0.2):
-   Did the agent actually save the output to the requested document format
-   (e.g. Google Docs, Excel, text file)?
-   5 = saved correctly in the requested format
-   3 = partially saved or wrong format
-   1 = not saved
-
-4. completeness (weight 0.1):
-   Did the agent address all aspects and requirements of the task?
-   5 = all requirements fully addressed
-   3 = most requirements met, minor gaps
-   1 = significant requirements missed
-
-Respond ONLY with valid JSON:
-{
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "document_saved": <1-5>,
-  "completeness": <1-5>,
-  "reasoning": "<one paragraph explaining the scores>",
-  "overall_score": <weighted average as a single decimal number>
-}
-"""
-
+TASK_INSTRUCTION = 'I want to buy an M5 MacBook Pro with at least 1TB SSD and 16GB RAM. Research apple.com, Amazon, and Best Buy for the best prices and detailed specs. Then open Google Docs, create a new document and add the specs, pricing and other details to it.'
 PASS_THRESHOLD = 3.0
-DIMENSIONS = ["task_completion", "information_quality", "document_saved", "completeness"]
 
+SYSTEM_PROMPT = "You are an expert evaluator for AI agent benchmarks assessing a multi-site product research task followed by Google Docs document creation. Note: As of early 2026, the M5 MacBook Pro may not yet exist — the agent should handle this gracefully (search, note availability status, and use the closest available model if M5 isn't released)."
 
-def _extract_response(result: dict) -> str:
-    task_result = result.get("task_result") or ""
-    if task_result.strip():
-        return task_result
-    for message in reversed(result.get("conversation") or []):
-        if not isinstance(message, dict):
-            continue
-        if message.get("role") == "assistant":
-            content = message.get("content") or ""
-            if isinstance(content, str) and len(content) > 20:
-                return content
+USER_PROMPT_TEMPLATE = '## Task Instruction\n{task_instruction}\n\n## Task-Specific Constraints\n- Specs required: ≥1TB SSD AND ≥16GB RAM (both are hard minimums)\n- Sites: apple.com, Amazon, Best Buy — all three must be checked\n- Note: M5 MacBook Pro may not be released; agent should note availability and use M4 Pro/M4 Max if necessary\n- Output: Google Docs document with specs, pricing from all three sites, and comparison\n\n## Agent Final Response\n{agent_response}\n\n## Agent Tool-Call Trace\n{execution_summary}\n\n---\n\n## Evaluation Instructions\n\n### Step 1: Evidence Analysis\n- Did the agent visit all 3 sites (apple.com, Amazon, Best Buy)?\n- Were ≥1TB/≥16GB models found? Are specs verified?\n- Did the agent handle M5 availability (note if not released, use M4)?\n- Was a Google Docs document created with the findings?\n\n### Step 2: Dimension Scoring\n\n#### A. Multi-Site Research\nDid the agent research all three required sites?\n\n5 — All 3 sites (apple.com, Amazon, Best Buy) navigated; prices retrieved from each.\n4 — 2 of 3 sites researched; one was inaccessible or skipped.\n3 — 1 site researched directly; others referenced from prior knowledge or general search.\n2 — None of the 3 sites navigated; response from prior knowledge.\n1 — No research performed.\n\n#### B. Spec & Price Accuracy\nAre the specifications and prices accurate and correctly filtered?\n\n5 — ≥1TB/≥16GB models identified with correct specs; prices from all available sites; M5 availability correctly handled.\n4 — Specs correct but price from 1 site missing or M5 availability not explicitly addressed.\n3 — Models found but specs not verified to meet minimums; prices approximate.\n2 — Models listed without spec verification; prices not from the required sites.\n1 — Specs/prices fabricated or completely wrong.\n\n#### C. Google Docs Save\nWas a Google Docs document created with the research?\n\n5 — Google Docs document created; URL or trace confirmation; contains specs, pricing comparison, and summary.\n4 — Document creation attempted; trace confirms Google Docs API call; content present.\n3 — Agent compiled research in response but did not create Google Docs document.\n2 — Agent mentioned creating a doc without doing so.\n1 — No document created.\n\n#### D. Information Quality\nIs the overall information well-organised and useful for a purchase decision?\n\n5 — Price comparison table across sites; specs clearly listed; best value recommendation given.\n4 — Information present but comparison is narrative rather than structured table.\n3 — Information present but disorganised; hard to compare options at a glance.\n2 — Partial information; missing prices or specs from most sites.\n1 — No useful purchase information.\n\n### Step 3: Output\n<Answer>\n{{\n  "evidence_summary": "<2-3 sentences>",\n  "multi_site_research": <1-5>,\n  "spec_price_accuracy": <1-5>,\n  "google_docs_save": <1-5>,\n  "information_quality": <1-5>,\n  "dimension_reasoning": {{"multi_site_research": "<one sentence>", "spec_price_accuracy": "<one sentence>", "google_docs_save": "<one sentence>", "information_quality": "<one sentence>"}},\n  "overall_score": <weighted average, one decimal>,\n  "passed": <true or false>\n}}\n</Answer>'
+
+DIMENSION_WEIGHTS = {'multi_site_research': 0.3, 'spec_price_accuracy': 0.25, 'google_docs_save': 0.3, 'information_quality': 0.15}
+DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
+
+def _extract_response(result):
+    t = result.get("task_result") or ""
+    if isinstance(t, str) and t.strip(): return t
+    for m in reversed(result.get("conversation") or []):
+        if isinstance(m, dict) and m.get("role") == "assistant":
+            c = m.get("content") or ""
+            if isinstance(c, str) and len(c) > 20: return c
     return ""
 
+def _parse(text):
+    match = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
+    if not match: return None
+    try: return json.loads(match.group(1).strip())
+    except: return None
 
-def _call_judge(agent_response: str, execution_summary: str = "") -> dict:
+def _call(agent_response, execution_summary):
     try:
         import openai
-        api_key = os.environ.get("OPENAI_API_KEY")
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        if not api_key:
-            return {"error": "OPENAI_API_KEY not set (required for LLM judge)", "overall_score": 0}
-        client = openai.OpenAI(api_key=api_key, base_url=base_url)
-        content = f"{RUBRIC}\n\nAgent response to evaluate:\n\n{agent_response}"
-        if execution_summary:
-            content += f"\n\nVerified agent tool-call trace (ground truth of what the agent actually did):\n{execution_summary}"
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         completion = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": content}],
-            response_format={"type": "json_object"},
-            max_tokens=512,
-        )
-        return json.loads(completion.choices[0].message.content)
-    except Exception as e:
-        return {"error": str(e), "overall_score": 0}
+            messages=[{"role": "system", "content": SYSTEM_PROMPT},
+                      {"role": "user", "content": USER_PROMPT_TEMPLATE.format(task_instruction=TASK_INSTRUCTION, agent_response=agent_response, execution_summary=execution_summary or "Not available.")}],
+            max_tokens=1024)
+        return _parse(completion.choices[0].message.content)
+    except Exception as e: return {"error": str(e)}
 
+def _vote(votes):
+    valid = [v for v in votes if v and "error" not in v and all(d in v for d in DIMENSIONS)]
+    if not valid: return votes[0] if votes else {"error": "All calls failed"}
+    agg = {d: sorted([v[d] for v in valid])[len(valid)//2] for d in DIMENSIONS}
+    overall = sum(agg[d] * DIMENSION_WEIGHTS[d] for d in DIMENSIONS)
+    agg["overall_score"] = round(overall, 2); agg["passed"] = overall >= PASS_THRESHOLD
+    median = sorted(valid, key=lambda v: abs(v.get("overall_score",0)-overall))[0]
+    agg["evidence_summary"] = median.get("evidence_summary",""); agg["dimension_reasoning"] = median.get("dimension_reasoning",{}); agg["_votes_used"] = len(valid)
+    return agg
 
-def test(result: dict) -> dict:
+def test(result):
     agent_response = _extract_response(result)
     execution_summary = result.get("execution_summary", "")
-
     if not agent_response.strip():
-        return {
-            "passed": False,
-            "feedback": "No response found from agent.",
-            "details": {"task_completed": result.get("status") == "success"},
-        }
-
-    scores = _call_judge(agent_response, execution_summary)
-    overall = scores.get("overall_score", 0)
-    passed = float(overall) >= PASS_THRESHOLD
-
-    feedback_lines = [f"Overall score: {overall}/5"]
-    for dim in DIMENSIONS:
-        if dim in scores:
-            feedback_lines.append(f"  {dim}: {scores[dim]}/5")
-    if "reasoning" in scores:
-        feedback_lines.append(f"\nJudge reasoning: {scores['reasoning']}")
-
-    return {
-        "passed": passed,
-        "feedback": "\n".join(feedback_lines),
-        "details": {
-            "task_completed": result.get("status") == "success",
-            "overall_score": overall,
-            "dimension_scores": {k: scores.get(k) for k in DIMENSIONS},
-            "judge_reasoning": scores.get("reasoning"),
-            "pass_threshold": PASS_THRESHOLD,
-        },
-    }
+        return {"passed": False, "feedback": "No response found from agent.", "details": {"task_completed": result.get("status") == "success"}}
+    first = _call(agent_response, execution_summary)
+    if first and "error" not in first:
+        overall = first.get("overall_score", 0)
+        scores = _vote([first, _call(agent_response, execution_summary), _call(agent_response, execution_summary)]) if abs(float(overall) - PASS_THRESHOLD) <= 0.5 else (first.__setitem__("_votes_used", 1) or first)
+    else:
+        scores = first or {"error": "Judge call failed", "overall_score": 0}
+    overall = scores.get("overall_score", 0); passed = scores.get("passed", float(overall) >= PASS_THRESHOLD)
+    lines = [f"Overall score: {overall}/5  (threshold: {PASS_THRESHOLD})"] + [f"  {d}: {scores[d]}/5" for d in DIMENSIONS if d in scores]
+    if scores.get("evidence_summary"): lines.append(f"\nEvidence summary: {scores['evidence_summary']}")
+    if scores.get("dimension_reasoning"):
+        lines.append("\nDimension reasoning:")
+        for d, r in scores["dimension_reasoning"].items(): lines.append(f"  {d}: {r}")
+    if scores.get("_votes_used", 1) > 1: lines.append(f"\n(Borderline: {scores['_votes_used']} calls, majority vote)")
+    return {"passed": bool(passed), "feedback": "\n".join(lines), "details": {"task_completed": result.get("status") == "success", "overall_score": overall, "dimension_scores": {d: scores.get(d) for d in DIMENSIONS}, "evidence_summary": scores.get("evidence_summary"), "dimension_reasoning": scores.get("dimension_reasoning"), "pass_threshold": PASS_THRESHOLD, "votes_used": scores.get("_votes_used", 1)}}

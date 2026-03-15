@@ -1,105 +1,175 @@
 """
-LLM-as-judge evaluator for an evolvebench task.
-Auto-generated from spreadsheet row.
+LLM-as-judge evaluator for EvolveBench task-02.
+
+Category: HR & Recruiting
+Approach: Hybrid — category-level rubric axes (HR & Recruiting) + task-specific constraint injection.
+Design grounded in:
+  - AutoMetrics: axes-from-examples pipeline, observable 5-point rubric anchors
+  - SWE-ABS: forced analysis before verdict, orthogonal sub-dimensions, structured output tag
+
+Task:
+  "Help me search Xiaohongshu for all interview questions related to the Chinese University
+   of Hong Kong (Shenzhen)/Hong Kong-China-Shenzhen Artificial Intelligence and Robotics
+   (MAIR) and summarize them into a list"
 """
 
 import os
 import json
+import re
 
-TASK_INSTRUCTION = """Help me search Xiaohongshu for all interview questions related to the Chinese University of Hong Kong (Shenzhen)/Hong Kong-China-Shenzhen Artificial Intelligence and Robotics (MAIR) and summarize them into a list"""
+# ---------------------------------------------------------------------------
+# Task metadata
+# ---------------------------------------------------------------------------
 
-RUBRIC_GENERIC = """
-You are evaluating an AI agent's response to this task:
-"Help me search Xiaohongshu for all interview questions related to the Chinese University of Hong Kong (Shenzhen)/Hong Kong-China-Shenzhen Artificial Intelligence and Robotics (MAIR) and summarize them into a list"
-
-Score on each dimension from 1 to 5:
-
-1. task_completion (weight 0.36):
-   Did the agent complete the core request?
-   5 = fully completed all required steps
-   3 = partially completed or missing minor details
-   1 = failed or gave up without completing the main task
-
-2. information_quality (weight 0.27):
-   Is the retrieved information accurate, current, and from credible sources?
-   5 = accurate, up-to-date, with credible sources cited
-   3 = mostly accurate but vague or missing some sources
-   1 = hallucinated, inaccurate, or no sources
-
-3. response_quality (weight 0.18):
-   Is the response comprehensive, well-organised, and useful?
-   5 = thorough, well-structured, actionable
-   3 = adequate but could be more detailed
-   1 = sparse, disorganised, or not useful
-
-4. completeness (weight 0.18):
-   Did the agent address all aspects and requirements of the task?
-   5 = all requirements fully addressed
-   3 = most requirements met, minor gaps
-   1 = significant requirements missed
-
-Respond ONLY with valid JSON:
-{
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "response_quality": <1-5>,
-  "completeness": <1-5>,
-  "reasoning": "<one paragraph explaining the scores>",
-  "overall_score": <weighted average as a single decimal number>
-}
-"""
-
-RUBRIC = """
-You are evaluating an AI agent's response to this social media research task:
-"Search Xiaohongshu (小红书, xiaohongshu.com) for interview questions about the CUHK-Shenzhen (港中深) MAIR (Artificial Intelligence and Robotics) graduate program, and summarize them into a list."
-
-Context: Xiaohongshu is a Chinese social platform. The target program is CUHK(SZ) MAIR — a competitive graduate program where users share interview experiences. The agent must navigate to Xiaohongshu and search for this specific content, which may be in Chinese.
-
-Score on each dimension from 1 to 5:
-
-1. platform_specificity (weight 0.30):
-   Did the agent specifically navigate to and search on Xiaohongshu?
-   5 = agent visited xiaohongshu.com (or app), searched for MAIR/CUHK-Shenzhen interview content in Chinese or English
-   3 = agent attempted Xiaohongshu but may have fallen back to web search, or reached the site but couldn't extract content
-   1 = agent used generic web search only, never attempted Xiaohongshu, or used a completely different platform
-
-2. content_coverage (weight 0.30):
-   How many distinct interview questions or question topics were found and listed?
-   5 = 5+ distinct interview questions or question categories from Xiaohongshu posts
-   3 = 2-4 distinct questions or topics found, or a general description of question types without specific examples
-   1 = 0-1 specific questions found, or content is fabricated without source attribution
-
-3. program_relevance (weight 0.25):
-   Are the collected questions specifically about CUHK-Shenzhen MAIR, not generic AI/ML interviews?
-   5 = questions clearly reference CUHK-Shenzhen MAIR specifics (e.g., program structure, application process, specific interview style, faculty)
-   3 = mix of MAIR-specific context and generic AI/robotics interview questions
-   1 = questions are entirely generic AI interview prep with no CUHK-Shenzhen connection
-
-4. list_format (weight 0.15):
-   Is the output presented as an organized list?
-   5 = clearly numbered or bulleted list, optionally grouped by topic (technical, English interview, motivation, etc.)
-   3 = list-like structure present but inconsistent formatting, or items lumped in prose
-   1 = no list structure; questions buried in unformatted paragraphs
-
-Respond ONLY with valid JSON:
-{
-  "platform_specificity": <1-5>,
-  "content_coverage": <1-5>,
-  "program_relevance": <1-5>,
-  "list_format": <1-5>,
-  "reasoning": "<one paragraph explaining the scores>",
-  "overall_score": <weighted average 0.30*platform_specificity + 0.30*content_coverage + 0.25*program_relevance + 0.15*list_format as a single decimal>
-}
-"""
+TASK_INSTRUCTION = (
+    "Help me search Xiaohongshu for all interview questions related to the Chinese University "
+    "of Hong Kong (Shenzhen)/Hong Kong-China-Shenzhen Artificial Intelligence and Robotics "
+    "(MAIR) and summarize them into a list"
+)
 
 PASS_THRESHOLD = 3.0
-DIMENSIONS = ["platform_specificity", "content_coverage", "program_relevance", "list_format"]
-DIMENSIONS_GENERIC = ["task_completion", "information_quality", "response_quality", "completeness"]
 
+# ---------------------------------------------------------------------------
+# Judge prompt
+#
+# Structure (from SWE-ABS pattern):
+#   1. Forced analysis section — prevents jumping to verdict
+#   2. Per-dimension scoring — orthogonal axes, each with observable anchors
+#   3. Structured output tag — enables reliable parsing + majority voting
+#
+# Axes (HR & Recruiting category):
+#   A. Platform Execution        — did the agent actually use Xiaohongshu as instructed?
+#   B. Source Coverage           — how many posts/sources were consulted and synthesized?
+#   C. Content Relevance         — are the questions specifically about CUHK(SZ) MAIR?
+#   D. Synthesis Quality         — is the output a clean, usable list of interview questions?
+#
+# Task-specific constraints injected:
+#   - Platform: Xiaohongshu (小红书) specifically — not Zhihu, Baidu, or general web
+#   - Program: CUHK(SZ) MAIR (AI & Robotics) specifically — not generic CUHK or generic MAIR
+#   - Output format: summarized list of interview questions
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully completed a browser-based research task on a Chinese social platform (Xiaohongshu / 小红书).
+
+You will be given:
+1. The task instruction the agent was given
+2. The agent's final response
+3. A summary of the agent's tool-call trace (what it actually did, if available)
+
+You must evaluate the agent's performance across four dimensions. Follow the evaluation steps exactly in order."""
+
+
+USER_PROMPT_TEMPLATE = """## Task Instruction
+{task_instruction}
+
+## Task-Specific Constraints
+- Platform: The agent must search Xiaohongshu (小红书) specifically — not Zhihu, Baidu, general web search, or any other platform
+- Program specificity: Questions must be about CUHK(Shenzhen) MAIR (Artificial Intelligence and Robotics) — not generic CUHK admissions or unrelated programs
+- Output format: A summarized list of interview questions (not a narrative description, not a single paragraph)
+- Language note: Source content may be in Chinese; the agent may respond in English or Chinese — both are acceptable as long as the questions are clearly conveyed
+
+## Agent Final Response
+{agent_response}
+
+## Agent Tool-Call Trace (what the agent actually did)
+{execution_summary}
+
+---
+
+## Evaluation Instructions
+
+### Step 1: Evidence Analysis (do this before scoring)
+Carefully read the agent response and trace. Then answer each of the following questions with a direct observation — do not infer or assume:
+
+- Did the agent navigate to or search on Xiaohongshu? Cite evidence from the trace or response.
+- How many distinct interview questions or question topics did the agent surface? List them briefly.
+- Are the questions specifically about CUHK(SZ) MAIR, or are they generic interview questions?
+- Did the agent synthesize from multiple posts/sources, or just one?
+- Is the output structured as a list, or presented as prose/narrative?
+- Did the agent acknowledge any limitations (e.g. login required, few results found)?
+
+### Step 2: Dimension Scoring
+Score each dimension from 1 to 5 using the rubrics below. Each score must be justified by specific evidence from Step 1.
+
+#### A. Platform Execution
+Did the agent actually use Xiaohongshu as instructed, rather than substituting another source?
+
+5 — Clear evidence in trace and/or response that the agent searched Xiaohongshu; multiple posts accessed.
+4 — Agent used Xiaohongshu but accessed only 1–2 posts, or trace confirms platform but response doesn't cite it.
+3 — Ambiguous: response mentions Xiaohongshu but trace shows no platform navigation, or agent used Xiaohongshu alongside other platforms without distinguishing sources.
+2 — Agent used a different platform (e.g. Zhihu, Baidu) and did not use Xiaohongshu at all.
+1 — Agent did not perform any search; response is hallucinated or generated from prior knowledge only.
+
+#### B. Source Coverage
+How thoroughly did the agent search and synthesize across multiple posts?
+
+5 — Agent consulted 3+ distinct Xiaohongshu posts and synthesized questions across all of them into a unified list.
+4 — Agent consulted 2–3 posts; synthesis is present but one source may be underrepresented.
+3 — Agent consulted 1–2 posts; questions are drawn from a narrow source base.
+2 — Agent found results but only skimmed or summarized 1 post superficially.
+1 — No sources consulted; content appears fabricated or copied from a single non-Xiaohongshu source.
+
+#### C. Content Relevance
+Are the surfaced questions specifically relevant to CUHK(SZ) MAIR interviews?
+
+5 — All or nearly all questions are clearly specific to CUHK(SZ) MAIR (e.g. reference the program name, specific professors, AI/robotics topics, program-specific logistics).
+4 — Most questions are relevant to CUHK(SZ) MAIR; 1–2 are generic postgraduate interview questions that could apply anywhere.
+3 — Questions are relevant to AI/robotics graduate programs generally but lack CUHK(SZ) MAIR specificity.
+2 — Questions are generic interview questions (e.g. "why do you want to study here?") with no program-specific content.
+1 — Questions are off-topic, fabricated, or unrelated to the program.
+
+#### D. Synthesis Quality
+Is the final output a clean, usable list of interview questions?
+
+5 — Output is a well-organized list with 5+ distinct questions; questions are clearly worded and directly usable as interview prep material.
+4 — Output is a list with 3–5 questions; minor formatting issues or slight redundancy between items.
+3 — Output contains interview question content but is presented as prose or a loosely structured summary rather than a clean list.
+2 — Output mentions interview topics but does not present actual questions; or list has fewer than 3 items.
+1 — Output is a refusal, an error message, or contains no interview question content.
+
+### Step 3: Output
+Respond ONLY with valid JSON inside <Answer></Answer> tags, exactly as shown:
+
+<Answer>
+{{
+  "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
+  "platform_execution": <1-5>,
+  "source_coverage": <1-5>,
+  "content_relevance": <1-5>,
+  "synthesis_quality": <1-5>,
+  "dimension_reasoning": {{
+    "platform_execution": "<one sentence citing specific evidence>",
+    "source_coverage": "<one sentence citing specific evidence>",
+    "content_relevance": "<one sentence citing specific evidence>",
+    "synthesis_quality": "<one sentence citing specific evidence>"
+  }},
+  "overall_score": <weighted average, one decimal>,
+  "passed": <true or false based on overall_score >= 3.0>
+}}
+</Answer>
+"""
+
+# Dimension weights — Platform Execution is highest because using the wrong
+# platform is a fundamental failure of the task regardless of output quality.
+# Content Relevance is second because generic questions are not useful for
+# CUHK(SZ) MAIR interview prep specifically.
+DIMENSION_WEIGHTS = {
+    "platform_execution": 0.35,
+    "source_coverage":    0.20,
+    "content_relevance":  0.30,
+    "synthesis_quality":  0.15,
+}
+
+DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _extract_response(result: dict) -> str:
     task_result = result.get("task_result") or ""
-    if task_result.strip():
+    if isinstance(task_result, str) and task_result.strip():
         return task_result
     for message in reversed(result.get("conversation") or []):
         if not isinstance(message, dict):
@@ -111,29 +181,73 @@ def _extract_response(result: dict) -> str:
     return ""
 
 
-def _call_judge(agent_response: str, execution_summary: str = "", rubric: str = None) -> dict:
-    if rubric is None:
-        rubric = RUBRIC
+def _parse_answer_tag(text: str) -> dict | None:
+    """Extract JSON from inside <Answer>...</Answer> tags."""
+    match = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(1).strip())
+    except json.JSONDecodeError:
+        return None
+
+
+def _call_judge_once(agent_response: str, execution_summary: str) -> dict | None:
+    """Single judge call. Returns parsed dict or None on failure."""
     try:
         import openai
-        api_key = os.environ.get("OPENAI_API_KEY")
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        if not api_key:
-            return {"error": "OPENAI_API_KEY not set (required for LLM judge)", "overall_score": 0}
-        client = openai.OpenAI(api_key=api_key, base_url=base_url)
-        content = f"{rubric}\n\nAgent response to evaluate:\n\n{agent_response}"
-        if execution_summary:
-            content += f"\n\nVerified agent tool-call trace (ground truth of what the agent actually did):\n{execution_summary}"
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        user_content = USER_PROMPT_TEMPLATE.format(
+            task_instruction=TASK_INSTRUCTION,
+            agent_response=agent_response,
+            execution_summary=execution_summary or "Not available.",
+        )
+
         completion = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": content}],
-            response_format={"type": "json_object"},
-            max_tokens=512,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user",   "content": user_content},
+            ],
+            max_tokens=1024,
         )
-        return json.loads(completion.choices[0].message.content)
+        raw = completion.choices[0].message.content
+        return _parse_answer_tag(raw)
     except Exception as e:
-        return {"error": str(e), "overall_score": 0}
+        return {"error": str(e)}
 
+
+def _majority_vote(votes: list[dict]) -> dict:
+    """
+    Aggregate up to 3 judge calls via majority vote on each dimension.
+    Overall score is recomputed from voted dimension scores using weights.
+    Used for borderline cases (overall_score within 0.5 of threshold).
+    """
+    valid = [v for v in votes if v and "error" not in v and all(d in v for d in DIMENSIONS)]
+    if not valid:
+        return votes[0] if votes else {"error": "All judge calls failed"}
+
+    aggregated = {}
+    for dim in DIMENSIONS:
+        scores = [v[dim] for v in valid]
+        aggregated[dim] = sorted(scores)[len(scores) // 2]
+
+    overall = sum(aggregated[d] * DIMENSION_WEIGHTS[d] for d in DIMENSIONS)
+    aggregated["overall_score"] = round(overall, 2)
+    aggregated["passed"] = overall >= PASS_THRESHOLD
+
+    median_call = sorted(valid, key=lambda v: abs(v.get("overall_score", 0) - overall))[0]
+    aggregated["evidence_summary"] = median_call.get("evidence_summary", "")
+    aggregated["dimension_reasoning"] = median_call.get("dimension_reasoning", {})
+    aggregated["_votes_used"] = len(valid)
+
+    return aggregated
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
 
 def test(result: dict) -> dict:
     agent_response = _extract_response(result)
@@ -146,42 +260,49 @@ def test(result: dict) -> dict:
             "details": {"task_completed": result.get("status") == "success"},
         }
 
-    scores = _call_judge(agent_response, execution_summary, RUBRIC)
-    scores_generic = _call_judge(agent_response, execution_summary, RUBRIC_GENERIC)
+    first_call = _call_judge_once(agent_response, execution_summary)
+
+    if first_call and "error" not in first_call:
+        overall = first_call.get("overall_score", 0)
+        borderline = abs(float(overall) - PASS_THRESHOLD) <= 0.5
+
+        if borderline:
+            call2 = _call_judge_once(agent_response, execution_summary)
+            call3 = _call_judge_once(agent_response, execution_summary)
+            scores = _majority_vote([first_call, call2, call3])
+        else:
+            scores = first_call
+            scores["_votes_used"] = 1
+    else:
+        scores = first_call or {"error": "Judge call failed", "overall_score": 0}
 
     overall = scores.get("overall_score", 0)
-    overall_generic = scores_generic.get("overall_score", 0)
-    passed = float(overall) >= PASS_THRESHOLD
+    passed = scores.get("passed", float(overall) >= PASS_THRESHOLD)
 
-    feedback_lines = [f"=== Customized Rubric Score: {overall}/5 ==="]
-    if "error" in scores:
-        feedback_lines.append(f"  [ERROR: {scores['error']}]")
+    feedback_lines = [f"Overall score: {overall}/5  (threshold: {PASS_THRESHOLD})"]
     for dim in DIMENSIONS:
         if dim in scores:
             feedback_lines.append(f"  {dim}: {scores[dim]}/5")
-    if "reasoning" in scores:
-        feedback_lines.append(f"\nCustomized reasoning: {scores['reasoning']}")
-
-    feedback_lines.append(f"\n=== Generic Rubric Score: {overall_generic}/5 ===")
-    if "error" in scores_generic:
-        feedback_lines.append(f"  [ERROR: {scores_generic['error']}]")
-    for dim in DIMENSIONS_GENERIC:
-        if dim in scores_generic:
-            feedback_lines.append(f"  {dim}: {scores_generic[dim]}/5")
-    if "reasoning" in scores_generic:
-        feedback_lines.append(f"\nGeneric reasoning: {scores_generic['reasoning']}")
+    if scores.get("evidence_summary"):
+        feedback_lines.append(f"\nEvidence summary: {scores['evidence_summary']}")
+    reasoning = scores.get("dimension_reasoning", {})
+    if reasoning:
+        feedback_lines.append("\nDimension reasoning:")
+        for dim, reason in reasoning.items():
+            feedback_lines.append(f"  {dim}: {reason}")
+    if scores.get("_votes_used", 1) > 1:
+        feedback_lines.append(f"\n(Borderline case: {scores['_votes_used']} judge calls used, majority vote applied)")
 
     return {
-        "passed": passed,
+        "passed": bool(passed),
         "feedback": "\n".join(feedback_lines),
         "details": {
             "task_completed": result.get("status") == "success",
             "overall_score": overall,
-            "dimension_scores": {k: scores.get(k) for k in DIMENSIONS},
-            "judge_reasoning": scores.get("reasoning"),
+            "dimension_scores": {d: scores.get(d) for d in DIMENSIONS},
+            "evidence_summary": scores.get("evidence_summary"),
+            "dimension_reasoning": scores.get("dimension_reasoning"),
             "pass_threshold": PASS_THRESHOLD,
-            "generic_score": overall_generic,
-            "generic_dimension_scores": {k: scores_generic.get(k) for k in DIMENSIONS_GENERIC},
-            "generic_reasoning": scores_generic.get("reasoning"),
+            "votes_used": scores.get("_votes_used", 1),
         },
     }

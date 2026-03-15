@@ -1,0 +1,1 @@
+Create a web-based ear training tool as a single HTML file. The tool should: (1) play a musical note or interval using the Web Audio API, (2) let the user guess what note or interval was played from multiple choice options, (3) show whether the answer was correct, and (4) track the user's score. Save the file locally.

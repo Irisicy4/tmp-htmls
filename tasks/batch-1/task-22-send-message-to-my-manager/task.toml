@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Daily activities"
-tags = ["evolvebench", "send_email"]
+tags = ["evolvebench", "send_email", "daily_activities", "zh"]
 
 [agent]
 timeout_sec = 900.0

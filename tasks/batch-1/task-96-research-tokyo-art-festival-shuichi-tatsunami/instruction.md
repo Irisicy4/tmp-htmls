@@ -1,0 +1,1 @@
+Research both the Art Festival at Tokyo University's affiliated secondary school and Shuichi Tatsunami, then create a Google Document summarizing each. In a separate tab of the same document, draft a concrete proposal for hosting a lecture or workshop by Shuichi Tatsunami at the Art Festival, including specific content and a schedule.

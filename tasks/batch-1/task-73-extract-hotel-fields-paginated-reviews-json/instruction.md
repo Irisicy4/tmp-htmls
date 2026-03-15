@@ -1,0 +1,1 @@
+You are a web data extraction agent. Go to https://deriheruhotel.com/hotel/index/hokkaido/sapporo-chuo/3697/ and extract: (1) hotel-level fields including name, address, phone, hotel website, and booking URL, and (2) all paginated reviews including reviewer name, date, score, and review text. Output as structured JSON.

@@ -1,124 +1,72 @@
 """
-LLM-as-judge evaluator for an evolvebench task.
-Auto-generated from spreadsheet row.
+LLM-as-judge evaluator for EvolveBench task-34.
+Category: Travel & Planning
 """
+import os, json, re
 
-import os
-import json
-
-TASK_INSTRUCTION = """I want to take a train from Zhangye to Ningxia. Please help me plan how to buy tickets for travel on February 12, 2026."""
-
-RUBRIC = """
-You are evaluating an AI agent's response to this task:
-"I want to take a train from Zhangye to Ningxia. Please help me plan how to buy tickets for travel on February 12, 2026."
-
-Score on each dimension from 1 to 5:
-
-1. task_completion (weight 0.36):
-   Did the agent complete the core request?
-   5 = fully completed all required steps
-   3 = partially completed or missing minor details
-   1 = failed or gave up without completing the main task
-
-2. information_quality (weight 0.27):
-   Is the retrieved information accurate, current, and from credible sources?
-   5 = accurate, up-to-date, with credible sources cited
-   3 = mostly accurate but vague or missing some sources
-   1 = hallucinated, inaccurate, or no sources
-
-3. response_quality (weight 0.18):
-   Is the response comprehensive, well-organised, and useful?
-   5 = thorough, well-structured, actionable
-   3 = adequate but could be more detailed
-   1 = sparse, disorganised, or not useful
-
-4. completeness (weight 0.18):
-   Did the agent address all aspects and requirements of the task?
-   5 = all requirements fully addressed
-   3 = most requirements met, minor gaps
-   1 = significant requirements missed
-
-Respond ONLY with valid JSON:
-{
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "response_quality": <1-5>,
-  "completeness": <1-5>,
-  "reasoning": "<one paragraph explaining the scores>",
-  "overall_score": <weighted average as a single decimal number>
-}
-"""
-
+TASK_INSTRUCTION = 'I want to take a train from Zhangye to Ningxia. Please help me plan how to buy tickets for travel on February 12, 2026.'
 PASS_THRESHOLD = 3.0
-DIMENSIONS = ["task_completion", "information_quality", "response_quality", "completeness"]
 
+SYSTEM_PROMPT = 'You are an expert evaluator for AI agent benchmarks. This is a Chinese domestic train ticket planning task. Note: Ningxia is an autonomous region, not a city — the agent should identify the appropriate destination station (e.g. Yinchuan). February 12, 2026 falls during Chinese New Year travel season (春运), which affects ticket availability.'
 
-def _extract_response(result: dict) -> str:
-    task_result = result.get("task_result") or ""
-    if task_result.strip():
-        return task_result
-    for message in reversed(result.get("conversation") or []):
-        if not isinstance(message, dict):
-            continue
-        if message.get("role") == "assistant":
-            content = message.get("content") or ""
-            if isinstance(content, str) and len(content) > 20:
-                return content
+USER_PROMPT_TEMPLATE = '## Task Instruction\n{task_instruction}\n\n## Task-Specific Constraints\n- Origin: Zhangye (张掖), Gansu province\n- Destination: Ningxia Hui Autonomous Region — agent must identify the destination city/station (likely Yinchuan/银川)\n- Date: February 12, 2026 — this is during Chinese New Year travel rush (春运); tickets may sell out quickly\n- Platform: 12306.cn is the official Chinese train ticket platform\n- Agent should check available trains and advise on ticket purchase process\n\n## Agent Final Response\n{agent_response}\n\n## Agent Tool-Call Trace\n{execution_summary}\n\n---\n\n## Evaluation Instructions\n\n### Step 1: Evidence Analysis\n- Did the agent identify the destination station (Yinchuan or another Ningxia city)?\n- Did the agent search 12306 or equivalent for trains on Feb 12?\n- Was Chinese New Year travel period mentioned?\n- Were specific train options (train number, departure time, duration, price) provided?\n- Were ticket purchase steps outlined?\n\n### Step 2: Dimension Scoring\n\n#### A. Route Clarity\nDid the agent correctly identify the full route (origin station → destination station)?\n\n5 — Origin and destination stations clearly identified (e.g. Zhangye → Yinchuan); transfer requirements noted if applicable.\n4 — Route identified but destination is "Ningxia" without specifying a station; or transfer not addressed.\n3 — General direction correct but route details vague.\n2 — Only one endpoint identified; agent asked for clarification without providing useful info.\n1 — Route not identified; response is generic travel advice.\n\n#### B. Ticket Platform Guidance\nDid the agent guide on how to buy tickets via 12306 or equivalent?\n\n5 — Agent navigated 12306 or provided specific steps: search route, select train, create account/login, payment; or found actual available trains on Feb 12.\n4 — Agent described 12306 process accurately without actually searching.\n3 — Agent mentioned 12306 without detailed guidance.\n2 — Agent mentioned buying tickets without specifying platform.\n1 — No platform guidance.\n\n#### C. Date Context Awareness\nDid the agent recognise Feb 12 2026 as Chinese New Year travel period?\n\n5 — Agent explicitly noted 春运 (Spring Festival travel rush), advised booking early, and may have noted ticket release timing.\n4 — Agent mentioned it\'s a busy holiday period without using 春运 terminology.\n3 — Agent noted Feb 12 is near Chinese New Year but did not address booking implications.\n2 — Date noted without holiday context.\n1 — Date context ignored.\n\n#### D. Actionability\nCan the user immediately act on the information provided?\n\n5 — Complete action plan: destination station identified, platform specified, train options or search steps provided, booking tips for 春运 included.\n4 — Most elements present; one step (e.g. specific train options) missing.\n3 — Partial guidance; user would need to do significant additional research.\n2 — High-level overview only; not actionable.\n1 — No actionable information.\n\n### Step 3: Output\n<Answer>\n{{\n  "evidence_summary": "<2-3 sentences>",\n  "route_clarity": <1-5>,\n  "ticket_platform_guidance": <1-5>,\n  "date_context_awareness": <1-5>,\n  "actionability": <1-5>,\n  "dimension_reasoning": {{"route_clarity": "<one sentence>", "ticket_platform_guidance": "<one sentence>", "date_context_awareness": "<one sentence>", "actionability": "<one sentence>"}},\n  "overall_score": <weighted average, one decimal>,\n  "passed": <true or false>\n}}\n</Answer>'
+
+DIMENSION_WEIGHTS = {'route_clarity': 0.25, 'ticket_platform_guidance': 0.3, 'date_context_awareness': 0.25, 'actionability': 0.2}
+DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
+
+def _extract_response(result):
+    t = result.get("task_result") or ""
+    if isinstance(t, str) and t.strip(): return t
+    for m in reversed(result.get("conversation") or []):
+        if isinstance(m, dict) and m.get("role") == "assistant":
+            c = m.get("content") or ""
+            if isinstance(c, str) and len(c) > 20: return c
     return ""
 
+def _parse(text):
+    match = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
+    if not match: return None
+    try: return json.loads(match.group(1).strip())
+    except: return None
 
-def _call_judge(agent_response: str, execution_summary: str = "") -> dict:
+def _call(agent_response, execution_summary):
     try:
         import openai
-        api_key = os.environ.get("OPENAI_API_KEY")
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        if not api_key:
-            return {"error": "OPENAI_API_KEY not set (required for LLM judge)", "overall_score": 0}
-        client = openai.OpenAI(api_key=api_key, base_url=base_url)
-        content = f"{RUBRIC}\n\nAgent response to evaluate:\n\n{agent_response}"
-        if execution_summary:
-            content += f"\n\nVerified agent tool-call trace (ground truth of what the agent actually did):\n{execution_summary}"
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         completion = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": content}],
-            response_format={"type": "json_object"},
-            max_tokens=512,
-        )
-        return json.loads(completion.choices[0].message.content)
-    except Exception as e:
-        return {"error": str(e), "overall_score": 0}
+            messages=[{"role": "system", "content": SYSTEM_PROMPT},
+                      {"role": "user", "content": USER_PROMPT_TEMPLATE.format(task_instruction=TASK_INSTRUCTION, agent_response=agent_response, execution_summary=execution_summary or "Not available.")}],
+            max_tokens=1024)
+        return _parse(completion.choices[0].message.content)
+    except Exception as e: return {"error": str(e)}
 
+def _vote(votes):
+    valid = [v for v in votes if v and "error" not in v and all(d in v for d in DIMENSIONS)]
+    if not valid: return votes[0] if votes else {"error": "All calls failed"}
+    agg = {d: sorted([v[d] for v in valid])[len(valid)//2] for d in DIMENSIONS}
+    overall = sum(agg[d] * DIMENSION_WEIGHTS[d] for d in DIMENSIONS)
+    agg["overall_score"] = round(overall, 2); agg["passed"] = overall >= PASS_THRESHOLD
+    median = sorted(valid, key=lambda v: abs(v.get("overall_score",0)-overall))[0]
+    agg["evidence_summary"] = median.get("evidence_summary",""); agg["dimension_reasoning"] = median.get("dimension_reasoning",{}); agg["_votes_used"] = len(valid)
+    return agg
 
-def test(result: dict) -> dict:
+def test(result):
     agent_response = _extract_response(result)
     execution_summary = result.get("execution_summary", "")
-
     if not agent_response.strip():
-        return {
-            "passed": False,
-            "feedback": "No response found from agent.",
-            "details": {"task_completed": result.get("status") == "success"},
-        }
-
-    scores = _call_judge(agent_response, execution_summary)
-    overall = scores.get("overall_score", 0)
-    passed = float(overall) >= PASS_THRESHOLD
-
-    feedback_lines = [f"Overall score: {overall}/5"]
-    for dim in DIMENSIONS:
-        if dim in scores:
-            feedback_lines.append(f"  {dim}: {scores[dim]}/5")
-    if "reasoning" in scores:
-        feedback_lines.append(f"\nJudge reasoning: {scores['reasoning']}")
-
-    return {
-        "passed": passed,
-        "feedback": "\n".join(feedback_lines),
-        "details": {
-            "task_completed": result.get("status") == "success",
-            "overall_score": overall,
-            "dimension_scores": {k: scores.get(k) for k in DIMENSIONS},
-            "judge_reasoning": scores.get("reasoning"),
-            "pass_threshold": PASS_THRESHOLD,
-        },
-    }
+        return {"passed": False, "feedback": "No response found from agent.", "details": {"task_completed": result.get("status") == "success"}}
+    first = _call(agent_response, execution_summary)
+    if first and "error" not in first:
+        overall = first.get("overall_score", 0)
+        scores = _vote([first, _call(agent_response, execution_summary), _call(agent_response, execution_summary)]) if abs(float(overall) - PASS_THRESHOLD) <= 0.5 else (first.__setitem__("_votes_used", 1) or first)
+    else:
+        scores = first or {"error": "Judge call failed", "overall_score": 0}
+    overall = scores.get("overall_score", 0); passed = scores.get("passed", float(overall) >= PASS_THRESHOLD)
+    lines = [f"Overall score: {overall}/5  (threshold: {PASS_THRESHOLD})"] + [f"  {d}: {scores[d]}/5" for d in DIMENSIONS if d in scores]
+    if scores.get("evidence_summary"): lines.append(f"\nEvidence summary: {scores['evidence_summary']}")
+    if scores.get("dimension_reasoning"):
+        lines.append("\nDimension reasoning:")
+        for d, r in scores["dimension_reasoning"].items(): lines.append(f"  {d}: {r}")
+    if scores.get("_votes_used", 1) > 1: lines.append(f"\n(Borderline: {scores['_votes_used']} calls, majority vote)")
+    return {"passed": bool(passed), "feedback": "\n".join(lines), "details": {"task_completed": result.get("status") == "success", "overall_score": overall, "dimension_scores": {d: scores.get(d) for d in DIMENSIONS}, "evidence_summary": scores.get("evidence_summary"), "dimension_reasoning": scores.get("dimension_reasoning"), "pass_threshold": PASS_THRESHOLD, "votes_used": scores.get("_votes_used", 1)}}

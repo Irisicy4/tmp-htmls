@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Shopping"
-tags = ["evolvebench", "web_navigation", "shopping", "amazon"]
+tags = ["evolvebench", "web_nagivation", "shopping", "en"]
 
 [agent]
 timeout_sec = 900.0

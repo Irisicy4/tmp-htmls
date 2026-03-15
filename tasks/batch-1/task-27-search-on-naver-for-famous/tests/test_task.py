@@ -1,124 +1,158 @@
 """
-LLM-as-judge evaluator for an evolvebench task.
-Auto-generated from spreadsheet row.
+LLM-as-judge evaluator for EvolveBench task-27.
+
+Category: Daily Activities
+Task: Search Naver for 3 famous hair salons in Henan. Book the best-value one for a men's perm.
+
+Note: Henan is a province in China — using Naver (a Korean search engine) to find Chinese
+salons is unusual. The agent must navigate this platform mismatch. If Naver yields no results
+for Henan salons, the agent should explain this and try an alternative approach.
 """
 
-import os
-import json
+import os, json, re
 
-TASK_INSTRUCTION = """Search on Naver for 3 famous hair salons in Henan, and book the one that offers the best value. I want to get a men's perm."""
-
-RUBRIC = """
-You are evaluating an AI agent's response to this task:
-"Search on Naver for 3 famous hair salons in Henan, and book the one that offers the best value. I want to get a men's perm."
-
-Score on each dimension from 1 to 5:
-
-1. task_completion (weight 0.36):
-   Did the agent complete the core request?
-   5 = fully completed all required steps
-   3 = partially completed or missing minor details
-   1 = failed or gave up without completing the main task
-
-2. information_quality (weight 0.27):
-   Is the retrieved information accurate, current, and from credible sources?
-   5 = accurate, up-to-date, with credible sources cited
-   3 = mostly accurate but vague or missing some sources
-   1 = hallucinated, inaccurate, or no sources
-
-3. response_quality (weight 0.18):
-   Is the response comprehensive, well-organised, and useful?
-   5 = thorough, well-structured, actionable
-   3 = adequate but could be more detailed
-   1 = sparse, disorganised, or not useful
-
-4. completeness (weight 0.18):
-   Did the agent address all aspects and requirements of the task?
-   5 = all requirements fully addressed
-   3 = most requirements met, minor gaps
-   1 = significant requirements missed
-
-Respond ONLY with valid JSON:
-{
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "response_quality": <1-5>,
-  "completeness": <1-5>,
-  "reasoning": "<one paragraph explaining the scores>",
-  "overall_score": <weighted average as a single decimal number>
-}
-"""
-
+TASK_INSTRUCTION = "Search on Naver for 3 famous hair salons in Henan, and book the one that offers the best value. I want to get a men's perm."
 PASS_THRESHOLD = 3.0
-DIMENSIONS = ["task_completion", "information_quality", "response_quality", "completeness"]
 
+SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. This task involves a platform mismatch: Naver is a Korean search engine but the location (Henan) is in China. Evaluate how the agent handles this, whether it finds salon information, makes a value assessment, and attempts booking."""
 
-def _extract_response(result: dict) -> str:
-    task_result = result.get("task_result") or ""
-    if task_result.strip():
-        return task_result
-    for message in reversed(result.get("conversation") or []):
-        if not isinstance(message, dict):
-            continue
-        if message.get("role") == "assistant":
-            content = message.get("content") or ""
-            if isinstance(content, str) and len(content) > 20:
-                return content
+USER_PROMPT_TEMPLATE = """## Task Instruction
+{task_instruction}
+
+## Task-Specific Constraints
+- Platform: Naver (Korean search engine — naver.com)
+- Location: Henan province, China (note: Naver may have limited coverage here)
+- Required count: 3 salons found
+- Service: men's perm specifically
+- Action: must attempt to book the best-value salon (not just list them)
+- Value assessment: agent must compare options (price/reputation) and justify its choice
+
+## Agent Final Response
+{agent_response}
+
+## Agent Tool-Call Trace
+{execution_summary}
+
+---
+
+## Evaluation Instructions
+
+### Step 1: Evidence Analysis
+- Did the agent navigate Naver? Cite evidence.
+- How did the agent handle the Naver/Henan platform mismatch?
+- Were 3 salon options identified (from any source)?
+- Did the agent compare options and select best value?
+- Was a booking attempted? What method (phone, website, app)?
+
+### Step 2: Dimension Scoring
+
+#### A. Platform Execution
+Did the agent attempt to use Naver as instructed?
+
+5 — Agent navigated Naver, searched for Henan hair salons, and either found results or clearly explained platform limitations and pivoted appropriately.
+4 — Agent used Naver but found limited results; supplemented with another platform without fully explaining the mismatch.
+3 — Agent attempted Naver but immediately switched to a different platform without explanation.
+2 — Agent used a completely different platform (not Naver) without acknowledgement.
+1 — No search performed.
+
+#### B. Salon Discovery
+Did the agent identify 3 named hair salons relevant to the task?
+
+5 — 3 specific, named salons in Henan found with location and men's perm pricing or service info.
+4 — 3 salons found but one lacks specific location or pricing detail.
+3 — 2 salons found with detail; third is vague or unverified.
+2 — Only 1 salon found, or salons found are generic (not named establishments).
+1 — No specific salons identified.
+
+#### C. Value Assessment & Selection
+Did the agent compare salons and select the best value with justification?
+
+5 — Agent compared 2+ salons on price and/or reputation, selected one, and justified the choice (e.g. "salon X offers men's perm at ¥X with good reviews").
+4 — Agent selected a salon with brief justification; comparison is implicit.
+3 — Agent selected a salon without comparing alternatives or without justification.
+2 — Agent listed salons but did not make a selection.
+1 — No selection made.
+
+#### D. Booking Attempt
+Did the agent attempt to book the selected salon?
+
+5 — Booking attempted via appropriate channel (website, phone, reservation app) with confirmation or next steps described.
+4 — Booking attempted but outcome unclear or channel is indirect (e.g. found contact info but did not call/submit).
+3 — Agent identified booking method but did not execute it.
+2 — Agent noted that booking is required but took no action.
+1 — No booking attempt of any kind.
+
+### Step 3: Output
+<Answer>
+{{
+  "evidence_summary": "<2-3 sentences>",
+  "platform_execution": <1-5>,
+  "salon_discovery": <1-5>,
+  "value_assessment": <1-5>,
+  "booking_attempt": <1-5>,
+  "dimension_reasoning": {{"platform_execution": "<one sentence>", "salon_discovery": "<one sentence>", "value_assessment": "<one sentence>", "booking_attempt": "<one sentence>"}},
+  "overall_score": <weighted average, one decimal>,
+  "passed": <true or false>
+}}
+</Answer>
+"""
+
+DIMENSION_WEIGHTS = {"platform_execution": 0.20, "salon_discovery": 0.25, "value_assessment": 0.25, "booking_attempt": 0.30}
+DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
+
+def _extract_response(result):
+    t = result.get("task_result") or ""
+    if isinstance(t, str) and t.strip(): return t
+    for m in reversed(result.get("conversation") or []):
+        if isinstance(m, dict) and m.get("role") == "assistant":
+            c = m.get("content") or ""
+            if isinstance(c, str) and len(c) > 20: return c
     return ""
 
+def _parse(text):
+    match = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
+    if not match: return None
+    try: return json.loads(match.group(1).strip())
+    except: return None
 
-def _call_judge(agent_response: str, execution_summary: str = "") -> dict:
+def _call(agent_response, execution_summary):
     try:
         import openai
-        api_key = os.environ.get("OPENAI_API_KEY")
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        if not api_key:
-            return {"error": "OPENAI_API_KEY not set (required for LLM judge)", "overall_score": 0}
-        client = openai.OpenAI(api_key=api_key, base_url=base_url)
-        content = f"{RUBRIC}\n\nAgent response to evaluate:\n\n{agent_response}"
-        if execution_summary:
-            content += f"\n\nVerified agent tool-call trace (ground truth of what the agent actually did):\n{execution_summary}"
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         completion = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": content}],
-            response_format={"type": "json_object"},
-            max_tokens=512,
-        )
-        return json.loads(completion.choices[0].message.content)
-    except Exception as e:
-        return {"error": str(e), "overall_score": 0}
+            messages=[{"role": "system", "content": SYSTEM_PROMPT},
+                      {"role": "user", "content": USER_PROMPT_TEMPLATE.format(task_instruction=TASK_INSTRUCTION, agent_response=agent_response, execution_summary=execution_summary or "Not available.")}],
+            max_tokens=1024)
+        return _parse(completion.choices[0].message.content)
+    except Exception as e: return {"error": str(e)}
 
+def _vote(votes):
+    valid = [v for v in votes if v and "error" not in v and all(d in v for d in DIMENSIONS)]
+    if not valid: return votes[0] if votes else {"error": "All calls failed"}
+    agg = {d: sorted([v[d] for v in valid])[len(valid)//2] for d in DIMENSIONS}
+    overall = sum(agg[d] * DIMENSION_WEIGHTS[d] for d in DIMENSIONS)
+    agg["overall_score"] = round(overall, 2); agg["passed"] = overall >= PASS_THRESHOLD
+    median = sorted(valid, key=lambda v: abs(v.get("overall_score",0)-overall))[0]
+    agg["evidence_summary"] = median.get("evidence_summary",""); agg["dimension_reasoning"] = median.get("dimension_reasoning",{}); agg["_votes_used"] = len(valid)
+    return agg
 
-def test(result: dict) -> dict:
+def test(result):
     agent_response = _extract_response(result)
     execution_summary = result.get("execution_summary", "")
-
     if not agent_response.strip():
-        return {
-            "passed": False,
-            "feedback": "No response found from agent.",
-            "details": {"task_completed": result.get("status") == "success"},
-        }
-
-    scores = _call_judge(agent_response, execution_summary)
-    overall = scores.get("overall_score", 0)
-    passed = float(overall) >= PASS_THRESHOLD
-
-    feedback_lines = [f"Overall score: {overall}/5"]
-    for dim in DIMENSIONS:
-        if dim in scores:
-            feedback_lines.append(f"  {dim}: {scores[dim]}/5")
-    if "reasoning" in scores:
-        feedback_lines.append(f"\nJudge reasoning: {scores['reasoning']}")
-
-    return {
-        "passed": passed,
-        "feedback": "\n".join(feedback_lines),
-        "details": {
-            "task_completed": result.get("status") == "success",
-            "overall_score": overall,
-            "dimension_scores": {k: scores.get(k) for k in DIMENSIONS},
-            "judge_reasoning": scores.get("reasoning"),
-            "pass_threshold": PASS_THRESHOLD,
-        },
-    }
+        return {"passed": False, "feedback": "No response found from agent.", "details": {"task_completed": result.get("status") == "success"}}
+    first = _call(agent_response, execution_summary)
+    if first and "error" not in first:
+        overall = first.get("overall_score", 0)
+        scores = _vote([first, _call(agent_response, execution_summary), _call(agent_response, execution_summary)]) if abs(float(overall) - PASS_THRESHOLD) <= 0.5 else (first.__setitem__("_votes_used", 1) or first)
+    else:
+        scores = first or {"error": "Judge call failed", "overall_score": 0}
+    overall = scores.get("overall_score", 0); passed = scores.get("passed", float(overall) >= PASS_THRESHOLD)
+    lines = [f"Overall score: {overall}/5  (threshold: {PASS_THRESHOLD})"] + [f"  {d}: {scores[d]}/5" for d in DIMENSIONS if d in scores]
+    if scores.get("evidence_summary"): lines.append(f"\nEvidence summary: {scores['evidence_summary']}")
+    if scores.get("dimension_reasoning"):
+        lines.append("\nDimension reasoning:")
+        for d, r in scores["dimension_reasoning"].items(): lines.append(f"  {d}: {r}")
+    if scores.get("_votes_used", 1) > 1: lines.append(f"\n(Borderline: {scores['_votes_used']} calls, majority vote)")
+    return {"passed": bool(passed), "feedback": "\n".join(lines), "details": {"task_completed": result.get("status") == "success", "overall_score": overall, "dimension_scores": {d: scores.get(d) for d in DIMENSIONS}, "evidence_summary": scores.get("evidence_summary"), "dimension_reasoning": scores.get("dimension_reasoning"), "pass_threshold": PASS_THRESHOLD, "votes_used": scores.get("_votes_used", 1)}}

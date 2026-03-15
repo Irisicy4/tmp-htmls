@@ -1,0 +1,1 @@
+Search online to find information about the current foot traffic and popularity of Wanxiang Tiandi (万象天地) shopping mall in Shenzhen, China. Look for recent visitor reviews, social media posts, and any available foot traffic data. Summarize your findings.

@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Design"
-tags = ["evolvebench", "image_edit", "save_to_document"]
+tags = ["evolvebench", "image_edit, save_to_document", "design", "zh"]
 
 [agent]
 timeout_sec = 900.0

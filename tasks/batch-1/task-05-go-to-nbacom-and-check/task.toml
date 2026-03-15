@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Daily activities"
-tags = ["evolvebench", "web_nagivation"]
+tags = ["evolvebench", "web_nagivation", "daily_activities", "en"]
 
 [agent]
 timeout_sec = 900.0

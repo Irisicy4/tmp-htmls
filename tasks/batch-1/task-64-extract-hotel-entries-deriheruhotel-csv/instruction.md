@@ -1,0 +1,1 @@
+You are a web data extraction agent. Go to https://deriheruhotel.com/hotel/index/hokkaido/sapporo-chuo/ and extract all hotel entries listed on the page. For each hotel, extract the hotel name and detail URL, deduplicate, and output as a CSV file with columns: hotel_name, hotel_url.

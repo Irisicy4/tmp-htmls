@@ -63,11 +63,7 @@ def _extract_response(result: dict) -> str:
 def _call_judge(agent_response: str, execution_summary: str = "") -> dict:
     try:
         import openai
-        api_key = os.environ.get("OPENAI_API_KEY")
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        if not api_key:
-            return {"error": "OPENAI_API_KEY not set (required for LLM judge)", "overall_score": 0}
-        client = openai.OpenAI(api_key=api_key, base_url=base_url)
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         content = f"{RUBRIC}\n\nAgent response to evaluate:\n\n{agent_response}"
         if execution_summary:
             content += f"\n\nVerified agent tool-call trace (ground truth of what the agent actually did):\n{execution_summary}"
