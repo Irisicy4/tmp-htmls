@@ -189,9 +189,11 @@ def _wrap_codex_instruction(instruction: str) -> str:
     return (
         "Complete the following task immediately without asking any clarifying questions. "
         "Make reasonable assumptions and proceed. "
+        "For any visual, interactive, or game output, create a single self-contained HTML file "
+        "(no external dependencies) rather than a terminal or desktop application. "
         "After creating any files, print each file's complete contents to stdout "
-        "wrapped like this: === FILE: <filename> ===\\n<contents>\\n=== END FILE ===\\n\\n"
-        "Task:\\n" + instruction
+        "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
+        "Task:\n" + instruction
     )
 
 
@@ -367,7 +369,7 @@ async def _run_task(
                 r"find /root /home -maxdepth 4 \( -name '*.html' -o -name '*.py' -o -name '*.js' -o -name '*.ts' -o -name '*.sh' -o -name '*.json' -o -name '*.txt' \) 2>/dev/null | head -20"
             )
             await result_obj.wait.aio()
-            file_list = (await result_obj.stdout.read.aio(8192)).decode(errors="replace").strip()
+            file_list = (await result_obj.stdout.read.aio()).decode(errors="replace").strip()
             if file_list:
                 for fpath in file_list.splitlines():
                     fpath = fpath.strip()
@@ -376,7 +378,7 @@ async def _run_task(
                     try:
                         cat_obj = await env._sandbox.exec.aio("cat", fpath)
                         await cat_obj.wait.aio()
-                        content = (await cat_obj.stdout.read.aio(65536)).decode(errors="replace")
+                        content = (await cat_obj.stdout.read.aio()).decode(errors="replace")
                         fname = fpath.split("/")[-1]
                         (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
                         print(f"[{task_name}] Collected artifact: {fpath} ({len(content)} chars)")
