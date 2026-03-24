@@ -12,10 +12,18 @@ from urllib.parse import urlparse, parse_qs
 import os
 
 
+def load_json_first(file_path: Path):
+    """Load the first JSON object from a file (handles NDJSON / multi-object files)."""
+    content = open(file_path).read()
+    decoder = json.JSONDecoder()
+    obj, _ = decoder.raw_decode(content)
+    return obj
+
+
 def load_task_meta(file_path: Path) -> dict:
     """Return minimal metadata (pass/fail, score) for a task result file."""
     try:
-        data = json.load(open(file_path))
+        data = load_json_first(file_path)
         ev = data.get("eval") or {}
         passed = ev.get("passed")
         # Extract score from feedback string "Customized Rubric Score: X.X/5"
@@ -42,11 +50,19 @@ class VisualizationHandler(SimpleHTTPRequestHandler):
         path = parsed_path.path
 
         if path == "/api/data":
-            self._handle_data(parse_qs(parsed_path.query))
+            self._handle_data(parse_qs(parsed_path.query), self.data_dir)
+            return
+
+        if path == "/api/data2":
+            self._handle_data(parse_qs(parsed_path.query), self.compare_dir)
             return
 
         if path == "/api/list":
-            self._handle_list()
+            self._handle_list(self.data_dir)
+            return
+
+        if path == "/api/list2":
+            self._handle_list(self.compare_dir)
             return
 
         if path == "/api/compare":
@@ -66,31 +82,45 @@ class VisualizationHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _handle_data(self, query_params):
+    def _handle_data(self, query_params, directory):
         file_name = query_params.get("file", [None])[0]
-        if not file_name or not self.data_dir:
-            self.send_error(400, "Missing file parameter")
+        if not file_name or not directory:
+            self.send_error(400, "Missing file parameter or directory not configured")
             return
-        file_path = self.data_dir / file_name
+        file_path = directory / file_name
         if not file_path.exists():
             self.send_error(404, f"File not found: {file_name}")
             return
         try:
-            data = json.load(open(file_path))
+            data = load_json_first(file_path)
             visualization_data = data.get("visualization_data", {})
             if "eval" in data:
                 visualization_data["eval"] = data["eval"]
+            # Split task_description into core instruction + injected skills
+            raw = visualization_data.get("task_description", "") or ""
+            if "\n---\n" in raw:
+                parts = raw.split("\n---\n")
+                last = parts[-1].strip()
+                for prefix in ("Now, here is your actual task:\n\n", "Now, here is your actual task:\n"):
+                    if last.startswith(prefix):
+                        last = last[len(prefix):]
+                        break
+                visualization_data["task_instruction"] = last
+                visualization_data["task_skills"] = "\n---\n".join(parts[:-1]).strip()
+            else:
+                visualization_data["task_instruction"] = raw
+                visualization_data["task_skills"] = ""
             self._send_json(visualization_data)
         except Exception as e:
             self.send_error(500, f"Error reading file: {e}")
 
-    def _handle_list(self):
-        if not self.data_dir or not self.data_dir.exists():
+    def _handle_list(self, directory):
+        if not directory or not directory.exists():
             self.send_error(404, "Data directory not found")
             return
         try:
             files = []
-            for f in sorted(self.data_dir.glob("*.json")):
+            for f in sorted(directory.glob("*.json")):
                 if f.name.startswith("_"):
                     continue
                 meta = load_task_meta(f)

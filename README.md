@@ -1,190 +1,197 @@
 # EvolveBench Harbor
 
-Run **any agent** with [Harbor](https://harborframework.com/docs) on **Docker** (local) or **Modal** (cloud, parallel). Ships with **CocoaAgent** — a generic browser agent that works with any task ([cocoabench/cocoa-agent](https://github.com/cocoabench/cocoa-agent)).
+Benchmark harness for running and evaluating AI agents on [EvolveBench](https://github.com/cocoabench/evolvebench) tasks.
+Supports multiple agents (codex, claude-code, cocoa, …) with **fire-and-forget Modal execution** — dispatch an experiment and disconnect your laptop.
+
+---
+
+## Approaches
+
+There are two runners, each serving a different purpose:
+
+### 1. `harbor_modal_runner.py` — multi-agent, fire-and-forget
+
+Uses [Harbor](https://harborframework.com/docs) to install and run any agent (codex, claude-code, gemini-cli, …) inside Modal Sandboxes.
+The orchestrator is a deployed Modal Function — your laptop can disconnect after triggering.
+
+```bash
+# Deploy once
+modal deploy harbor_modal_runner.py
+
+# Trigger a run — then disconnect
+python trigger_harbor.py --agent codex
+python trigger_harbor.py --agent codex --first-n 5
+python trigger_harbor.py --agent codex --task-names task-01-...,task-02-...
+
+# Collect results when done
+modal run harbor_modal_runner.py --collect <run-tag>
+```
+
+Supported agents: `codex`, `claude-code`, `gemini-cli`, `aider`, and any other agent Harbor supports.
+API keys are read from `.env` and injected automatically per agent.
+
+### 2. `standalone_modal_runner.py` — cocoa-agent + skill experiments
+
+Runs **cocoa-agent** directly on Modal (no Harbor, no sandboxes). Designed for **2-phase skill experiments**: Phase 1 collects skills, Phase 2 injects them.
+
+```bash
+# Deploy once
+modal deploy standalone_modal_runner.py
+
+# Trigger a skill experiment — then disconnect
+python trigger_experiment.py
+python trigger_experiment.py --first-n 5
+
+# Collect results when done
+modal run standalone_modal_runner.py --collect <run-tag>
+```
+
+### 3. `harbor_runner.sh` — local/Harbor native (requires laptop awake)
+
+Runs Harbor directly with `-e modal` or `-e docker`. Simpler setup but your laptop must stay connected for the duration.
+
+```bash
+./harbor_runner.sh tasks/batch-1
+ENV=docker ./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-under
+```
+
+---
 
 ## Prerequisites
 
-- [Harbor](https://harborframework.com/docs) (`uv tool install harbor` or `pip install harbor`)
-- Docker (for local runs)
-- [Modal](https://modal.com) account + CLI (for cloud runs): `pip install modal && modal setup`
+- Python 3.12+
+- [Harbor](https://harborframework.com/docs): `uv tool install harbor` or `pip install harbor`
+- [Modal](https://modal.com) account + CLI: `pip install modal && modal setup`
 - API key — OpenAI directly, or any provider via [UniAPI](https://uniapi.io) proxy
 
 ## Setup
 
 ```bash
-# 1. Configure API key and optional settings
-cp env.template .env && $EDITOR .env
-
-# 2. For Modal: store your API key as a Modal secret
-modal secret create openai-secret OPENAI_API_KEY=sk-your-key
+cp env.template .env
+# Edit .env — set OPENAI_API_KEY, LLM_BASE_URL, LLM_MODEL
 ```
 
 ### `.env` reference
 
 ```bash
-OPENAI_API_KEY=sk-your-key          # Required — OpenAI key or UniAPI key
-# LLM_BASE_URL=https://api.uniapi.io/v1  # Optional — proxy for non-OpenAI models
-# LLM_MODEL=claude-sonnet-4-20250514     # Optional — model override (default: gpt-4.1-mini)
+OPENAI_API_KEY=sk-your-key               # Required — OpenAI key or UniAPI key
+LLM_BASE_URL=https://api.uniapi.io/v1   # Optional — proxy for non-OpenAI models
+LLM_MODEL=gpt-4.1-mini                  # Optional — model used by both agent and evaluator
 ```
 
-With UniAPI as `LLM_BASE_URL`, you can use any model (Claude, Gemini, etc.) — UniAPI translates the OpenAI API format to the target provider.
+With UniAPI as `LLM_BASE_URL`, you can use Claude, Gemini, or any model via the OpenAI-compatible API.
 
-## Quick Start
+---
 
-```bash
-# Run all batch-1 tasks on Modal:
-./harbor_runner.sh tasks/batch-1
-
-# Run a single task:
-./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-under
-
-# Run locally with Docker:
-ENV=docker ./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-under
-```
-
-## Run Options
-
-```bash
-./harbor_runner.sh <task_path> [output_dir]
-```
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENV` | `modal` | `modal` (cloud, parallel) or `docker` (local) |
-| `OPENAI_API_KEY` | — | API key (or UniAPI key for non-OpenAI models) |
-| `LLM_BASE_URL` | — | Proxy endpoint (e.g. UniAPI) |
-| `LLM_MODEL` | `gpt-4.1-mini` | Model override |
-| `COCOA_MAX_ITERATIONS` | `50` | Max agent iterations per task |
-| `MODAL_SECRET` | `openai-secret` | Modal secret name |
-| `AGENT` | `agents.cocoa_harbor_agent:CocoaHarborAgent` | Agent import path |
-| `MODEL` | `openai/gpt-4.1-mini` | Harbor model string |
-| `COCOA_CONFIG` | `/harness/configs/skill-phase1.json` | Config path inside container |
-
-```bash
-# Override model via .env or inline:
-LLM_MODEL=claude-sonnet-4-20250514 ./harbor_runner.sh
-
-# Use a different config:
-COCOA_CONFIG=/harness/configs/harbor-config.json ./harbor_runner.sh
-
-# Limit iterations for quick testing:
-COCOA_MAX_ITERATIONS=10 ./harbor_runner.sh tasks -l 3
-```
-
-## Structure
+## Repository Structure
 
 ```
 evolve_bench_harbor/
-├── harbor_runner.sh              # Main entry — runs on Modal (default) or Docker
-├── standalone_modal_runner.py    # Alternative: direct Modal runner (bypasses Harbor)
+├── harbor_modal_runner.py     # Multi-agent fire-and-forget runner (Harbor + Modal deploy)
+├── trigger_harbor.py          # Trigger script for harbor_modal_runner
+├── standalone_modal_runner.py # Cocoa-agent runner with 2-phase skill experiments
+├── trigger_experiment.py      # Trigger script for standalone_modal_runner
+├── run_skill_experiment.sh    # End-to-end wrapper: Phase 1 → extract skills → Phase 2 → compare
+├── harbor_runner.sh           # Legacy: Harbor CLI runner (laptop must stay awake)
+├── generate_report.py         # Generate HTML/Excel report from experiment results
 ├── scripts/
-│   └── sync-harness.sh           # Sync harness/ + configs/ to all task environments
-├── env.template                  # Copy to .env for API keys
+│   ├── convert_tasks.py       # Convert cocoa-agent format → Harbor format
+│   ├── extract_skills.py      # Post-process Phase 1 results to extract skills
+│   └── sync-harness.sh        # Sync harness/ + configs/ into task environments
+├── env.template               # Copy to .env for API keys
 ├── agents/
-│   └── cocoa_harbor_agent.py     # Harbor wrapper for CocoaAgent
-├── harness/                      # Files injected into task containers at /harness/
-│   ├── run_task.py               #   Agent-agnostic entry point + skill middleware
-│   ├── skill_store.py            #   Skill persistence + LLM search
-│   ├── skill_extractor.py        #   Skill evaluation + extraction
+│   └── cocoa_harbor_agent.py  # Harbor wrapper for CocoaAgent
+├── harness/                   # Files injected into cocoa-agent task containers
+│   ├── run_task.py            #   Agent entry point + skill middleware
+│   ├── skill_store.py         #   Skill persistence + LLM search
+│   ├── skill_extractor.py     #   Skill extraction
 │   └── adapters/
-│       ├── __init__.py
-│       └── cocoa_adapter.py      #   All cocoa-agent-specific code (monkey-patch, imports)
+│       └── cocoa_adapter.py   #   Cocoa-agent-specific adapter
 ├── configs/
-│   ├── harbor-config.json        # Default config (gpt-4.1-mini via UniAPI, 50 iterations)
-│   ├── skill-phase1.json         # Skill Phase 1 (store skills)
-│   └── skill-phase2.json         # Skill Phase 2 (use skills)
+│   ├── harbor-config.json     # Default config (no skills)
+│   ├── skill-phase1.json      # Phase 1: store skills
+│   └── skill-phase2.json      # Phase 2: inject skills
+├── visualizer/                # Interactive trace viewer (web app)
+│   ├── server.py              #   Python HTTP server
+│   └── index.html             #   Single-page app
 └── tasks/
-    └── <task-name>/
-        ├── instruction.md        # Task prompt
-        ├── task.toml             # Harbor task config (timeout, resources, verifier env)
-        ├── environment/
-        │   ├── Dockerfile        # Self-contained: clones cocoa-agent + harness files
-        │   ├── docker-compose.yaml
-        │   └── ...               # Synced copies of harness/, configs/, skills/ (gitignored)
-        └── tests/
-            ├── test.sh           # Verifier entry
-            └── test_task.py      # LLM-as-judge scorer
+    ├── batch-1/               # 100 EvolveBench tasks
+    ├── cocoa-synthetic-50/    # 50 synthetic tasks (cocoa-agent format)
+    └── updated-deprivacy-100/ # 100 updated deprivacy tasks
+        └── <task-name>/
+            ├── instruction.md      # Task prompt
+            ├── task.toml           # Harbor task config (timeout, resources)
+            ├── environment/
+            │   ├── Dockerfile      # Task container (cocoa-agent + harness)
+            │   └── docker-compose.yaml
+            └── tests/
+                ├── test.sh         # Verifier entry point
+                └── test_task.py    # LLM-as-judge scorer
 ```
 
-## Adding a New Task
+---
 
-1. Create `tasks/<task-name>/` with `instruction.md`, `task.toml`, `tests/`
-2. Copy `environment/` from any existing task — the Dockerfile and harness files are identical across tasks
-3. Run: `./harbor_runner.sh tasks/<task-name>`
+## Skill System (2-Phase, cocoa-agent)
 
-## Updating Harness or Config Files
+The skill system is middleware in `harness/run_task.py` that works with cocoa-agent:
 
-`harbor_runner.sh` automatically runs `scripts/sync-harness.sh` before every run, which copies the following into each task's `environment/` directory:
+- **Phase 1** (`store_skills=true`): after each successful task, extracts a reusable skill and saves it as a `.md` file.
+- **Phase 2** (`use_skills=true`): before each task, retrieves relevant skills and injects them into the instruction.
 
-- **Harness files:** `run_task.py`, `skill_store.py`, `skill_extractor.py`, `adapters/`
-- **Configs:** `configs/harbor-config.json`, `configs/skill-phase1.json`, `configs/skill-phase2.json`
-- **Skills:** contents of `skills/`
-
-These copies are gitignored — the source of truth is `harness/` and `configs/`. If using `standalone_modal_runner.py`, run the sync manually:
+For a full end-to-end run:
 
 ```bash
-./scripts/sync-harness.sh
+# Runs Phase 1, extracts skills, then Phase 2, then prints comparison
+./run_skill_experiment.sh tasks/cocoa-synthetic-50
 ```
 
-This is needed because Harbor Modal uses each task's `environment/` as the Docker build context — it can't access files outside that directory.
+Or manually via `standalone_modal_runner.py` for fire-and-forget.
 
-## Multi-Agent Support
+---
 
-`run_task.py` supports multiple agent types via the `agent_type` field in the config JSON:
+## Adding Tasks
 
-- `cocoa` (default) — browser-based agent with sandbox
-- `claude_code`, `codex`, `gemini_cli`, `manus` — CLI/API agents (no sandbox needed)
-- `openai_deep_research`, `gemini_deep_research` — deep research agents
+Tasks live under `tasks/`. To add a new task:
 
-Browser-based agents (`cocoa`) start the sandbox; pure-API agents skip it.
+1. Create `tasks/<task-name>/` with `instruction.md`, `task.toml`, and `tests/`
+2. Copy `environment/` from any existing task
+3. Run `./scripts/sync-harness.sh` to populate harness files into the environment
 
-## Skill System (2-Phase)
-
-The skill system is agent-agnostic middleware — it works with any agent type via config flags:
-
-- **Phase 1** (`store_skills=true`): after each task, if the score meets the threshold, extracts a generalizable skill and saves it as a `.md` file.
-- **Phase 2** (`use_skills=true`): before each task, searches stored skills and injects the most relevant ones into the instruction.
+To convert tasks from cocoa-agent format:
 
 ```bash
-# Phase 1: run tasks and store skills (works with any agent_type)
-COCOA_CONFIG=/harness/configs/skill-phase1.json ./harbor_runner.sh
-
-# Phase 2: run tasks with skill retrieval
-COCOA_CONFIG=/harness/configs/skill-phase2.json ./harbor_runner.sh
+python scripts/convert_tasks.py /path/to/cocoa-agent-tasks/ tasks/<output-dir>/
 ```
 
-Skills are orthogonal to agent type — combine any `agent_type` with `store_skills`/`use_skills` in the config.
+---
 
-## Standalone Modal Runner
+## Results & Visualization
 
-`standalone_modal_runner.py` is an alternative that bypasses Harbor and talks to Modal directly. It builds a single shared image (faster for large batches) and manages its own dispatch/aggregation.
+Results are stored in the Modal Volume `evolve-bench-results` and downloaded to `results/`.
 
 ```bash
-modal run standalone_modal_runner.py --tasks-dir tasks/batch-1
-modal run standalone_modal_runner.py --tasks-dir tasks/batch-1 --first-n 3
-modal run standalone_modal_runner.py --tasks-dir tasks/batch-1 --task-names task-01-...,task-02-...
+# Download a run
+modal run harbor_modal_runner.py --collect <run-tag>
+modal run standalone_modal_runner.py --collect <run-tag>
 ```
 
-For most use cases, prefer `./harbor_runner.sh` (uses Harbor's native Modal support).
-
-## Visualization
-
-**Trace visualizer** — interactive web app for replaying a single task's execution step by step (think/action/screenshot):
+**Trace visualizer** — interactive web app for replaying a task's execution step by step (thought/action/screenshot), with Phase 1 vs Phase 2 comparison:
 
 ```bash
-python visualizer/server.py --data-dir results/modal/ --port 8085
-# Open http://localhost:8085, select a task from the dropdown
+python visualizer/server.py \
+  --data-dir results/modal/<run-tag>/phase1 \
+  --compare-dir results/modal/<run-tag>/phase2 \
+  --port 8085
+# Open http://localhost:8085
 ```
 
-**Report generator** — static HTML dashboard + Excel spreadsheet summarizing an experiment:
+**Report generator** — static HTML dashboard + Excel spreadsheet:
 
 ```bash
-# Single experiment
-python generate_report.py results/modal/
-
-# Compare multiple experiments side by side
-python generate_report.py results/exp1/ results/exp2/ results/exp3/
+python generate_report.py results/modal/<run-tag>/
 ```
+
+---
 
 ## License
 
