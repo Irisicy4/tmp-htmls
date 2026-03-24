@@ -1,0 +1,1 @@
+Go to Hugging Face's model repository and filter for Transformer-based models trained on text-to-text tasks. Extract the first five models' names, descriptions, and the number of downloads. Make sure to cross-check with the GitHub pages for additional metadata, such as license types and last update dates.

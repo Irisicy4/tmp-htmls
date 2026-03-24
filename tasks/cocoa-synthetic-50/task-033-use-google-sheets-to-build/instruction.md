@@ -1,0 +1,1 @@
+Use Google Sheets to build a basic marketing performance dashboard. Pull live data for three recent campaigns from public examples or marketing blogs (e.g., campaign spend, clicks, and conversions). Create charts for each metric and calculate the ROI (return on investment) for each campaign.

@@ -1,0 +1,1 @@
+Go to Nasdaq's historical data section and extract the closing prices of Apple Inc. (AAPL) for the past 30 days. Then visit Yahoo Finance and cross-verify the same data. Finally, extract the percentage price change over this period and determine if the data from both sites aligns.

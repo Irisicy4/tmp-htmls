@@ -68,10 +68,20 @@ def apply_env_overrides(config: dict) -> dict:
     """Apply environment variable overrides to config."""
     config.setdefault("sandbox", {}).update({"skip_docker": True, "docker_port": 8080})
 
-    env_base_url = os.environ.get("LLM_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    env_base_url = (
+        os.environ.get("LLM_BASE_URL")
+        or os.environ.get("OPENAI_BASE_URL")
+        # Fallback: use base_url already baked into the config (e.g. by trigger_experiment.py)
+        or config.get("controller", {}).get("args", {}).get("base_url", "")
+    )
     if env_base_url:
         config.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
         os.environ["OPENAI_BASE_URL"] = env_base_url  # for LLM judge (test_task.py)
+
+    # Propagate agent api_key to OPENAI_API_KEY so the judge uses the same key
+    config_api_key = config.get("controller", {}).get("args", {}).get("api_key", "")
+    if config_api_key:
+        os.environ["OPENAI_API_KEY"] = config_api_key
 
     env_model = os.environ.get("LLM_MODEL")
     if env_model:

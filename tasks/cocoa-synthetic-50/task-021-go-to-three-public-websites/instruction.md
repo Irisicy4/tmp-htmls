@@ -1,0 +1,1 @@
+Go to three public websites that offer color palette resources (Coolors, Color Hunt, and Adobe Color) and locate a palette suitable for a travel website focusing on tropical destinations. Extract the hex codes of the top 5 colors from your chosen palette and ensure they relate to a tropical theme (e.g., ocean blues, palm greens, sandy beiges).

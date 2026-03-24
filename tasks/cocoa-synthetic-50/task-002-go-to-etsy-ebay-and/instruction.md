@@ -1,0 +1,1 @@
+Go to Etsy, eBay, and Alibaba, and navigate their search filters to extract information on handmade tote bags under $40. Apply filters for material type (e.g., canvas or cotton), seller review ratings (4 stars or higher), and shipping location (USA only). Extract and report the top 5 matching options for each platform, including price and seller ratings.

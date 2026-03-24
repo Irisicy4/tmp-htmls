@@ -1,0 +1,1 @@
+Research and compare three social media platforms (YouTube, TikTok, and Instagram) on their monetization options for creators. Focus on revenue streams like ad revenue, brand collaborations, and subscription features. Create a table with the key differences in terms of eligibility, payout structure, and additional available tools for monetization.

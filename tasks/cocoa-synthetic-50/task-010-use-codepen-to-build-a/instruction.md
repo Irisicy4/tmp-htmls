@@ -1,0 +1,1 @@
+Use CodePen to build a functional snippet that demonstrates a simple drag-and-drop interface for a Kanban board using JavaScript and CSS. Reference the official MDN documentation on drag-and-drop APIs and open-source examples for inspiration.
