@@ -87,17 +87,26 @@ modal_image = (
         "git clone --depth 1 https://github.com/cocoabench/cocoa-agent.git /cocoa-agent-src"
         " && ln -sf /cocoa-agent-src /cocoa-agent"
     )
+    # Install Codex CLI (for CodexAgent) and Claude Code CLI (for ClaudeCodeAgent)
+    .run_commands(
+        "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -"
+        " && apt-get install -y nodejs"
+        " && npm install -g @openai/codex @anthropic-ai/claude-code"
+    )
     # Upload this repo (agent glue, configs, task files)
     .add_local_dir(".", "/harbor-bench", copy=True, ignore=IGNORE_PATTERNS)
     # Copy harness files into /harness/ (agent-agnostic entry point)
     .run_commands(
-        "mkdir -p /harness/adapters /harness/configs"
+        "mkdir -p /harness/adapters /harness/configs /harness/agents"
         " && cp /harbor-bench/harness/run_task.py /harness/"
         " && cp /harbor-bench/harness/skill_store.py /harness/"
         " && cp /harbor-bench/harness/skill_extractor.py /harness/"
         " && cp /harbor-bench/harness/adapters/__init__.py /harness/adapters/"
         " && cp /harbor-bench/harness/adapters/cocoa_adapter.py /harness/adapters/"
         " && cp -r /harbor-bench/configs/. /harness/configs/"
+        " && cp /harbor-bench/agents/__init__.py /harness/agents/"
+        " && cp /harbor-bench/agents/codex_agent.py /harness/agents/"
+        " && cp /harbor-bench/agents/claude_code_agent.py /harness/agents/"
     )
     .workdir("/harness")
 )
@@ -534,6 +543,9 @@ def main(
     run_tag: str = "",
     collect: str = "",
     list_runs: bool = False,
+    config: str = "",
+    phase1_config: str = "",
+    phase2_config: str = "",
 ):
     """Run experiments on Modal or manage results.
 
@@ -541,13 +553,16 @@ def main(
     This entrypoint blocks until the experiment completes.
 
     --tasks-dir DIR           Task directory (default: tasks/batch-1)
-    --phase PHASE             phase1, phase2, or skill-experiment (default)
+    --phase PHASE             phase1, phase2, single, or skill-experiment (default)
     --first-n N               Only run first N tasks (0 = all)
     --task-names a,b,c        Comma-separated task names to run
     --skills-from TAG         For --phase phase2: run tag containing skills
     --run-tag TAG             Custom run tag (default: auto timestamp)
     --collect TAG             Download results for a run tag
     --list-runs               List all runs on the Volume
+    --config PATH             Config JSON for --phase single (e.g. configs/codex-config.json)
+    --phase1-config PATH      Override phase1 config (default: configs/skill-phase1.json)
+    --phase2-config PATH      Override phase2 config (default: configs/skill-phase2.json)
     """
     from datetime import datetime, timezone
 
@@ -572,9 +587,11 @@ def main(
                 os.environ[key] = val
 
     # Load configs
-    with open("configs/skill-phase1.json") as f:
+    p1_path = phase1_config or "configs/skill-phase1.json"
+    p2_path = phase2_config or "configs/skill-phase2.json"
+    with open(p1_path) as f:
         phase1_cfg: Dict[str, Any] = json.load(f)
-    with open("configs/skill-phase2.json") as f:
+    with open(p2_path) as f:
         phase2_cfg: Dict[str, Any] = json.load(f)
 
     env_base_url = os.environ.get("LLM_BASE_URL")
@@ -626,6 +643,25 @@ def main(
         )
         s = result["summary"]
         print(f"\nPhase 2 done: {s['passed']}/{s['total']} passed, avg={s['avg_score']}")
+
+    elif phase == "single":
+        if not config:
+            print("[error] --config <path> required for --phase single")
+            sys.exit(1)
+        with open(config) as f:
+            single_cfg: Dict[str, Any] = json.load(f)
+        if env_base_url:
+            single_cfg.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
+        # Only apply LLM_MODEL if the config doesn't already specify a model
+        existing_model = single_cfg.get("controller", {}).get("args", {}).get("model")
+        if env_model and not existing_model:
+            single_cfg.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
+        result = run_experiment.remote(
+            single_cfg, tag, f"Single ({single_cfg.get('agent_type', '?')})",
+            tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names,
+        )
+        s = result["summary"]
+        print(f"\nDone: {s['passed']}/{s['total']} passed, avg={s['avg_score']}")
 
     else:
         print(f"[error] Unknown phase: {phase}")

@@ -1,0 +1,17 @@
+{
+  "agent_type": "claude_code",
+  "log_level": "INFO",
+  "store_skills": false,
+  "use_skills": false,
+  "max_budget_usd": 1.0,
+  "controller": {
+    "args": {
+      "model": "claude-sonnet-4-20250514",
+      "base_url": "",
+      "api_key": ""
+    }
+  },
+  "sandbox": {
+    "max_iterations": 50
+  }
+}

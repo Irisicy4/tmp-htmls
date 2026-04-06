@@ -1,0 +1,19 @@
+{
+  "agent_type": "codex",
+  "log_level": "INFO",
+  "store_skills": true,
+  "use_skills": false,
+  "skill_score_threshold": 2.0,
+  "skill_model": "gpt-4o-mini",
+  "skills_dir": "/skills",
+  "controller": {
+    "args": {
+      "model": "gpt-4.1-mini",
+      "base_url": "",
+      "api_key": ""
+    }
+  },
+  "sandbox": {
+    "max_iterations": 50
+  }
+}
