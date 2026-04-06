@@ -22,6 +22,9 @@ tasks/*/*/environment/adapters/
 tasks/*/*/environment/configs/
 tasks/*/*/environment/skills/
 
+# Local-only scripts
+convert_cocoa_tasks.py
+
 # Environment & secrets
 .env
 .envrc

@@ -1,13 +1,13 @@
 """
-Fire-and-forget trigger for the deployed Modal skill experiment.
+Fire-and-forget trigger for the deployed Modal experiment runner.
 
 Requires the app to be deployed first:
   modal deploy standalone_modal_runner.py
 
 Then trigger and close your laptop:
-  python trigger_experiment.py --tasks-dir tasks/batch-1
-  python trigger_experiment.py --tasks-dir tasks/batch-1 --first-n 3
-  python trigger_experiment.py --tasks-dir tasks/batch-1 --phase phase1
+  python trigger_experiment.py --config configs/codex-config.json --task-names task-93-...
+  python trigger_experiment.py --phase skill-experiment --phase1-config configs/skill-phase1-codex.json --phase2-config configs/skill-phase2-codex.json --first-n 10
+  python trigger_experiment.py --phase phase1 --phase1-config configs/skill-phase1.json
 
 Collect results later (no laptop requirement):
   modal run standalone_modal_runner.py --collect <run-tag>
@@ -36,11 +36,11 @@ def load_env(env_file: Path = Path(".env")):
             os.environ[key] = val
 
 
-def load_config(path: str) -> dict:
+def load_config(path: str, apply_model_override: bool = True) -> dict:
     with open(path) as f:
         cfg = json.load(f)
     args = cfg.setdefault("controller", {}).setdefault("args", {})
-    # Inject all credentials/overrides from .env so the container doesn't
+    # Inject credentials/overrides from .env so the container doesn't
     # need a correctly-configured Modal secret for base_url or api_key.
     env_api_key = os.environ.get("OPENAI_API_KEY")
     env_base_url = os.environ.get("LLM_BASE_URL")
@@ -49,7 +49,8 @@ def load_config(path: str) -> dict:
         args["api_key"] = env_api_key
     if env_base_url:
         args["base_url"] = env_base_url
-    if env_model:
+    # Only apply LLM_MODEL if config doesn't already specify a model
+    if apply_model_override and env_model and not args.get("model"):
         args["model"] = env_model
     return cfg
 
@@ -58,8 +59,13 @@ def main():
     parser = argparse.ArgumentParser(description="Trigger a skill experiment on Modal and disconnect.")
     parser.add_argument("--tasks-dir", default="tasks/batch-1", help="Task directory (default: tasks/batch-1)")
     parser.add_argument("--phase", default="skill-experiment",
-                        choices=["skill-experiment", "phase1", "phase2"],
+                        choices=["skill-experiment", "phase1", "phase2", "single"],
                         help="Which phase to run (default: skill-experiment)")
+    parser.add_argument("--config", default="", help="Config JSON for --phase single")
+    parser.add_argument("--phase1-config", default="",
+                        help="Phase 1 config JSON path (required for skill-experiment/phase1)")
+    parser.add_argument("--phase2-config", default="",
+                        help="Phase 2 config JSON path (required for skill-experiment/phase2)")
     parser.add_argument("--first-n", type=int, default=0, help="Only run first N tasks")
     parser.add_argument("--task-names", default="", help="Comma-separated task names to run")
     parser.add_argument("--skills-from", default="", help="Run tag with skills for --phase phase2")
@@ -67,9 +73,6 @@ def main():
     args = parser.parse_args()
 
     load_env()
-
-    phase1_cfg = load_config("configs/skill-phase1.json")
-    phase2_cfg = load_config("configs/skill-phase2.json")
 
     env_base_url = os.environ.get("LLM_BASE_URL")
     env_model = os.environ.get("LLM_MODEL")
@@ -80,9 +83,28 @@ def main():
 
     tag = args.run_tag or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
 
-    if args.phase == "skill-experiment":
+    if args.phase == "single":
+        if not args.config:
+            print("[error] --config <path> required for --phase single")
+            sys.exit(1)
+        single_cfg = load_config(args.config)
+        fn = modal.Function.from_name("evolve-bench-harbor", "run_experiment")
+        fn.spawn(
+            single_cfg, tag, f"Single ({single_cfg.get('agent_type', '?')})",
+            tasks_dir=args.tasks_dir,
+            first_n=args.first_n,
+            task_names_csv=args.task_names,
+        )
+        print(f"\nDispatched single run ({single_cfg.get('agent_type', '?')}).")
+
+    elif args.phase == "skill-experiment":
+        if not args.phase1_config or not args.phase2_config:
+            print("[error] --phase1-config and --phase2-config required for skill-experiment")
+            sys.exit(1)
+        phase1_cfg = load_config(args.phase1_config)
+        phase2_cfg = load_config(args.phase2_config)
         fn = modal.Function.from_name("evolve-bench-harbor", "run_skill_experiment")
-        handle = fn.spawn(
+        fn.spawn(
             phase1_cfg, phase2_cfg, tag,
             tasks_dir=args.tasks_dir,
             first_n=args.first_n,
@@ -91,8 +113,12 @@ def main():
         print(f"\nDispatched full skill experiment (Phase 1 + Phase 2).")
 
     elif args.phase == "phase1":
+        if not args.phase1_config:
+            print("[error] --phase1-config required for phase1")
+            sys.exit(1)
+        phase1_cfg = load_config(args.phase1_config)
         fn = modal.Function.from_name("evolve-bench-harbor", "run_experiment")
-        handle = fn.spawn(
+        fn.spawn(
             phase1_cfg, f"{tag}/phase1", "Phase 1",
             tasks_dir=args.tasks_dir,
             first_n=args.first_n,
@@ -104,9 +130,13 @@ def main():
         if not args.skills_from:
             print("[error] --skills-from <run-tag> is required for phase2")
             sys.exit(1)
+        if not args.phase2_config:
+            print("[error] --phase2-config required for phase2")
+            sys.exit(1)
+        phase2_cfg = load_config(args.phase2_config)
         phase2_cfg["skills_dir"] = f"/results/{args.skills_from}/skills"
         fn = modal.Function.from_name("evolve-bench-harbor", "run_experiment")
-        handle = fn.spawn(
+        fn.spawn(
             phase2_cfg, f"{tag}/phase2", "Phase 2",
             tasks_dir=args.tasks_dir,
             first_n=args.first_n,

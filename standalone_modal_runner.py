@@ -586,21 +586,19 @@ def main(
             if key and val and key not in os.environ:
                 os.environ[key] = val
 
-    # Load configs
-    p1_path = phase1_config or "configs/skill-phase1.json"
-    p2_path = phase2_config or "configs/skill-phase2.json"
-    with open(p1_path) as f:
-        phase1_cfg: Dict[str, Any] = json.load(f)
-    with open(p2_path) as f:
-        phase2_cfg: Dict[str, Any] = json.load(f)
-
+    # Load configs (only when needed — validated per phase below)
     env_base_url = os.environ.get("LLM_BASE_URL")
     env_model = os.environ.get("LLM_MODEL")
-    for cfg in [phase1_cfg, phase2_cfg]:
+
+    def _load_cfg(path: str) -> Dict[str, Any]:
+        with open(path) as f:
+            cfg = json.load(f)
         if env_base_url:
             cfg.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
-        if env_model:
+        # Only apply LLM_MODEL if config doesn't already specify a model
+        if env_model and not cfg.get("controller", {}).get("args", {}).get("model"):
             cfg.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
+        return cfg
 
     if env_base_url:
         print(f"[.env] LLM_BASE_URL={env_base_url}")
@@ -618,27 +616,37 @@ def main(
     print(f"Collect with: modal run standalone_modal_runner.py --collect {tag}\n")
 
     if phase == "skill-experiment":
+        if not phase1_config or not phase2_config:
+            print("[error] --phase1-config and --phase2-config required for skill-experiment")
+            sys.exit(1)
         result = run_skill_experiment.remote(
-            phase1_cfg, phase2_cfg, tag,
+            _load_cfg(phase1_config), _load_cfg(phase2_config), tag,
             tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names,
         )
         print(result.get("comparison_text", ""))
 
     elif phase == "phase1":
+        if not phase1_config:
+            print("[error] --phase1-config required for phase1")
+            sys.exit(1)
         result = run_experiment.remote(
-            phase1_cfg, f"{tag}/phase1", "Phase 1",
+            _load_cfg(phase1_config), f"{tag}/phase1", "Phase 1",
             tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names,
         )
         s = result["summary"]
         print(f"\nPhase 1 done: {s['passed']}/{s['total']} passed, avg={s['avg_score']}")
 
     elif phase == "phase2":
+        if not phase2_config:
+            print("[error] --phase2-config required for phase2")
+            sys.exit(1)
         if not skills_from:
             print("[error] --skills-from <run-tag> required for phase2")
             sys.exit(1)
-        phase2_cfg["skills_dir"] = f"/results/{skills_from}/skills"
+        p2_cfg = _load_cfg(phase2_config)
+        p2_cfg["skills_dir"] = f"/results/{skills_from}/skills"
         result = run_experiment.remote(
-            phase2_cfg, f"{tag}/phase2", "Phase 2",
+            p2_cfg, f"{tag}/phase2", "Phase 2",
             tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names,
         )
         s = result["summary"]
@@ -648,14 +656,7 @@ def main(
         if not config:
             print("[error] --config <path> required for --phase single")
             sys.exit(1)
-        with open(config) as f:
-            single_cfg: Dict[str, Any] = json.load(f)
-        if env_base_url:
-            single_cfg.setdefault("controller", {}).setdefault("args", {})["base_url"] = env_base_url
-        # Only apply LLM_MODEL if the config doesn't already specify a model
-        existing_model = single_cfg.get("controller", {}).get("args", {}).get("model")
-        if env_model and not existing_model:
-            single_cfg.setdefault("controller", {}).setdefault("args", {})["model"] = env_model
+        single_cfg = _load_cfg(config)
         result = run_experiment.remote(
             single_cfg, tag, f"Single ({single_cfg.get('agent_type', '?')})",
             tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names,
