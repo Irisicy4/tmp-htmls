@@ -252,8 +252,6 @@ def _wrap_codex_instruction(instruction: str) -> str:
     return (
         "Complete the following task immediately without asking any clarifying questions. "
         "Make reasonable assumptions and proceed. "
-        "For any visual, interactive, or game output, create a single self-contained HTML file "
-        "(no external dependencies) rather than a terminal or desktop application. "
         "After creating any files, print each file's complete contents to stdout "
         "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
         "Task:\n" + instruction
@@ -484,6 +482,14 @@ async def _run_task(
         instruction = (
             "IMPORTANT: Do NOT use plan mode. Implement the solution directly and immediately. "
             "Do not ask clarifying questions. Make reasonable assumptions and proceed. "
+            "After creating any files, print each file's complete contents to stdout "
+            "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
+            "Task:\n" + instruction
+        )
+    elif agent_name == "aider":
+        instruction = (
+            "Complete the following task immediately without asking any clarifying questions. "
+            "Make reasonable assumptions and proceed. "
             "After creating any files, print each file's complete contents to stdout "
             "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
             "Task:\n" + instruction

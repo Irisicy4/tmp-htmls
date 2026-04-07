@@ -57,10 +57,10 @@ def _detect_uniapi() -> tuple[str, str]:
 
 
 _DEFAULT_MODELS = {
-    "claude-code": "claude-sonnet-4-20250514",
-    "codex": "gpt-4.1-mini",
-    "gemini-cli": "gemini-2.5-flash",
-    "aider": "gpt-4.1-mini",
+    "claude-code": "anthropic/claude-sonnet-4-20250514",
+    "codex": "openai/gpt-4.1-mini",
+    "gemini-cli": "google/gemini-2.5-flash",
+    "aider": "openai/gpt-4.1-mini",
 }
 
 
