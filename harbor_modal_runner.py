@@ -496,34 +496,25 @@ async def _run_task(
     trial_paths.mkdir()
 
     # Modal app names: alphanumeric + dashes + dots + underscores only, max 64 chars
-    safe_tag = run_tag.replace("/", "-")
+    safe_tag = run_tag.replace("/", "-").replace(" ", "-")
     session_id = f"hm-{safe_tag}-{task_name}"[:63].rstrip("-")
 
     env = _make_harbor_env(session_id, trial_paths)
 
-    # Expose API keys to the evaluator (test_task.py) which runs in this process.
-    # extra_env is only forwarded to the sandbox by Harbor, not to this container.
+    # Expose agent API keys so Harbor's create_run_agent_commands() picks them up.
     for k, v in agent_kwargs.get("extra_env", {}).items():
         os.environ[k] = v  # force override
 
-    # Judge (test_task.py) always needs OPENAI_API_KEY + OPENAI_BASE_URL.
-    # For non-OpenAI agents (e.g. claude-code via UniAPI), derive from available keys.
-    extra = agent_kwargs.get("extra_env", {})
-    if "OPENAI_API_KEY" not in extra:
-        fallback_key = extra.get("ANTHROPIC_API_KEY") or extra.get("GEMINI_API_KEY") or ""
-        if fallback_key:
-            os.environ["OPENAI_API_KEY"] = fallback_key
-    if "OPENAI_BASE_URL" not in extra:
-        for url_key in ("ANTHROPIC_BASE_URL", "OPENAI_BASE_URL", "GEMINI_API_BASE_URL"):
-            base = extra.get(url_key, "")
-            if "uniapi" in base:
-                os.environ["OPENAI_BASE_URL"] = base.rsplit("/", 1)[0] + "/v1"
-                break
+    # Judge credentials: set by trigger_harbor.py, separate from agent credentials.
+    for k, v in agent_kwargs.get("judge_env", {}).items():
+        os.environ[k] = v
 
+    # Filter out judge_env before passing to Harbor — it doesn't know about it
+    factory_kwargs = {k: v for k, v in agent_kwargs.items() if k != "judge_env"}
     agent = AgentFactory.create_agent_from_name(
         AgentName(agent_name),
         logs_dir=trial_paths.agent_dir,
-        **agent_kwargs,
+        **factory_kwargs,
     )
 
     context = AgentContext()
@@ -548,7 +539,7 @@ async def _run_task(
     except Exception as exc:
         print(f"[{task_name}] Agent error: {exc}")
     finally:
-        # Collect artifacts from /output/ (primary) with fallback to /root /home
+        # Collect artifacts from /output/
         artifacts_dir = RESULTS_BASE / run_tag / "artifacts" / task_name
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -563,19 +554,6 @@ async def _run_task(
             all_files = set()
             if output_files:
                 all_files.update(output_files.splitlines())
-
-            # Fallback: scan /root /home if /output/ was empty
-            if not all_files:
-                fallback_obj = await env._sandbox.exec.aio(
-                    "bash", "-c",
-                    r"find /root /home -maxdepth 4 \( -name '*.html' -o -name '*.py' "
-                    r"-o -name '*.js' -o -name '*.ts' -o -name '*.sh' -o -name '*.json' "
-                    r"-o -name '*.txt' \) 2>/dev/null | head -20"
-                )
-                await fallback_obj.wait.aio()
-                fallback_files = await _read_stdout(fallback_obj)
-                if fallback_files:
-                    all_files.update(fallback_files.splitlines())
 
             for fpath in sorted(all_files):
                 fpath = fpath.strip()

@@ -62,24 +62,54 @@ ENV=docker ./harbor_runner.sh tasks/batch-1/task-01-im-looking-for-backpack-unde
 - Python 3.12+
 - [Harbor](https://harborframework.com/docs): `uv tool install harbor` or `pip install harbor`
 - [Modal](https://modal.com) account + CLI: `pip install modal && modal setup`
-- API key — OpenAI directly, or any provider via [UniAPI](https://uniapi.io) proxy
+- API key — see credential setup below
 
 ## Setup
 
 ```bash
 cp env.template .env
-# Edit .env — set OPENAI_API_KEY, LLM_BASE_URL, LLM_MODEL
+# Edit .env with your credentials
 ```
 
-### `.env` reference
+### Credentials
+
+Agent credentials and judge (evaluator) credentials are configured separately.
+The LLM judge (`test_task.py`) always uses the OpenAI SDK, so it needs an OpenAI-compatible key.
+
+**Option A — UniAPI (simplest, one key for everything):**
 
 ```bash
-OPENAI_API_KEY=sk-your-key               # Required — OpenAI key or UniAPI key
-LLM_BASE_URL=https://api.uniapi.io/v1   # Optional — proxy for non-OpenAI models
-LLM_MODEL=gpt-4.1-mini                  # Optional — model used by both agent and evaluator
+UNIAPI_KEY=uni-xxx
+UNIAPI_BASE=https://api.uniapi.io
 ```
 
-With UniAPI as `LLM_BASE_URL`, you can use Claude, Gemini, or any model via the OpenAI-compatible API.
+This auto-derives credentials for all agents and the judge. Nothing else needed.
+
+**Option B — Direct provider APIs:**
+
+```bash
+OPENAI_API_KEY=sk-xxx            # For codex/aider + judge uses this too
+ANTHROPIC_API_KEY=sk-ant-xxx     # For claude-code
+GEMINI_API_KEY=AIza-xxx          # For gemini-cli
+JUDGE_API_KEY=sk-xxx             # Only needed if running a non-OpenAI agent without UniAPI
+```
+
+**Option C — Mix (UniAPI for agents, own key for judge, or vice versa):**
+
+```bash
+UNIAPI_KEY=uni-xxx
+UNIAPI_BASE=https://api.uniapi.io
+JUDGE_API_KEY=sk-xxx             # Override: use your own OpenAI key for the judge
+```
+
+**Credential priority:**
+
+| Purpose | Priority (high → low) |
+|---------|----------------------|
+| Agent   | Provider-specific env var → `UNIAPI_KEY` |
+| Judge   | `JUDGE_API_KEY` → `OPENAI_API_KEY` → `UNIAPI_KEY` |
+
+Missing credentials are caught before dispatch — the trigger script will exit with a clear error.
 
 ---
 

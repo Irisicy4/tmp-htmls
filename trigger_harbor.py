@@ -47,6 +47,10 @@ def _detect_uniapi() -> tuple[str, str]:
     """Return (key, base_url) if UniAPI proxy is configured, else ("", "")."""
     key = os.environ.get("UNIAPI_KEY", "")
     base = os.environ.get("UNIAPI_BASE", "")
+    if key and not base:
+        print("  [warn] UNIAPI_KEY is set but UNIAPI_BASE is missing — UniAPI disabled")
+    elif base and not key:
+        print("  [warn] UNIAPI_BASE is set but UNIAPI_KEY is missing — UniAPI disabled")
     if key and base:
         return key, base
     return "", ""
@@ -101,14 +105,37 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
             extra_env["GEMINI_API_BASE_URL"] = f"{uniapi_base}/gemini"
             print(f"  [proxy] gemini-cli -> {uniapi_base}/gemini")
 
+    if agent_name not in ("claude-code", "codex", "aider", "gemini-cli"):
+        print(f"  [warn] No credential mapping for agent '{agent_name}' — extra_env will be empty")
+
     if not model:
         model = _DEFAULT_MODELS.get(agent_name, "")
+
+    # --- Judge credentials (separate from agent) ---
+    # Judge (test_task.py) uses openai.OpenAI(), so it always needs
+    # OPENAI_API_KEY + optionally OPENAI_BASE_URL.
+    judge_key = (
+        os.environ.get("JUDGE_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or uniapi_key
+    )
+    judge_base = (
+        os.environ.get("JUDGE_BASE_URL")
+        or os.environ.get("OPENAI_BASE_URL")
+        or (f"{uniapi_base}/v1" if uniapi_base else "")
+    )
+    judge_env: dict[str, str] = {}
+    if judge_key:
+        judge_env["OPENAI_API_KEY"] = judge_key
+    if judge_base:
+        judge_env["OPENAI_BASE_URL"] = judge_base
 
     kwargs: dict = {}
     if extra_env:
         kwargs["extra_env"] = extra_env
     if model:
         kwargs["model_name"] = model
+    kwargs["judge_env"] = judge_env
 
     return kwargs
 
@@ -163,6 +190,17 @@ def main():
 
     tag = args.run_tag or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     agent_kwargs = _build_agent_kwargs(args.agent, args.model)
+
+    # Validate credentials before dispatching
+    if not agent_kwargs.get("extra_env"):
+        print(f"\n[ERROR] No API credentials resolved for agent '{args.agent}'.")
+        print("  Set the appropriate env vars (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY, or UNIAPI_KEY + UNIAPI_BASE).")
+        sys.exit(1)
+    if not agent_kwargs.get("judge_env", {}).get("OPENAI_API_KEY"):
+        print(f"\n[ERROR] No judge credentials resolved.")
+        print("  The LLM judge requires an OpenAI-compatible API key.")
+        print("  Set JUDGE_API_KEY, OPENAI_API_KEY, or UNIAPI_KEY + UNIAPI_BASE.")
+        sys.exit(1)
 
     if args.phase == "skill-experiment":
         fn = modal.Function.from_name("evolve-bench-harbor", "run_harbor_skill_experiment")
