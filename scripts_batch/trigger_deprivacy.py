@@ -77,11 +77,19 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
         if not key and uniapi_key:
             key = uniapi_key
             base_url = base_url or f"{uniapi_base}/claude"
-        if key:
-            extra_env["ANTHROPIC_API_KEY"] = key
         if base_url:
+            # Proxy mode: pass AUTH_TOKEN for the settings.local.json injection,
+            # and also set ANTHROPIC_API_KEY so Harbor doesn't complain (it gets
+            # overridden by settings.local.json inside the sandbox)
+            extra_env["ANTHROPIC_AUTH_TOKEN"] = key
+            extra_env["ANTHROPIC_API_KEY"] = key  # Harbor needs this to not error
             extra_env["ANTHROPIC_BASE_URL"] = base_url
-            print(f"  [proxy] claude-code -> {base_url}")
+            # Pass model name to proxy config injector
+            resolved_model = model or os.environ.get("LLM_MODEL", "") or _DEFAULT_MODELS.get("claude-code", "")
+            extra_env["_CLAUDE_MODEL"] = resolved_model
+            print(f"  [proxy] claude-code -> {base_url} (model: {resolved_model})")
+        elif key:
+            extra_env["ANTHROPIC_API_KEY"] = key
 
     elif agent_name in ("codex", "aider"):
         key = os.environ.get("OPENAI_API_KEY", "")
@@ -109,6 +117,15 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
     # Model: use explicit --model, or env LLM_MODEL, or default for agent
     if not model:
         model = os.environ.get("LLM_MODEL", "") or _DEFAULT_MODELS.get(agent_name, "")
+
+    # Always pass OPENAI_API_KEY + LLM_BASE_URL for the LLM judge,
+    # regardless of which agent is running
+    judge_key = os.environ.get("OPENAI_API_KEY", "")
+    judge_base = os.environ.get("LLM_BASE_URL", "")
+    if judge_key:
+        extra_env.setdefault("OPENAI_API_KEY", judge_key)
+    if judge_base:
+        extra_env.setdefault("OPENAI_BASE_URL", judge_base)
 
     kwargs: dict = {}
     if extra_env:

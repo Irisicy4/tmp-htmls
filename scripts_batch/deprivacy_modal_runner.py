@@ -319,16 +319,20 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
     """Write proxy config files into the sandbox AFTER agent install, BEFORE run.
 
     Codex CLI: writes config.toml with a custom model_provider pointing to UniAPI.
-    Claude Code: no extra config needed — ANTHROPIC_API_KEY + ANTHROPIC_BASE_URL
-                 are passed via env vars by Harbor.
+    Claude Code: writes .claude/settings.local.json with proxy env overrides.
+                 This is needed because Harbor merges AUTH_TOKEN into API_KEY,
+                 but Claude Code CLI requires API_KEY="" (empty) and AUTH_TOKEN
+                 set separately when using a proxy.
     """
     openai_base = extra_env.get("OPENAI_BASE_URL", "")
+    anthropic_base = extra_env.get("ANTHROPIC_BASE_URL", "")
+    anthropic_token = extra_env.get("ANTHROPIC_AUTH_TOKEN", "")
+    model_name = extra_env.get("_CLAUDE_MODEL", "")
 
     if agent_name == "codex" and openai_base:
         from harbor.models.trial.paths import EnvironmentPaths
         codex_home = EnvironmentPaths.agent_dir.as_posix()
 
-        # Write config.toml with uniapi as a custom provider
         config_toml = (
             f'model_provider = "uniapi"\n'
             f'model_reasoning_effort = "high"\n'
@@ -346,6 +350,55 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
             print(f"  [proxy] Wrote codex config.toml -> {openai_base}")
         except Exception as e:
             print(f"  [proxy] Failed to write codex config.toml: {e}")
+
+    elif agent_name == "claude-code" and anthropic_base and anthropic_token:
+        # Claude Code with proxy (OpenRouter/UniAPI) requires:
+        #   ANTHROPIC_BASE_URL = proxy URL
+        #   ANTHROPIC_AUTH_TOKEN = proxy API key
+        #   ANTHROPIC_API_KEY = "" (explicitly empty — NOT absent, EMPTY)
+        #
+        # Harbor's create_run_agent_commands() merges AUTH_TOKEN into API_KEY
+        # and strips empty values (line 834), which breaks this.
+        #
+        # Fix: wrap the `claude` binary so the correct env vars are always set
+        # regardless of what Harbor passes. The wrapper intercepts the call
+        # and overrides the env before exec-ing the real binary.
+
+        model = model_name or "claude-sonnet-4-20250514"
+
+        wrapper_script = f"""#!/bin/bash
+# Proxy wrapper — overrides Harbor's env vars for Claude Code CLI
+export ANTHROPIC_API_KEY=""
+export ANTHROPIC_AUTH_TOKEN="{anthropic_token}"
+export ANTHROPIC_BASE_URL="{anthropic_base}"
+export ANTHROPIC_MODEL="{model}"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="{model}"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="{model}"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="{model}"
+export CLAUDE_CODE_SUBAGENT_MODEL="{model}"
+exec /root/.local/bin/claude.real "$@"
+"""
+        # Rename real claude -> claude.real, install wrapper as claude
+        rename_and_wrap = (
+            "if [ -f /root/.local/bin/claude ] && [ ! -f /root/.local/bin/claude.real ]; then "
+            "  mv /root/.local/bin/claude /root/.local/bin/claude.real && "
+            "  cat > /root/.local/bin/claude << 'WRAPEOF'\n"
+            f"{wrapper_script}"
+            "WRAPEOF\n"
+            "  chmod +x /root/.local/bin/claude && "
+            "  echo '[proxy] Claude wrapper installed'; "
+            "fi"
+        )
+
+        try:
+            result = await harbor_env._sandbox.exec.aio("bash", "-c", rename_and_wrap)
+            await result.wait.aio()
+            stdout = await _read_stdout(result)
+            print(f"  [proxy] Claude Code wrapper -> {anthropic_base} (model: {model})")
+            if stdout:
+                print(f"  [proxy] {stdout}")
+        except Exception as e:
+            print(f"  [proxy] Failed to install Claude Code wrapper: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -477,18 +530,32 @@ async def _run_task(
         if stdout_file.exists():
             agent_stdout = stdout_file.read_text()
             if agent_stdout.strip():
+                print(f"[{task_name}] Using command-{cmd_idx} stdout ({len(agent_stdout)} chars)")
                 break
 
     parser = AGENT_OUTPUT_PARSERS.get(agent_name, _parse_generic_output)
     result_dict = parser(agent_stdout)
+    print(f"[{task_name}] Parsed task_result: {len(result_dict.get('task_result', ''))} chars")
 
+    # Append artifacts from /output/ to task_result so the judge can evaluate them
     artifact_texts = []
-    for artifact_file in sorted(trial_paths.agent_dir.glob("artifact_*")):
+    # Check agent dir artifacts
+    agent_artifacts = sorted(trial_paths.agent_dir.glob("artifact_*")) if trial_paths.agent_dir.exists() else []
+    # Also check the volume artifacts dir
+    volume_artifacts = sorted(artifacts_dir.glob("*")) if artifacts_dir.exists() else []
+    print(f"[{task_name}] Agent dir artifacts: {len(agent_artifacts)}, Volume artifacts: {len(volume_artifacts)}")
+
+    # Prefer volume artifacts (always written), fall back to agent dir
+    source_files = volume_artifacts if volume_artifacts else agent_artifacts
+    for artifact_file in source_files:
+        if not artifact_file.is_file():
+            continue
         content = artifact_file.read_text()
-        fname = artifact_file.name[len("artifact_"):]
+        fname = artifact_file.name.removeprefix("artifact_")
         artifact_texts.append(f"\n\n=== FILE: {fname} ===\n{content}\n=== END FILE ===")
     if artifact_texts:
         result_dict["task_result"] = (result_dict.get("task_result") or "") + "".join(artifact_texts)
+        print(f"[{task_name}] Appended {len(artifact_texts)} artifact(s) to task_result")
 
     # --- List collected artifacts ---
     collected_artifacts = sorted(
