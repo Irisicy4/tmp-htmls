@@ -59,19 +59,80 @@ RESULTS_BASE = Path("/results")
 # Base sandbox image: browser + Python, no agent.  Harbor installs the agent.
 SANDBOX_BASE_IMAGE = "ghcr.io/agent-infra/sandbox:latest"
 
+# Directory inside the sandbox where agents should save output files
+AGENT_OUTPUT_DIR = "/output"
+
+# Appended to every task instruction so agents know where to save files
+OUTPUT_DIR_INSTRUCTION = f"""
+
+---
+IMPORTANT: If you create any output files (reports, data, code, spreadsheets,
+images, HTML, etc.), save them to {AGENT_OUTPUT_DIR}/ directory. Create the
+directory if it doesn't exist. Always save a copy of your final answer/result
+as {AGENT_OUTPUT_DIR}/result.txt as well.
+"""
+
+
+# ── Task metadata ─────────────────────────────────────────────────────────────
+
+def _load_task_metadata(task_dir: Path) -> dict:
+    """Parse task.toml for category, tags, timeouts — attached to every result."""
+    meta = {"category": "unknown", "tags": [], "timeout_sec": 900.0}
+    toml_path = task_dir / "task.toml"
+    if not toml_path.exists():
+        return meta
+    try:
+        section = ""
+        for line in toml_path.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("["):
+                section = line.strip("[] ")
+            elif "=" in line and not line.startswith("#"):
+                key, _, val = line.partition("=")
+                key, val = key.strip(), val.strip().strip('"').strip("'")
+                if section == "metadata" and key == "category":
+                    meta["category"] = val
+                elif section == "metadata" and key == "tags":
+                    meta["tags"] = [
+                        t.strip().strip('"').strip("'")
+                        for t in val.strip("[]").split(",")
+                        if t.strip()
+                    ]
+                elif section == "agent" and key == "timeout_sec":
+                    meta["timeout_sec"] = float(val)
+    except Exception:
+        pass
+    return meta
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[str]:
-    """Return ordered task names from TASKS_BASE."""
+def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[dict]:
+    """Return ordered task dicts (name + metadata) from TASKS_BASE."""
     if task_names_csv:
-        return [t.strip() for t in task_names_csv.split(",") if t.strip()]
-    tasks = sorted(
-        d.name
-        for d in TASKS_BASE.iterdir()
-        if d.is_dir() and (d / "instruction.md").exists()
-    )
-    return tasks[:first_n] if first_n > 0 else tasks
+        names = [t.strip() for t in task_names_csv.split(",") if t.strip()]
+    else:
+        names = sorted(
+            d.name
+            for d in TASKS_BASE.iterdir()
+            if d.is_dir() and (d / "instruction.md").exists()
+        )
+        if first_n > 0:
+            names = names[:first_n]
+
+    tasks = []
+    for name in names:
+        meta = _load_task_metadata(TASKS_BASE / name)
+        tasks.append({"task_name": name, **meta})
+    return tasks
+
+
+async def _read_stdout(exec_result) -> str:
+    """Read stdout from a sandbox exec result, handling both str and bytes."""
+    raw = await exec_result.stdout.read.aio()
+    if isinstance(raw, bytes):
+        return raw.decode(errors="replace").strip()
+    return raw.strip()
 
 
 def _parse_claude_code_output(stdout: str) -> dict:
@@ -250,15 +311,76 @@ def _evaluate(task_name: str, result: dict, run_tag: str) -> dict:
     return eval_result
 
 
+# ── Enriched result builder ──────────────────────────────────────────────────
+
+def _build_result(
+    task_name: str,
+    agent_name: str,
+    agent_kwargs: dict,
+    run_tag: str,
+    task_meta: dict,
+    started_at: str,
+    score: float,
+    passed: bool,
+    eval_result: dict | None = None,
+    error: str = "",
+    artifacts: list[str] | None = None,
+    extracted_skill: str | None = None,
+) -> dict:
+    """Build the enriched result dict with all metadata for cross-agent analysis."""
+    finished_at = datetime.now(timezone.utc).isoformat()
+    eval_result = eval_result or {}
+    details = eval_result.get("details", {}) or {}
+    dimension_scores = details.get("dimension_scores", {}) or {}
+
+    model_name = agent_kwargs.get("model_name", "")
+    if not model_name:
+        model_name = (agent_kwargs.get("extra_env", {}) or {}).get("LLM_MODEL", "default")
+
+    result = {
+        # --- Identity ---
+        "task": task_name,
+        "agent": agent_name,
+        "model": model_name,
+        "run_tag": run_tag,
+
+        # --- Task metadata ---
+        "category": task_meta.get("category", "unknown"),
+        "tags": task_meta.get("tags", []),
+
+        # --- Scores ---
+        "score": score,
+        "passed": passed,
+        "dimension_scores": dimension_scores,
+
+        # --- Evaluation detail ---
+        "feedback": eval_result.get("feedback", error or ""),
+        "evidence_summary": details.get("evidence_summary", ""),
+        "dimension_reasoning": details.get("dimension_reasoning", {}),
+
+        # --- Timing ---
+        "started_at": started_at,
+        "finished_at": finished_at,
+
+        # --- Artifacts ---
+        "artifacts": artifacts or [],
+
+        # --- Error ---
+        "error": error,
+    }
+    if extracted_skill:
+        result["extracted_skill"] = extracted_skill
+    return result
+
+
 # ── PatchedModalEnvironment ────────────────────────────────────────────────────
-# Defined as a factory so it's constructed inside the Modal container where
-# the harbor SDK is available.
 
 def _make_harbor_env(session_id: str, trial_paths):
     """
     Returns a ModalEnvironment subclass instance that:
     1. Uses ghcr.io/agent-infra/sandbox:latest instead of a per-task Dockerfile.
     2. Uses session_id as the Modal app name to avoid the "__harbor__" locking bug.
+    3. Cleans up the ephemeral app on stop to avoid hitting the 200 app limit.
     """
     import modal as _modal
     from harbor.environments.modal import ModalEnvironment
@@ -288,6 +410,18 @@ def _make_harbor_env(session_id: str, trial_paths):
                 str(EnvironmentPaths.verifier_dir), parents=True
             )
 
+        async def stop(self, delete: bool = True) -> None:
+            """Stop sandbox and delete the ephemeral app to avoid hitting the 200 app limit."""
+            try:
+                await super().stop(delete=delete)
+            except Exception:
+                pass
+            try:
+                app = await _modal.App.lookup.aio(name=self.session_id)
+                await app.stop.aio()
+            except Exception:
+                pass
+
     return _PatchedEnv(
         environment_dir=Path("/tmp"),   # unused — start() is overridden
         environment_name=session_id,
@@ -304,6 +438,7 @@ async def _run_task(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
+    task_meta: dict,
     skill_config: dict | None = None,
 ) -> dict:
     """
@@ -311,7 +446,7 @@ async def _run_task(
     1. Create a Harbor-managed Modal Sandbox with the base sandbox image.
     2. Harbor installs the agent (claude-code, codex, …) in the sandbox.
     3. Agent runs; Harbor captures stdout to local (volume-mounted) logs.
-    4. Parse stdout, evaluate with test_task.py, return result dict.
+    4. Parse stdout, evaluate with test_task.py, return enriched result dict.
     """
     from harbor.agents.factory import AgentFactory
     from harbor.models.agent.context import AgentContext
@@ -319,9 +454,13 @@ async def _run_task(
     from harbor.models.trial.paths import TrialPaths
 
     skill_config = skill_config or {}
+    started_at = datetime.now(timezone.utc).isoformat()
 
     task_dir = TASKS_BASE / task_name
     instruction = (task_dir / "instruction.md").read_text().strip()
+
+    # Tell agents to save output files to /output/
+    instruction += OUTPUT_DIR_INSTRUCTION
 
     # Phase 2: inject relevant skills into instruction
     if skill_config.get("use_skills"):
@@ -338,9 +477,17 @@ async def _run_task(
             )
             print(f"[{task_name}] Injected {len(skill_bodies)} skill(s)")
 
-    # For codex: prevent clarifying questions, request file contents in stdout
+    # Agent-specific instruction wrapping
     if agent_name == "codex":
         instruction = _wrap_codex_instruction(instruction)
+    elif agent_name == "claude-code":
+        instruction = (
+            "IMPORTANT: Do NOT use plan mode. Implement the solution directly and immediately. "
+            "Do not ask clarifying questions. Make reasonable assumptions and proceed. "
+            "After creating any files, print each file's complete contents to stdout "
+            "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
+            "Task:\n" + instruction
+        )
 
     trial_dir = RESULTS_BASE / run_tag / "trials" / task_name
     trial_dir.mkdir(parents=True, exist_ok=True)
@@ -357,7 +504,21 @@ async def _run_task(
     # Expose API keys to the evaluator (test_task.py) which runs in this process.
     # extra_env is only forwarded to the sandbox by Harbor, not to this container.
     for k, v in agent_kwargs.get("extra_env", {}).items():
-        os.environ.setdefault(k, v)
+        os.environ[k] = v  # force override
+
+    # Judge (test_task.py) always needs OPENAI_API_KEY + OPENAI_BASE_URL.
+    # For non-OpenAI agents (e.g. claude-code via UniAPI), derive from available keys.
+    extra = agent_kwargs.get("extra_env", {})
+    if "OPENAI_API_KEY" not in extra:
+        fallback_key = extra.get("ANTHROPIC_API_KEY") or extra.get("GEMINI_API_KEY") or ""
+        if fallback_key:
+            os.environ["OPENAI_API_KEY"] = fallback_key
+    if "OPENAI_BASE_URL" not in extra:
+        for url_key in ("ANTHROPIC_BASE_URL", "OPENAI_BASE_URL", "GEMINI_API_BASE_URL"):
+            base = extra.get(url_key, "")
+            if "uniapi" in base:
+                os.environ["OPENAI_BASE_URL"] = base.rsplit("/", 1)[0] + "/v1"
+                break
 
     agent = AgentFactory.create_agent_from_name(
         AgentName(agent_name),
@@ -372,8 +533,12 @@ async def _run_task(
         await env.start(force_build=False)
     except Exception as exc:
         print(f"[{task_name}] Sandbox start failed: {exc}")
-        return {"task": task_name, "score": 0.0, "error": str(exc), "run_tag": run_tag}
+        return _build_result(
+            task_name, agent_name, agent_kwargs, run_tag, task_meta,
+            started_at, score=0.0, passed=False, error=str(exc),
+        )
 
+    collected_artifacts: list[str] = []
     try:
         print(f"[{task_name}] Setting up agent ({agent_name}) …")
         await agent.setup(env)
@@ -383,38 +548,63 @@ async def _run_task(
     except Exception as exc:
         print(f"[{task_name}] Agent error: {exc}")
     finally:
-        # Collect any files the agent wrote to the sandbox home directory
+        # Collect artifacts from /output/ (primary) with fallback to /root /home
+        artifacts_dir = RESULTS_BASE / run_tag / "artifacts" / task_name
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+
         try:
             result_obj = await env._sandbox.exec.aio(
                 "bash", "-c",
-                r"find /root /home -maxdepth 4 \( -name '*.html' -o -name '*.py' -o -name '*.js' -o -name '*.ts' -o -name '*.sh' -o -name '*.json' -o -name '*.txt' \) 2>/dev/null | head -20"
+                f"find {AGENT_OUTPUT_DIR} -type f 2>/dev/null | head -50"
             )
             await result_obj.wait.aio()
-            file_list = (await result_obj.stdout.read.aio()).decode(errors="replace").strip()
-            if file_list:
-                for fpath in file_list.splitlines():
-                    fpath = fpath.strip()
-                    if not fpath:
-                        continue
-                    try:
-                        cat_obj = await env._sandbox.exec.aio("cat", fpath)
-                        await cat_obj.wait.aio()
-                        content = (await cat_obj.stdout.read.aio()).decode(errors="replace")
-                        fname = fpath.split("/")[-1]
-                        (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
-                        print(f"[{task_name}] Collected artifact: {fpath} ({len(content)} chars)")
-                    except Exception:
-                        pass
+            output_files = await _read_stdout(result_obj)
+
+            all_files = set()
+            if output_files:
+                all_files.update(output_files.splitlines())
+
+            # Fallback: scan /root /home if /output/ was empty
+            if not all_files:
+                fallback_obj = await env._sandbox.exec.aio(
+                    "bash", "-c",
+                    r"find /root /home -maxdepth 4 \( -name '*.html' -o -name '*.py' "
+                    r"-o -name '*.js' -o -name '*.ts' -o -name '*.sh' -o -name '*.json' "
+                    r"-o -name '*.txt' \) 2>/dev/null | head -20"
+                )
+                await fallback_obj.wait.aio()
+                fallback_files = await _read_stdout(fallback_obj)
+                if fallback_files:
+                    all_files.update(fallback_files.splitlines())
+
+            for fpath in sorted(all_files):
+                fpath = fpath.strip()
+                if not fpath:
+                    continue
+                try:
+                    cat_obj = await env._sandbox.exec.aio("cat", fpath)
+                    await cat_obj.wait.aio()
+                    content = await _read_stdout(cat_obj)
+                    fname = fpath.split("/")[-1]
+
+                    (artifacts_dir / fname).write_text(content)
+                    (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
+                    collected_artifacts.append(fname)
+                    print(f"[{task_name}] Collected: {fpath} ({len(content)} chars)")
+                except Exception:
+                    pass
+
+            if all_files:
+                await results_volume.commit.aio()
         except Exception as collect_exc:
             print(f"[{task_name}] Artifact collection skipped: {collect_exc}")
+
         try:
             await env.stop(delete=True)
         except Exception:
             pass
 
     # ── Evaluate ──────────────────────────────────────────────────────────────
-    # Harbor captured each exec's stdout to trial_paths.agent_dir/command-{i}/stdout.txt
-    # For most agents, command-1 is the actual agent run (command-0 is setup).
     agent_files = list(trial_paths.agent_dir.rglob("*")) if trial_paths.agent_dir.exists() else []
     print(f"[{task_name}] Agent dir files: {[str(f.relative_to(trial_paths.agent_dir)) for f in agent_files if f.is_file()]}")
 
@@ -483,21 +673,17 @@ async def _run_task(
         else:
             print(f"[{task_name}] Not storing skill: {decision.get('reason', '')}")
 
-    summary = {
-        "task": task_name,
-        "agent": agent_name,
-        "run_tag": run_tag,
-        "score": score,
-        "passed": passed,
-        "feedback": eval_result.get("feedback", ""),
-    }
-    if extracted_skill:
-        summary["extracted_skill"] = extracted_skill
+    result = _build_result(
+        task_name, agent_name, agent_kwargs, run_tag, task_meta,
+        started_at, score=score, passed=passed,
+        eval_result=eval_result,
+        artifacts=collected_artifacts,
+        extracted_skill=extracted_skill,
+    )
 
-    (trial_dir / "result.json").write_text(json.dumps(summary, indent=2))
-
+    (trial_dir / "result.json").write_text(json.dumps(result, indent=2))
     print(f"[{task_name}] Done — score={score:.2f} passed={passed}")
-    return summary
+    return result
 
 
 # ── Modal Functions ───────────────────────────────────────────────────────────
@@ -513,10 +699,11 @@ async def run_harbor_task(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
+    task_meta: dict,
     skill_config: dict | None = None,
 ) -> dict:
     """Run a single task with a Harbor agent. Used by run_harbor_experiment via starmap."""
-    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, skill_config)
+    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, task_meta, skill_config)
 
 
 @app.function(
@@ -538,18 +725,17 @@ async def run_harbor_experiment(
     Dispatches one run_harbor_task per task (parallel via starmap).
     """
     tasks = _discover_tasks(tasks_dir, first_n, task_names_csv)
+    model_name = agent_kwargs.get("model_name", "")
 
     print(f"\n=== Harbor Experiment: {run_tag} ===")
-    print(f"Agent : {agent_name}")
+    print(f"Agent : {agent_name}  Model: {model_name}")
     print(f"Tasks : {len(tasks)}")
-    if agent_kwargs:
-        print(f"Kwargs: {agent_kwargs}")
     if skill_config:
         print(f"Skills: {skill_config}")
 
     results = []
     async for result in run_harbor_task.starmap.aio(
-        [(t, agent_name, agent_kwargs, run_tag, skill_config) for t in tasks]
+        [(t["task_name"], agent_name, agent_kwargs, run_tag, t, skill_config) for t in tasks]
     ):
         results.append(result)
         n_done = len(results)
@@ -562,20 +748,49 @@ async def run_harbor_experiment(
             print(f"   running avg = {sum(scores) / len(scores):.3f}")
 
     scores = [r["score"] for r in results if isinstance(r.get("score"), (int, float))]
+    errors = [r for r in results if r.get("error")]
     skills = {}
     for r in results:
         if r.get("extracted_skill"):
             skills[r["task"]] = r["extracted_skill"]
 
+    # Per-category breakdown
+    cat_scores: dict[str, list[float]] = {}
+    for r in results:
+        cat = r.get("category", "unknown")
+        cat_scores.setdefault(cat, []).append(r.get("score", 0.0))
+    category_summary = {
+        cat: {
+            "count": len(ss),
+            "mean_score": round(sum(ss) / len(ss), 3) if ss else 0,
+            "pass_rate": round(100 * sum(1 for s in ss if s >= 3.0) / len(ss), 1) if ss else 0,
+        }
+        for cat, ss in sorted(cat_scores.items())
+    }
+
+    # Per-dimension averages
+    dim_totals: dict[str, list[float]] = {}
+    for r in results:
+        for dim, val in (r.get("dimension_scores") or {}).items():
+            if val is not None:
+                dim_totals.setdefault(dim, []).append(float(val))
+    dimension_averages = {
+        dim: round(sum(vs) / len(vs), 3) for dim, vs in sorted(dim_totals.items()) if vs
+    }
+
     summary = {
         "run_tag": run_tag,
         "agent": agent_name,
-        "model": agent_kwargs.get("model_name", ""),
+        "model": model_name,
         "tasks_dir": tasks_dir,
         "n_tasks": len(results),
         "n_passed": sum(1 for r in results if r.get("passed")),
-        "mean_score": sum(scores) / len(scores) if scores else 0.0,
+        "n_errors": len(errors),
+        "mean_score": round(sum(scores) / len(scores), 3) if scores else 0.0,
+        "pass_rate_pct": round(100 * sum(1 for r in results if r.get("passed")) / len(results), 1) if results else 0,
         "skills_extracted": len(skills),
+        "category_summary": category_summary,
+        "dimension_averages": dimension_averages,
         "results": results,
     }
 
@@ -586,9 +801,19 @@ async def run_harbor_experiment(
 
     print(f"\n=== Experiment Complete ===")
     print(f"Mean score : {summary['mean_score']:.3f}")
-    print(f"Pass rate  : {summary['n_passed']}/{summary['n_tasks']}")
+    print(f"Pass rate  : {summary['n_passed']}/{summary['n_tasks']} ({summary['pass_rate_pct']}%)")
+    print(f"Errors     : {summary['n_errors']}")
+    if category_summary:
+        print(f"\nCategory breakdown:")
+        for cat, info in category_summary.items():
+            print(f"  {cat:30s}  n={info['count']:3d}  avg={info['mean_score']:.2f}  pass={info['pass_rate']}%")
+    if dimension_averages:
+        print(f"\nDimension averages:")
+        for dim, avg in dimension_averages.items():
+            print(f"  {dim:30s}  {avg:.2f}")
     if skills:
-        print(f"Skills     : {len(skills)} extracted")
+        print(f"\nSkills     : {len(skills)} extracted")
+
     return {"summary": summary, "skills": skills}
 
 
@@ -704,7 +929,8 @@ def main(collect: str = "", list_runs: bool = False):
     modal run harbor_modal_runner.py --collect <run-tag>
     modal run harbor_modal_runner.py --list-runs
     """
-    modal_bin = os.path.expanduser("~/.local/bin/modal")
+    import shutil
+    modal_bin = shutil.which("modal") or os.path.expanduser("~/.local/bin/modal")
 
     if list_runs:
         subprocess.run([modal_bin, "volume", "ls", "evolve-bench-results"])
@@ -715,7 +941,7 @@ def main(collect: str = "", list_runs: bool = False):
         out_dir.mkdir(parents=True, exist_ok=True)
         print(f"Downloading {collect} → {out_dir}")
         subprocess.run(
-            [modal_bin, "volume", "get", "evolve-bench-results", collect, str(out_dir)],
+            [modal_bin, "volume", "get", "evolve-bench-results", collect, str(out_dir), "--force"],
             check=True,
         )
         print(f"Done. Results in {out_dir}")

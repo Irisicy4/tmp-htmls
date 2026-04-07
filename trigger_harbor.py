@@ -43,40 +43,66 @@ def _load_env(env_file: Path = Path(".env")):
             os.environ[key] = val
 
 
+def _detect_uniapi() -> tuple[str, str]:
+    """Return (key, base_url) if UniAPI proxy is configured, else ("", "")."""
+    key = os.environ.get("UNIAPI_KEY", "")
+    base = os.environ.get("UNIAPI_BASE", "")
+    if key and base:
+        return key, base
+    return "", ""
+
+
+_DEFAULT_MODELS = {
+    "claude-code": "claude-sonnet-4-20250514",
+    "codex": "gpt-4.1-mini",
+    "gemini-cli": "gemini-2.5-flash",
+    "aider": "gpt-4.1-mini",
+}
+
+
 def _build_agent_kwargs(agent_name: str, model: str) -> dict:
     """
     Build the agent-specific kwargs dict that harbor_modal_runner passes to
     AgentFactory.create_agent_from_name(..., **agent_kwargs).
 
-    Credentials are injected here so the Modal container picks them up via
-    extra_env rather than requiring a correctly configured Modal Secret.
+    If UNIAPI_KEY is set, automatically derives per-provider keys and base URLs.
+    Otherwise falls back to provider-specific env vars (OPENAI_API_KEY, etc.).
     """
     extra_env: dict[str, str] = {}
+    uniapi_key, uniapi_base = _detect_uniapi()
 
     if agent_name == "claude-code":
-        key = os.environ.get("ANTHROPIC_API_KEY", "")
+        key = os.environ.get("ANTHROPIC_API_KEY", "") or uniapi_key
         base_url = os.environ.get("ANTHROPIC_BASE_URL", "")
+        if not base_url and uniapi_base:
+            base_url = f"{uniapi_base}/claude"
         if key:
             extra_env["ANTHROPIC_API_KEY"] = key
         if base_url:
             extra_env["ANTHROPIC_BASE_URL"] = base_url
+            print(f"  [proxy] claude-code -> {base_url}")
 
     elif agent_name in ("codex", "aider"):
-        key = os.environ.get("OPENAI_API_KEY", "")
-        base_url = os.environ.get("OPENAI_BASE_URL", "") or os.environ.get("LLM_BASE_URL", "")
+        key = os.environ.get("OPENAI_API_KEY", "") or uniapi_key
+        base_url = os.environ.get("OPENAI_BASE_URL", "")
+        if not base_url and uniapi_base:
+            base_url = f"{uniapi_base}/v1"
         if key:
             extra_env["OPENAI_API_KEY"] = key
         if base_url:
             extra_env["OPENAI_BASE_URL"] = base_url
+            print(f"  [proxy] {agent_name} -> {base_url}")
 
     elif agent_name == "gemini-cli":
-        key = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
+        key = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "") or uniapi_key
         if key:
             extra_env["GEMINI_API_KEY"] = key
+        if uniapi_base:
+            extra_env["GEMINI_API_BASE_URL"] = f"{uniapi_base}/gemini"
+            print(f"  [proxy] gemini-cli -> {uniapi_base}/gemini")
 
-    # Fall back to LLM_MODEL from .env when no explicit --model given
     if not model:
-        model = os.environ.get("LLM_MODEL", "")
+        model = _DEFAULT_MODELS.get(agent_name, "")
 
     kwargs: dict = {}
     if extra_env:
