@@ -125,6 +125,12 @@ def main():
         default="",
         help="Custom run tag (default: auto timestamp)",
     )
+    parser.add_argument(
+        "--phase",
+        default="single",
+        choices=["single", "skill-experiment"],
+        help="single = one pass; skill-experiment = Phase 1 + Phase 2 (default: single)",
+    )
     args = parser.parse_args()
 
     _load_env()
@@ -132,18 +138,31 @@ def main():
     tag = args.run_tag or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     agent_kwargs = _build_agent_kwargs(args.agent, args.model)
 
-    fn = modal.Function.from_name("evolve-bench-harbor", "run_harbor_experiment")
-    handle = fn.spawn(
-        args.agent,
-        agent_kwargs,
-        tag,
-        tasks_dir=args.tasks_dir,
-        first_n=args.first_n,
-        task_names_csv=args.task_names,
-    )
+    if args.phase == "skill-experiment":
+        fn = modal.Function.from_name("evolve-bench-harbor", "run_harbor_skill_experiment")
+        fn.spawn(
+            args.agent,
+            agent_kwargs,
+            tag,
+            tasks_dir=args.tasks_dir,
+            first_n=args.first_n,
+            task_names_csv=args.task_names,
+        )
+        print(f"\nDispatched Harbor skill experiment (Phase 1 + Phase 2).")
+    else:
+        fn = modal.Function.from_name("evolve-bench-harbor", "run_harbor_experiment")
+        fn.spawn(
+            args.agent,
+            agent_kwargs,
+            tag,
+            tasks_dir=args.tasks_dir,
+            first_n=args.first_n,
+            task_names_csv=args.task_names,
+        )
+        print(f"\nDispatched Harbor experiment.")
 
-    print(f"\nDispatched Harbor experiment.")
     print(f"  Agent     : {args.agent}")
+    print(f"  Phase     : {args.phase}")
     print(f"  Run tag   : {tag}")
     print(f"  Tasks dir : {args.tasks_dir}")
     if args.first_n:

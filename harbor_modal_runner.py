@@ -48,6 +48,8 @@ harbor_image = (
         "shortuuid>=1.0",
     )
     .add_local_dir("tasks/batch-1", "/harbor-bench/tasks/batch-1", copy=True)
+    .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
+    .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
 )
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -302,6 +304,7 @@ async def _run_task(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
+    skill_config: dict | None = None,
 ) -> dict:
     """
     Run one task end-to-end:
@@ -315,8 +318,25 @@ async def _run_task(
     from harbor.models.agent.name import AgentName
     from harbor.models.trial.paths import TrialPaths
 
+    skill_config = skill_config or {}
+
     task_dir = TASKS_BASE / task_name
     instruction = (task_dir / "instruction.md").read_text().strip()
+
+    # Phase 2: inject relevant skills into instruction
+    if skill_config.get("use_skills"):
+        sys.path.insert(0, "/harness")
+        from skill_store import SkillStore
+        store = SkillStore(skills_dir=skill_config.get("skills_dir", "/skills"))
+        skill_bodies = store.search_skills(instruction, top_k=3)
+        if skill_bodies:
+            combined = "\n\n---\n\n".join(skill_bodies)
+            instruction = (
+                "Here are some relevant strategies from similar past tasks:\n\n"
+                f"{combined}\n\n---\n\nNow, here is your actual task:\n\n"
+                + instruction
+            )
+            print(f"[{task_name}] Injected {len(skill_bodies)} skill(s)")
 
     # For codex: prevent clarifying questions, request file contents in stdout
     if agent_name == "codex":
@@ -328,8 +348,9 @@ async def _run_task(
     trial_paths = TrialPaths(trial_dir=trial_dir)
     trial_paths.mkdir()
 
-    # Modal app names: max 64 chars, alphanumeric + hyphens
-    session_id = f"hm-{run_tag}-{task_name}"[:63].rstrip("-")
+    # Modal app names: alphanumeric + dashes + dots + underscores only, max 64 chars
+    safe_tag = run_tag.replace("/", "-")
+    session_id = f"hm-{safe_tag}-{task_name}"[:63].rstrip("-")
 
     env = _make_harbor_env(session_id, trial_paths)
 
@@ -429,6 +450,39 @@ async def _run_task(
                   or eval_result.get("overall_score", 0))
     passed = bool(eval_result.get("passed", False))
 
+    # Phase 1: extract and store skill if result is good enough
+    extracted_skill = None
+    if skill_config.get("store_skills"):
+        sys.path.insert(0, "/harness")
+        from skill_extractor import SkillExtractor
+        from skill_store import SkillStore
+
+        task_data = {"task_name": task_name, "instruction": instruction}
+        result_for_skill = {**result_dict, "instruction": instruction}
+        config_for_skill = {
+            "store_skills": True,
+            "skill_score_threshold": skill_config.get("skill_score_threshold", 3.0),
+            "skill_model": skill_config.get("skill_model", "gpt-4o-mini"),
+            "skills_dir": skill_config.get("skills_dir", f"/results/{run_tag}/skills"),
+        }
+
+        extractor = SkillExtractor(model=config_for_skill["skill_model"])
+        decision = extractor.should_store(result_for_skill, eval_result, config_for_skill)
+        if decision.get("store"):
+            print(f"[{task_name}] Extracting skill: {decision.get('reason', '')}")
+            skill_md = extractor.extract_skill(task_data, result_for_skill, eval_result)
+            store = SkillStore(skills_dir=config_for_skill["skills_dir"])
+            metadata = {
+                "score": score,
+                "task_type": decision.get("task_type", ""),
+                "tags": decision.get("tags", []),
+            }
+            path = store.save_skill(skill_md, task_name, metadata)
+            extracted_skill = skill_md
+            print(f"[{task_name}] Saved skill: {path}")
+        else:
+            print(f"[{task_name}] Not storing skill: {decision.get('reason', '')}")
+
     summary = {
         "task": task_name,
         "agent": agent_name,
@@ -437,6 +491,9 @@ async def _run_task(
         "passed": passed,
         "feedback": eval_result.get("feedback", ""),
     }
+    if extracted_skill:
+        summary["extracted_skill"] = extracted_skill
+
     (trial_dir / "result.json").write_text(json.dumps(summary, indent=2))
 
     print(f"[{task_name}] Done — score={score:.2f} passed={passed}")
@@ -456,9 +513,10 @@ async def run_harbor_task(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
+    skill_config: dict | None = None,
 ) -> dict:
     """Run a single task with a Harbor agent. Used by run_harbor_experiment via starmap."""
-    return await _run_task(task_name, agent_name, agent_kwargs, run_tag)
+    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, skill_config)
 
 
 @app.function(
@@ -473,6 +531,7 @@ async def run_harbor_experiment(
     tasks_dir: str = "tasks/batch-1",
     first_n: int = 0,
     task_names_csv: str = "",
+    skill_config: dict | None = None,
 ) -> dict:
     """
     Orchestrate a full experiment run.
@@ -485,10 +544,12 @@ async def run_harbor_experiment(
     print(f"Tasks : {len(tasks)}")
     if agent_kwargs:
         print(f"Kwargs: {agent_kwargs}")
+    if skill_config:
+        print(f"Skills: {skill_config}")
 
     results = []
     async for result in run_harbor_task.starmap.aio(
-        [(t, agent_name, agent_kwargs, run_tag) for t in tasks]
+        [(t, agent_name, agent_kwargs, run_tag, skill_config) for t in tasks]
     ):
         results.append(result)
         n_done = len(results)
@@ -501,14 +562,20 @@ async def run_harbor_experiment(
             print(f"   running avg = {sum(scores) / len(scores):.3f}")
 
     scores = [r["score"] for r in results if isinstance(r.get("score"), (int, float))]
+    skills = {}
+    for r in results:
+        if r.get("extracted_skill"):
+            skills[r["task"]] = r["extracted_skill"]
+
     summary = {
         "run_tag": run_tag,
         "agent": agent_name,
-        "agent_kwargs": agent_kwargs,
+        "model": agent_kwargs.get("model_name", ""),
         "tasks_dir": tasks_dir,
         "n_tasks": len(results),
         "n_passed": sum(1 for r in results if r.get("passed")),
         "mean_score": sum(scores) / len(scores) if scores else 0.0,
+        "skills_extracted": len(skills),
         "results": results,
     }
 
@@ -520,7 +587,113 @@ async def run_harbor_experiment(
     print(f"\n=== Experiment Complete ===")
     print(f"Mean score : {summary['mean_score']:.3f}")
     print(f"Pass rate  : {summary['n_passed']}/{summary['n_tasks']}")
-    return summary
+    if skills:
+        print(f"Skills     : {len(skills)} extracted")
+    return {"summary": summary, "skills": skills}
+
+
+@app.function(
+    image=harbor_image,
+    timeout=28800,  # 8 hours for full 2-phase experiment
+    volumes={str(RESULTS_BASE): results_volume},
+)
+async def run_harbor_skill_experiment(
+    agent_name: str,
+    agent_kwargs: dict,
+    run_tag: str,
+    tasks_dir: str = "tasks/batch-1",
+    first_n: int = 0,
+    task_names_csv: str = "",
+) -> dict:
+    """Full skill experiment: Phase 1 → extract skills → Phase 2 → compare."""
+
+    skills_dir = f"/results/{run_tag}/skills"
+
+    # ── Phase 1: run tasks, extract skills ──
+    phase1_tag = f"{run_tag}/phase1"
+    phase1_skill_config = {
+        "store_skills": True,
+        "skills_dir": skills_dir,
+        "skill_score_threshold": 3.0,
+        "skill_model": "gpt-4o-mini",
+    }
+    phase1_out = await run_harbor_experiment.remote.aio(
+        agent_name, agent_kwargs, phase1_tag,
+        tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names_csv,
+        skill_config=phase1_skill_config,
+    )
+
+    skills = phase1_out.get("skills", {})
+    print(f"\n>>> Phase 1 complete. Extracted {len(skills)} skill(s).")
+
+    # Ensure skills are persisted to Volume
+    if skills:
+        await results_volume.commit.aio()
+
+    # ── Phase 2: run tasks with skill injection ──
+    phase2_tag = f"{run_tag}/phase2"
+    phase2_skill_config = {
+        "use_skills": True,
+        "skills_dir": skills_dir,
+    }
+    phase2_out = await run_harbor_experiment.remote.aio(
+        agent_name, agent_kwargs, phase2_tag,
+        tasks_dir=tasks_dir, first_n=first_n, task_names_csv=task_names_csv,
+        skill_config=phase2_skill_config,
+    )
+
+    # ── Compare ──
+    p1 = phase1_out["summary"]
+    p2 = phase2_out["summary"]
+
+    p1_by_task = {r["task"]: r for r in p1["results"]}
+    p2_by_task = {r["task"]: r for r in p2["results"]}
+    all_tasks = sorted(set(p1_by_task) | set(p2_by_task))
+
+    improved, declined, unchanged = 0, 0, 0
+    for name in all_tasks:
+        s1 = p1_by_task.get(name, {}).get("score", 0)
+        s2 = p2_by_task.get(name, {}).get("score", 0)
+        delta = float(s2) - float(s1)
+        if delta > 0:
+            improved += 1
+        elif delta < 0:
+            declined += 1
+        else:
+            unchanged += 1
+
+    print("\n" + "=" * 60)
+    print("  RESULTS COMPARISON")
+    print("=" * 60)
+    print(f"{'Metric':<20} {'Phase 1':>10} {'Phase 2':>10} {'Delta':>10}")
+    print("-" * 52)
+    for key in ["mean_score", "n_passed"]:
+        v1, v2 = p1[key], p2[key]
+        delta = v2 - v1
+        sign = "+" if delta > 0 else ""
+        if isinstance(v1, float):
+            print(f"  {key:<18} {v1:>10.2f} {v2:>10.2f} {sign}{delta:>9.2f}")
+        else:
+            print(f"  {key:<18} {v1:>10d} {v2:>10d} {sign}{delta:>9d}")
+    print(f"\n  Improved: {improved}  |  Declined: {declined}  |  Unchanged: {unchanged}")
+    print(f"  Skills extracted: {len(skills)}")
+
+    comparison = {
+        "run_tag": run_tag,
+        "agent": agent_name,
+        "phase1": p1,
+        "phase2": p2,
+        "skills_extracted": len(skills),
+        "improved": improved,
+        "declined": declined,
+        "unchanged": unchanged,
+    }
+    comp_path = RESULTS_BASE / run_tag / "_comparison.json"
+    comp_path.parent.mkdir(parents=True, exist_ok=True)
+    comp_path.write_text(json.dumps(comparison, indent=2))
+    await results_volume.commit.aio()
+
+    return comparison
 
 
 # ── Local entrypoint ──────────────────────────────────────────────────────────
