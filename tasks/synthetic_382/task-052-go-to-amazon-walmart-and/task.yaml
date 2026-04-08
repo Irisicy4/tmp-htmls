@@ -1,0 +1,3 @@
+instruction: |
+  Go to Amazon, Walmart, and eBay, and search for electric kitchen blenders under $80. Use each site's filters to narrow results to models with at least 4-star ratings and extract product names, prices, and seller ratings for the top 5 results on each platform.
+# Row 170 | ability: web_navigation | domain: Shopping | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Visit the Sephora website and use their foundation shade match tool. Input 'light skin' with neutral undertones and select three foundations recommended by the tool. Complete the process and extract the recommended product names, prices, and shade details from the final screen.
+# Row 204 | ability: web_navigation | domain: Shopping | lang: en

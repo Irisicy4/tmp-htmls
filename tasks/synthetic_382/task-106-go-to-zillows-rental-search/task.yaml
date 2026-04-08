@@ -1,0 +1,3 @@
+instruction: |
+  Go to Zillow's rental search tool and extract detailed information about apartments available for rent in San Francisco, CA, with 2 bedrooms, under $3,000/month. Apply filters for pet-friendly properties, and collect data on the first 5 listings, including price, address, and key amenities.
+# Row 224 | ability: web_navigation | domain: Daily Activities | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Go to Google Sheets and create a tracker to compare monthly subscription box services. Research on Cratejoy.com, Birchbox.com, and FabFitFun.com to find three subscription boxes under $50/month. Populate the tracker with details about price, included items, user ratings, and shipping options.
+# Row 179 | ability: web_navigation | domain: Shopping | lang: en

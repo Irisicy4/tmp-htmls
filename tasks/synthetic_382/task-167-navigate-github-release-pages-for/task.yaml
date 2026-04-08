@@ -1,0 +1,3 @@
+instruction: |
+  Navigate GitHub release pages for three popular machine learning libraries (TensorFlow, PyTorch, and Scikit-learn) and extract breaking changes introduced between their last minor version updates (e.g., 2.x.x to 2.y.x). Ensure extracted details focus on API changes affecting backward compatibility.
+# Row 285 | ability: web_navigation | domain: Software Engineering | lang: en

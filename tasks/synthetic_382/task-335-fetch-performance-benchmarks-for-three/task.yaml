@@ -1,0 +1,3 @@
+instruction: |
+  Fetch performance benchmarks for three open-source vector databases (e.g., Milvus, Pinecone, Weaviate) using their documentation and GitHub pages. Calculate the most cost-effective option for storing and querying a dataset with 1 million vector embeddings, considering speed, scalability, and pricing. Recommend the best choice with supporting data.
+# Row 453 | ability: web_navigation | domain: Data & ML Engineering | lang: en

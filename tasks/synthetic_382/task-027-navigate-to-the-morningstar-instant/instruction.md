@@ -1,0 +1,1 @@
+Navigate to the Morningstar instant X-Ray tool and analyze a sample portfolio with the following asset allocation: 40% in SPDR S&P 500 ETF (SPY), 30% in Vanguard Total Bond Market ETF (BND), and 30% in iShares MSCI Emerging Markets ETF (EEM). Complete the workflow to produce a breakdown of the portfolio's sector composition, geographic allocation, and risk level.

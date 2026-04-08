@@ -1,0 +1,3 @@
+instruction: |
+  Go to OpenTable and find three restaurants in Los Angeles with outdoor seating and a price range of $15–30 per meal. Extract their names, ratings, and available reservation times for tomorrow evening between 6 PM and 9 PM.
+# Row 240 | ability: web_navigation | domain: Daily Activities | lang: en

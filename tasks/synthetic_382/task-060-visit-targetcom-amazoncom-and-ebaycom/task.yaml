@@ -1,0 +1,3 @@
+instruction: |
+  Visit Target.com, Amazon.com, and eBay.com, and search for wireless noise-canceling headphones. Apply filters to only show options priced between $150–$200, and extract the top 5 options from each site including name, price, and seller rating.
+# Row 178 | ability: web_navigation | domain: Shopping | lang: en

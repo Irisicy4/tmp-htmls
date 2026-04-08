@@ -1,0 +1,3 @@
+instruction: |
+  Research and compare three flight options from New York City (JFK) to Tokyo (NRT) departing on the 15th of next month and returning on the 22nd. Include major airlines, economy class tickets, and price, layover duration, and total travel time as criteria for comparison. Use Skyscanner, Kayak, and Expedia for your research.
+# Row 406 | ability: web_navigation | domain: Travel & Planning | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Use Google Sheets to create an automated issue tracking template for a software project. Include columns for issue ID, priority (with color-coded dropdown), status, description, assigned team member, and due date. Add sample data for three issues.
+# Row 270 | ability: web_navigation | domain: Software Engineering | lang: en

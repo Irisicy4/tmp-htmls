@@ -1,0 +1,3 @@
+instruction: |
+  Navigate YouTube’s trending page, filter for English-language videos, and extract the top 10 videos’ titles, creators, view counts, and upload dates. Save the extracted data as a structured list.
+# Row 352 | ability: web_navigation | domain: (Self) Media | lang: en

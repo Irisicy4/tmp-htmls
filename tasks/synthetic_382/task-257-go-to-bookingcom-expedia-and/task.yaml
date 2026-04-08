@@ -1,0 +1,3 @@
+instruction: |
+  Go to Booking.com, Expedia, and Hotels.com. Apply filters for 4-star hotels in Venice, Italy, with availability from June 1-7. Extract the top 5 matching options from each site, including price, guest rating, and distance to city center.
+# Row 375 | ability: web_navigation | domain: Travel & Planning | lang: en

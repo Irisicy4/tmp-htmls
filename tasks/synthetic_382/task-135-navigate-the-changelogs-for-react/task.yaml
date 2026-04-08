@@ -1,0 +1,3 @@
+instruction: |
+  Navigate the changelogs for React and Vue.js and extract all breaking changes introduced between their respective versions 17.0 and 18.0 for React, and 2.6 and 3.0 for Vue.js. Provide a summary of these changes categorized by feature or functionality.
+# Row 253 | ability: web_navigation | domain: Software Engineering | lang: en

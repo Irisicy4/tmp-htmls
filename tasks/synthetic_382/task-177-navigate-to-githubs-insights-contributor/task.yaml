@@ -1,0 +1,3 @@
+instruction: |
+  Navigate to GitHub's Insights Contributor Graph tool for Python's official repository. Extract the contributor stats for the last 6 months and summarize the top 3 contributors by commit count.
+# Row 295 | ability: web_navigation | domain: Software Engineering | lang: en

@@ -1,0 +1,1 @@
+Use Google Sheets to build a simple hyperparameter tuning tracker. Create columns for the following: model type, learning rate, batch size, optimizer, and accuracy. Populate the tracker with information for three sample experiments using accuracy data sourced from a Kaggle notebook or Google Colab. Create a summary sheet showing the experiment with the highest accuracy.

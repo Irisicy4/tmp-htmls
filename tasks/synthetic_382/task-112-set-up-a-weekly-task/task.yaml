@@ -1,0 +1,3 @@
+instruction: |
+  Set up a weekly task tracker in Notion to manage household chores. Create four categories: Cleaning, Cooking, Shopping, and Maintenance. Add 5 example tasks under each category and configure a filter to show only incomplete tasks. Save and report the final structure of the task tracker.
+# Row 230 | ability: web_navigation | domain: Daily Activities | lang: en

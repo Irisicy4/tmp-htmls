@@ -1,0 +1,3 @@
+instruction: |
+  Diagnose why a training pipeline for fine-tuning BERT on custom text data fails when using PyTorch Lightning. Investigate error logs on Stack Overflow, GitHub issues, and the official PyTorch Lightning documentation, and summarize the root cause and recommended fix.
+# Row 431 | ability: web_navigation | domain: Data & ML Engineering | lang: en

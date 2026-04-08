@@ -1,0 +1,3 @@
+instruction: |
+  A developer using Node.js reports an issue where 'node-fetch' fails with a 'TypeError [ERR_INVALID_ARG_TYPE]' error after upgrading to Node.js version 18. Investigate the root cause by reviewing the package's GitHub issues, documentation, and Node.js release notes. Provide the affected versions of 'node-fetch' and the recommended fix.
+# Row 282 | ability: web_navigation | domain: Software Engineering | lang: en

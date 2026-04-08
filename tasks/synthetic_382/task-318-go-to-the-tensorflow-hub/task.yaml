@@ -1,0 +1,3 @@
+instruction: |
+  Go to the TensorFlow Hub model repository and complete a full workflow to find the top 3 models for object detection that are compatible with TF 2.x. Report each model's name, description, and download size from the final result screen.
+# Row 436 | ability: web_navigation | domain: Data & ML Engineering | lang: en

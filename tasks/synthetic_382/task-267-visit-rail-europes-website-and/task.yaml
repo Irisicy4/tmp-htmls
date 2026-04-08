@@ -1,0 +1,3 @@
+instruction: |
+  Visit Rail Europe's website and complete the booking workflow for a round-trip train ticket from London to Edinburgh departing July 12 and returning July 14. Use filters for 'Standard Class' and report the total price and ticket terms shown on the final checkout screen.
+# Row 385 | ability: web_navigation | domain: Travel & Planning | lang: en

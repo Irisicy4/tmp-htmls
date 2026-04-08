@@ -1,0 +1,3 @@
+instruction: |
+  Use Google Sheets to create a weekly meal plan template with breakfast, lunch, and dinner slots for each day. Populate the plan with recipes sourced from three different recipe websites. Include links to each recipe in the sheet.
+# Row 217 | ability: web_navigation | domain: Daily Activities | lang: en

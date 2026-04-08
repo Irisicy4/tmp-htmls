@@ -1,0 +1,3 @@
+instruction: |
+  Use the npm package search tool and filter for libraries tagged 'image-processing' with at least 1,000 weekly downloads. Extract the top five packages based on weekly download stats and note their latest published versions.
+# Row 279 | ability: web_navigation | domain: Software Engineering | lang: en

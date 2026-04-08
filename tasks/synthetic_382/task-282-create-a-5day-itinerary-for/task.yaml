@@ -1,0 +1,3 @@
+instruction: |
+  Create a 5-day itinerary for a trip to Kyoto, Japan using Google Sheets. Include day-by-day plans for attractions such as Kinkaku-ji, Fushimi Inari Taisha, and Nishiki Market. Research the approximate admission fees and travel costs for each attraction on the Japan Guide website and Kyoto city's tourism board.
+# Row 400 | ability: web_navigation | domain: Travel & Planning | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Go to Google Cloud Platform's AI model comparison page and complete the workflow for comparing pre-trained ML models on text classification tasks. Select TensorFlow models and filter by those optimized for small devices like mobile phones. Report the top 3 models displayed along with their model names and specifications.
+# Row 420 | ability: web_navigation | domain: Data & ML Engineering | lang: en

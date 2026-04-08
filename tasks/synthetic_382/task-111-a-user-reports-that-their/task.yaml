@@ -1,0 +1,3 @@
+instruction: |
+  A user reports that their Google Maps directions fail to load when trying to navigate from Seattle to Portland, OR, on Safari. Investigate whether this issue is related to browser compatibility or a temporary outage. Use Google Maps Help Center, Safari support documentation, and Downdetector. Provide a diagnosis, affected browser versions, and recommended resolution options.
+# Row 229 | ability: web_navigation | domain: Daily Activities | lang: en

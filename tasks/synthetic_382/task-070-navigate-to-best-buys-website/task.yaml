@@ -1,0 +1,3 @@
+instruction: |
+  Navigate to Best Buy's website and complete the workflow for checking the availability of the latest Samsung Galaxy S series phone in ZIP code 90210. Report the model, price, and store availability.
+# Row 188 | ability: web_navigation | domain: Shopping | lang: en

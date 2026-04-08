@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost for a 7-day trip to Rome, Italy. Include live flight costs from Google Flights, average hotel rates from Hotels.com, and daily meal expenses averaged from TripAdvisor (assume 3 meals/day). Recommend a total budget for the trip, breaking down the cost sources.
+# Row 370 | ability: web_navigation | domain: Travel & Planning | lang: en

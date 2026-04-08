@@ -1,0 +1,3 @@
+instruction: |
+  Use the IKEA kitchen planner tool to set up a basic kitchen layout with specifications for a 10x12 ft space. Select cabinets, countertops, and appliances within the lowest price range and complete the workflow to generate a summary of the setup.
+# Row 172 | ability: web_navigation | domain: Shopping | lang: en

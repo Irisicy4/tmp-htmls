@@ -1,0 +1,3 @@
+instruction: |
+  Fetch the latest pricing for Amazon Web Services (AWS) EC2 instances, Azure Virtual Machines, and Google Cloud VMs for a similar configuration (8 vCPUs, 32GB RAM, Linux OS). Calculate the monthly cost for running these instances 24/7 and recommend the most cost-effective option.
+# Row 296 | ability: web_navigation | domain: Software Engineering | lang: en

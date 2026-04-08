@@ -1,0 +1,3 @@
+instruction: |
+  Complete a search workflow on npmjs.com to find packages for image compression. Apply filters for actively maintained packages with 1,000+ weekly downloads and extract the top three results with package name, description, and download count.
+# Row 263 | ability: web_navigation | domain: Software Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost for a 5-day trip to Bali, Indonesia, including round-trip airfare from Los Angeles, a mid-range hotel stay, and a daily budget for meals and activities. Use live data from flight booking websites and hotel platforms.
+# Row 362 | ability: web_navigation | domain: Travel & Planning | lang: en

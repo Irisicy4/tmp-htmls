@@ -1,0 +1,3 @@
+instruction: |
+  A developer reports that upgrading React to version 18.0 breaks compatibility with React Router v5. Investigate the root cause using GitHub issues, official React documentation, and community forums. Identify the affected version range and recommend a fix or workaround.
+# Row 290 | ability: web_navigation | domain: Software Engineering | lang: en

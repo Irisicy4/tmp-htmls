@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of buying a gaming console (PS5 or Xbox Series X) including shipping and extended warranties. Use pricing data from Amazon and Newegg for the consoles and shipping costs, and get warranty prices from Best Buy. Recommend the most cost-effective option with a breakdown of the cost components.
+# Row 213 | ability: web_navigation | domain: Shopping | lang: en

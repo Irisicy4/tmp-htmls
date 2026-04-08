@@ -1,0 +1,3 @@
+instruction: |
+  Go to Kaggle's dataset repository and use the search and filter tools to find three datasets suitable for training a multi-class image recognition model. Extract metadata for each dataset, including dataset name, source, size, number of classes, and download link.
+# Row 450 | ability: web_navigation | domain: Data & ML Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Find and compare three local gyms in Manhattan, NY. Research their monthly membership fees, amenities (e.g., pool, yoga classes, free weights), and customer reviews from their official websites and aggregator sites like Yelp. Create a table summarizing the key differences and recommend the best option for someone interested in strength training and group fitness classes.
+# Row 223 | ability: web_navigation | domain: Daily Activities | lang: en

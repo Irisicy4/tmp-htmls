@@ -1,0 +1,3 @@
+instruction: |
+  Research the best flights from New York City (JFK) to Tokyo (NRT) departing on December 10th and returning on December 20th. Compare options across Expedia, Kayak, and Skyscanner on price, layover duration, and airline ratings, then summarize the top 3 choices.
+# Row 366 | ability: web_navigation | domain: Travel & Planning | lang: en

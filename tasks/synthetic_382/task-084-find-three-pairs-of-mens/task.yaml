@@ -1,0 +1,3 @@
+instruction: |
+  Find three pairs of men's running shoes in size US 10 that are rated 4 stars or higher on Amazon. Use the filters to narrow down the options and extract details such as brand, price, and customer rating for each pair. Ensure the shoes are in stock and eligible for free shipping.
+# Row 202 | ability: web_navigation | domain: Shopping | lang: en

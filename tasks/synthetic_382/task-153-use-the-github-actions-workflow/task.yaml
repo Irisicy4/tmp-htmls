@@ -1,0 +1,3 @@
+instruction: |
+  Use the GitHub Actions workflow editor to simulate the creation of a CI/CD pipeline for a JavaScript application. Specify steps for linting, running tests, and deploying to Netlify. Report the configuration shown on the final confirmation screen.
+# Row 271 | ability: web_navigation | domain: Software Engineering | lang: en

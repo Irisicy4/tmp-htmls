@@ -1,0 +1,3 @@
+instruction: |
+  Use Google Sheets to create a budget tracker comparing the costs of furnishing a living room. Use price data for sofas, coffee tables, and area rugs from IKEA, Wayfair, and Overstock. Include columns for item type, description, price, and retailer.
+# Row 187 | ability: web_navigation | domain: Shopping | lang: en

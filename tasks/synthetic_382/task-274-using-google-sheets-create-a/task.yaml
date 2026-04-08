@@ -1,0 +1,3 @@
+instruction: |
+  Using Google Sheets, create a 5-day itinerary template for a trip to London, UK. Include columns for date, location, activity, cost, and transportation notes. Populate the template with data gathered from TripAdvisor, Visit London, and Transport for London.
+# Row 392 | ability: web_navigation | domain: Travel & Planning | lang: en

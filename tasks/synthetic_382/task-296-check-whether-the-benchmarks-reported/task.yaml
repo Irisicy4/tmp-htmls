@@ -1,0 +1,3 @@
+instruction: |
+  Check whether the benchmarks reported by OpenAI's GPT-4, Google's PaLM 2, and Meta's LLaMA 2 on common NLP datasets (e.g., SuperGLUE, SQuAD, or MMLU) are reproducible. Verify benchmark claims by cross-referencing leaderboard records, official papers, and GitHub repositories.
+# Row 414 | ability: web_navigation | domain: Data & ML Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Complete a flight booking price comparison workflow. Search for round-trip flights from New York (JFK) to London (LHR) on August 10-17, 2024. Use Skyscanner, Kayak, and Google Flights to select economy class, non-stop flights. Report the lowest fares from each platform.
+# Row 377 | ability: web_navigation | domain: Travel & Planning | lang: en

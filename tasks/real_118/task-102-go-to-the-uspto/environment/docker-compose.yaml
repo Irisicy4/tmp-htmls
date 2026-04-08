@@ -1,0 +1,6 @@
+# Build context is this directory (environment/).
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile

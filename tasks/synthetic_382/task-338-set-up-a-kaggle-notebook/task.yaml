@@ -1,0 +1,3 @@
+instruction: |
+  Set up a Kaggle notebook environment to preprocess a dataset for training a regression model. Configure the notebook to load a CSV dataset from Kaggle's repository, clean missing values, and visualize correlations using a heatmap. Report the final notebook setup and steps performed.
+# Row 456 | ability: web_navigation | domain: Data & ML Engineering | lang: en

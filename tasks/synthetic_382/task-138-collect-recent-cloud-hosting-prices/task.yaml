@@ -1,0 +1,3 @@
+instruction: |
+  Collect recent cloud hosting prices for AWS EC2, Google Cloud Compute Engine, and Microsoft Azure VMs (standard configurations). Calculate the total cost of running a medium-tier VM 24/7 for a month on each platform. Recommend the most cost-efficient platform based on the calculation.
+# Row 256 | ability: web_navigation | domain: Software Engineering | lang: en

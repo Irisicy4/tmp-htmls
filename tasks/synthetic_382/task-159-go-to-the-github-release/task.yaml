@@ -1,0 +1,3 @@
+instruction: |
+  Go to the GitHub release pages for React and Angular, and extract all major breaking changes listed for versions React 18 and Angular 16. Include URLs of the release notes and summarize the context of each breaking change.
+# Row 277 | ability: web_navigation | domain: Software Engineering | lang: en

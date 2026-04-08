@@ -1,0 +1,3 @@
+instruction: |
+  Compare the top 3 flight options from New York City (JFK) to Tokyo (Narita Airport) for a hypothetical round-trip in May. Include details on price, travel time, layovers, and airline reviews. Use Google Flights, Expedia, and SkyScanner for your research.
+# Row 382 | ability: web_navigation | domain: Travel & Planning | lang: en

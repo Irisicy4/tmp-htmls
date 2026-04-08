@@ -1,0 +1,3 @@
+instruction: |
+  Book an appointment for a health check-up at a clinic in Los Angeles. Use the clinic’s website to enter a fictional patient profile (name: John Doe, DOB: January 1, 1990), select a date within the next two weeks, and report the confirmation details shown on the final page.
+# Row 218 | ability: web_navigation | domain: Daily Activities | lang: en

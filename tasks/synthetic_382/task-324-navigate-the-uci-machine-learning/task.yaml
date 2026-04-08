@@ -1,0 +1,3 @@
+instruction: |
+  Navigate the UCI Machine Learning Repository to find datasets labeled for 'classification' tasks with more than 500 samples. Extract the dataset names, number of features, and number of samples for the top 5 qualifying datasets.
+# Row 442 | ability: web_navigation | domain: Data & ML Engineering | lang: en

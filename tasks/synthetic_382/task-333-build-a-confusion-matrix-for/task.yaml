@@ -1,0 +1,3 @@
+instruction: |
+  Build a confusion matrix for a mock dataset using Google Sheets. Input the class predictions and ground truth values provided in a fictional JSON snippet. Populate the matrix showing counts for true positives, false negatives, false positives, and true negatives for each class.
+# Row 451 | ability: web_navigation | domain: Data & ML Engineering | lang: en

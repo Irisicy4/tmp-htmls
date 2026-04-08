@@ -1,0 +1,3 @@
+instruction: |
+  Book a haircut appointment at a salon in San Francisco using Booksy.com. Search for salons specializing in men's haircuts, select one with at least four stars, and proceed through the multi-step booking workflow, choosing an available slot for next Saturday. Report the salon name, appointment time, and price shown at the final step.
+# Row 250 | ability: web_navigation | domain: Daily Activities | lang: en

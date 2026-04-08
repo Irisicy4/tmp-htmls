@@ -1,0 +1,3 @@
+instruction: |
+  A user reports that they purchased an espresso machine from Amazon, but the instructions say to use pods only, even though the product description states it is compatible with ground coffee. Investigate the issue using the Amazon product page, customer reviews, and FAQs, and provide a diagnosis and resolution path.
+# Row 175 | ability: web_navigation | domain: Shopping | lang: en

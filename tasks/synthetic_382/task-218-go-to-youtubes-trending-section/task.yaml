@@ -1,0 +1,3 @@
+instruction: |
+  Go to YouTube's trending section, filter for videos in the 'Music' category, and extract the top 10 trending videos with their title, channel name, and views. Additionally, visit Twitter and check any tweets mentioning these videos for audience sentiment keywords (e.g., 'love', 'hate', 'favorite').
+# Row 336 | ability: web_navigation | domain: (Self) Media | lang: en

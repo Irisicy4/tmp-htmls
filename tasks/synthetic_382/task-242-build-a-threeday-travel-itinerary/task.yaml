@@ -1,0 +1,3 @@
+instruction: |
+  Build a three-day travel itinerary for Paris in December using a Google Sheets template. Include day-by-day activities such as visiting landmarks, dining recommendations, and estimated costs for each activity.
+# Row 360 | ability: web_navigation | domain: Travel & Planning | lang: en

@@ -1,0 +1,1 @@
+Verify whether TikTok has updated its ad policy regarding targeting underage users by checking TikTok's official policy page, any recent announcements on their newsroom, and coverage on a reputable marketing news site like Marketing Dive. State whether the policy has changed, when it was updated, and what the change entails.

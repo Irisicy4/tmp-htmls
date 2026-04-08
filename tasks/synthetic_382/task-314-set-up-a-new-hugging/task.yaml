@@ -1,0 +1,3 @@
+instruction: |
+  Set up a new Hugging Face Space for training a sentiment analysis model on the Amazon review dataset. Configure the environment by adding the dataset, specifying training parameters, and setting up a reporting dashboard for loss and accuracy.
+# Row 432 | ability: web_navigation | domain: Data & ML Engineering | lang: en

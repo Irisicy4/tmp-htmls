@@ -1,0 +1,3 @@
+instruction: |
+  Use the Zipcar website to complete a search for car availability near Boston, MA, for this Saturday. Filter for vehicles that seat at least 5 passengers and report the total number of available cars along with their hourly rates.
+# Row 242 | ability: web_navigation | domain: Daily Activities | lang: en

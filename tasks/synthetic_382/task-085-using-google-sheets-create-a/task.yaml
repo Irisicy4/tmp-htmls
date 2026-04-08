@@ -1,0 +1,3 @@
+instruction: |
+  Using Google Sheets, create a product comparison table for gaming monitors under $400. Include data on resolution, refresh rate, screen size, and customer reviews extracted from Amazon, Newegg, and Walmart. Share the link to the publicly accessible spreadsheet along with the data filled in.
+# Row 203 | ability: web_navigation | domain: Shopping | lang: en

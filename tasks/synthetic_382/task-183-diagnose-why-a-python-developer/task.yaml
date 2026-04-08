@@ -1,0 +1,3 @@
+instruction: |
+  Diagnose why a Python developer might encounter the error 'ImportError: cannot import name XYZ from module ABC' while working with 'Flask' version 2.2 and its extensions. Navigate community forums, GitHub issues, and the official Flask documentation to find the root cause, affected version range, and a recommended fix.
+# Row 301 | ability: web_navigation | domain: Software Engineering | lang: en

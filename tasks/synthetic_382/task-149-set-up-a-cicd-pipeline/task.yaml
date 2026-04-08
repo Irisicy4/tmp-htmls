@@ -1,0 +1,3 @@
+instruction: |
+  Set up a CI/CD pipeline on CircleCI using the publicly accessible configuration generator. Use Docker as the build environment and add steps to run linting using ESLint, execute tests, and deploy to Netlify. Report the generated configuration file.
+# Row 267 | ability: web_navigation | domain: Software Engineering | lang: en

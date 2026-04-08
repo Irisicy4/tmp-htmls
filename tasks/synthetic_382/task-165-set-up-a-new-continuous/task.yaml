@@ -1,0 +1,3 @@
+instruction: |
+  Set up a new continuous integration workflow for a JavaScript project using GitHub Actions. Create a YAML file that runs tests on Node.js versions 16 and 18, installing dependencies via npm and running `npm test`. Use GitHub's workflow configuration documentation.
+# Row 283 | ability: web_navigation | domain: Software Engineering | lang: en

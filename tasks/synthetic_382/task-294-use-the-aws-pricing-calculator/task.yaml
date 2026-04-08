@@ -1,0 +1,3 @@
+instruction: |
+  Use the AWS Pricing Calculator, enter specifications for training a machine learning model with 2 NVIDIA A100 GPUs for 100 training hours, and select necessary compute and storage options. Complete the workflow and report the estimated total cost shown at the final screen.
+# Row 412 | ability: web_navigation | domain: Data & ML Engineering | lang: en

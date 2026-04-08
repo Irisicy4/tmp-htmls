@@ -1,0 +1,3 @@
+instruction: |
+  Go to Social Blade, SimilarWeb, and Statista. Extract the monthly traffic data, engagement metrics, and demographics for the top 3 social media platforms globally (e.g., Facebook, Instagram, TikTok). Organize the extracted data into a CSV file with clear labeling.
+# Row 312 | ability: web_navigation | domain: (Self) Media | lang: en

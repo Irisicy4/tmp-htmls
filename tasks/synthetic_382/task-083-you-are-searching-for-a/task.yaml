@@ -1,0 +1,3 @@
+instruction: |
+  You are searching for a high-quality espresso machine under $300. Compare the top 3 espresso machines available on Amazon, Best Buy, and Walmart based on their price, customer ratings, warranty period, and additional features (e.g. milk frother, programmable settings). Provide a comparison chart summarizing your findings.
+# Row 201 | ability: web_navigation | domain: Shopping | lang: en

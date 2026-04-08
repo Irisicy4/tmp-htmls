@@ -1,0 +1,3 @@
+instruction: |
+  Use Expedia to complete the flight booking workflow for a one-way trip from New York City (JFK) to London Heathrow (LHR) on December 15th. Select economy class with the cheapest available ticket and report the flight details including airline, departure time, and price.
+# Row 361 | ability: web_navigation | domain: Travel & Planning | lang: en

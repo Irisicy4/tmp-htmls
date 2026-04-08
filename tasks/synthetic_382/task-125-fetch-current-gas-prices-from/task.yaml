@@ -1,0 +1,3 @@
+instruction: |
+  Fetch current gas prices from AAA Gas Prices and calculate the estimated cost of a round trip from Denver to Aspen (360 miles total) for a car averaging 25 miles per gallon. Recommend whether using a carpool option (costing $50 per person for 3 people) is cheaper.
+# Row 243 | ability: web_navigation | domain: Daily Activities | lang: en

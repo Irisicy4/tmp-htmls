@@ -1,0 +1,3 @@
+instruction: |
+  Go to Twitter's trending topics page, Reddit's 'r/AskReddit' popular posts section, and YouTube's trending tab. Extract the top 5 trending topics or videos from each platform with engagement metrics (e.g., likes, responses, or views).
+# Row 304 | ability: web_navigation | domain: (Self) Media | lang: en

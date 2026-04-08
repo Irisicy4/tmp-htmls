@@ -1,0 +1,3 @@
+instruction: |
+  Fetch the current follower count for three popular creators across Instagram, TikTok, and YouTube. Calculate their engagement rates using their last 5 posts/videos (likes+comments/views). Recommend the creator with the highest engagement rate and explain your calculation.
+# Row 331 | ability: web_navigation | domain: (Self) Media | lang: en

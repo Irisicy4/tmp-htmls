@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of purchasing an Apple MacBook Air, including the base price from Apple, a carrying case from Amazon, and a Magic Mouse from Walmart. Include shipping costs and applicable taxes from each site, assuming a shipping address in California.
+# Row 189 | ability: web_navigation | domain: Shopping | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Compare the top 5 electric kettles for under $50 from Amazon, Walmart, and Target. Evaluate their features, including capacity, heating speed, safety mechanisms, and user reviews. Summarize the findings in a table.
+# Row 185 | ability: web_navigation | domain: Shopping | lang: en

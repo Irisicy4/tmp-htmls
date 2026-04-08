@@ -1,0 +1,3 @@
+instruction: |
+  A user reports that fine-tuning a T5 model using Hugging Face Transformers fails when using version 4.30.0 due to a 'KeyError: attention_mask'. Investigate the root cause using Hugging Face documentation, GitHub issues, and community forums. Provide the affected version range and the official recommended fix.
+# Row 463 | ability: web_navigation | domain: Data & ML Engineering | lang: en

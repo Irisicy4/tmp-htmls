@@ -1,0 +1,3 @@
+instruction: |
+  Fetch the current CPM (Cost Per Mille) rates for Instagram ads, YouTube ads, and TikTok ads from their respective advertising documentation pages. Calculate the estimated revenue for 1 million views on each platform and recommend the platform with the highest payout.
+# Row 307 | ability: web_navigation | domain: (Self) Media | lang: en

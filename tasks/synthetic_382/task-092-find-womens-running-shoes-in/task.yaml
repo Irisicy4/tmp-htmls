@@ -1,0 +1,3 @@
+instruction: |
+  Find women's running shoes in size 8 with arch support priced under $120 on Zappos. Use the filtering options to narrow down results, and extract the top 5 options with brand names, prices, ratings, and colors available.
+# Row 210 | ability: web_navigation | domain: Shopping | lang: en

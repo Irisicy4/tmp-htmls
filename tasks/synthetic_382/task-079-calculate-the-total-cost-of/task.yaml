@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of purchasing a gaming laptop from Newegg, including shipping fees, optional 2-year warranty, and sales tax for ZIP code 90001. Compare three laptops and recommend the best option based on features and total price.
+# Row 197 | ability: web_navigation | domain: Shopping | lang: en

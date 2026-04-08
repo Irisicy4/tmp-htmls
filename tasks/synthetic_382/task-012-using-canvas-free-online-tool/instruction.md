@@ -1,0 +1,1 @@
+Using Canva's free online tool, create a mockup of a YouTube video thumbnail for a video titled 'Top 5 Video Editing Tips in 2023.' Include a catchy headline, a relevant background image, and branded elements (e.g., logo or banner). Use free templates and images available on Canva.

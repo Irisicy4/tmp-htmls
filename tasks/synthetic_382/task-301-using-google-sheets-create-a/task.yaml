@@ -1,0 +1,3 @@
+instruction: |
+  Using Google Sheets, create a confusion matrix calculator for binary classification. Incorporate editable fields for true positives, false positives, true negatives, and false negatives, and calculate accuracy, precision, recall, and F1 score using formulas. Use example input values from scikit-learn documentation for testing.
+# Row 419 | ability: web_navigation | domain: Data & ML Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Fetch today's AWS Lambda pricing for 1 million requests, the cost for processing 100GB of data in S3, and the GPU processing cost for a hypothetical EC2 instance (p3.2xlarge). Calculate the estimated monthly cost of running an ML model inference pipeline with these components. Recommend the most cost-effective setup.
+# Row 445 | ability: web_navigation | domain: Data & ML Engineering | lang: en

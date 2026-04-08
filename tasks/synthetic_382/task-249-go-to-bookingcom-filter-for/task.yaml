@@ -1,0 +1,3 @@
+instruction: |
+  Go to Booking.com, filter for hotels in Venice, Italy with a check-in date of March 15th and check-out date of March 20th. Apply filters for 'free cancellation,' 'breakfast included,' and a guest rating of 8.0 or higher. Extract details of 5 matching hotels, including name, price per night, and distance to city center.
+# Row 367 | ability: web_navigation | domain: Travel & Planning | lang: en

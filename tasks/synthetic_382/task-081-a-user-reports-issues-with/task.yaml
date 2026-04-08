@@ -1,0 +1,3 @@
+instruction: |
+  A user reports issues with purchasing a refurbished laptop on eBay where the payment keeps failing. Investigate the problem by checking eBay's help center, forums, and live updates, and determine the root cause (e.g., payment gateway issues, seller restrictions). Provide the recommended resolution and step-by-step guidance.
+# Row 199 | ability: web_navigation | domain: Shopping | lang: en

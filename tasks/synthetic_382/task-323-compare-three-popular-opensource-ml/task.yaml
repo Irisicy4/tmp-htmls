@@ -1,0 +1,3 @@
+instruction: |
+  Compare three popular open-source ML libraries — TensorFlow, PyTorch, and JAX — on training speed, community support (GitHub stars, issues), and compatibility with TPU acceleration. Gather information from their documentation, GitHub repositories, and benchmark results from MLPerf.org.
+# Row 441 | ability: web_navigation | domain: Data & ML Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total trip cost for a 5-day excursion to Thailand (Bangkok and Phuket). Include airfare, mid-range hotel stays, daily meals, and local transport. Use data from Google Flights, Booking.com, and Numbeo for cost estimates.
+# Row 378 | ability: web_navigation | domain: Travel & Planning | lang: en

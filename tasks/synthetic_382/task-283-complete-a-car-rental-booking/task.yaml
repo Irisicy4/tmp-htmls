@@ -1,0 +1,3 @@
+instruction: |
+  Complete a car rental booking inquiry workflow on Hertz, Avis, and Enterprise for a compact car pickup in Los Angeles airport (LAX) on April 10th and drop-off on April 15th. Extract the quoted price, mileage limits, and included features at the final step.
+# Row 401 | ability: web_navigation | domain: Travel & Planning | lang: en

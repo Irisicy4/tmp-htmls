@@ -1,0 +1,3 @@
+instruction: |
+  Go to PyPI and GitHub to investigate the release notes and changelog for Django versions 4.1 and 4.2. Extract all breaking changes introduced in version 4.2, including affected APIs and migration instructions.
+# Row 269 | ability: web_navigation | domain: Software Engineering | lang: en

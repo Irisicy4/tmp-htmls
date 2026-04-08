@@ -1,0 +1,3 @@
+instruction: |
+  Use Google Sheets to create a weekly meal plan for a family of four based on recipes from Food Network, Allrecipes, and BBC Good Food. Include breakfast, lunch, and dinner for each day, along with the name of each dish and the website URL where the recipe can be found.
+# Row 249 | ability: web_navigation | domain: Daily Activities | lang: en

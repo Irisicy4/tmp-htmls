@@ -1,0 +1,3 @@
+instruction: |
+  Go to the npm website and search for packages tagged with 'eslint plugin'. Extract the top 10 packages sorted by weekly download count with their name, description, and last updated date.
+# Row 293 | ability: web_navigation | domain: Software Engineering | lang: en

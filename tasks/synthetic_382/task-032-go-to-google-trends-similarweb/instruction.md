@@ -1,0 +1,1 @@
+Go to Google Trends, Similarweb, and Ahrefs Free Keyword Generator to extract data on the top three trending search keywords related to 'electric cars' in the United States. For each keyword, provide search popularity metrics, estimated traffic, and related keywords provided by these platforms.

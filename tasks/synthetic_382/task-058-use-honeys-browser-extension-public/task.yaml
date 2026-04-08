@@ -1,0 +1,3 @@
+instruction: |
+  Use Honey's browser extension (public site interface) to configure a price-drop alert for a PlayStation 5 console on Amazon and Walmart. Set the target price to $450 and specify email notifications for when the prices drop below the threshold.
+# Row 176 | ability: web_navigation | domain: Shopping | lang: en

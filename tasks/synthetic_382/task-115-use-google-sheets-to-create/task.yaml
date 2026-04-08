@@ -1,0 +1,3 @@
+instruction: |
+  Use Google Sheets to create a weekly meal planner for a family of four. Include recipes sourced from Food Network, AllRecipes, and Epicurious for breakfast, lunch, and dinner. Ensure each meal is under 30 minutes to prepare.
+# Row 233 | ability: web_navigation | domain: Daily Activities | lang: en

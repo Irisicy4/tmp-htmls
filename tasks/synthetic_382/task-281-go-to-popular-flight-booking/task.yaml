@@ -1,0 +1,3 @@
+instruction: |
+  Go to popular flight booking websites and filter for flights from Chicago to Tokyo departing on March 15th and returning on March 25th. Extract economy class options with airlines offering baggage included and the lowest prices. Use sites like Kayak, Expedia, and Skyscanner.
+# Row 399 | ability: web_navigation | domain: Travel & Planning | lang: en

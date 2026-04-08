@@ -1,0 +1,3 @@
+instruction: |
+  A developer reports an issue where installing 'express-session' alongside 'passport' generates an authentication error. Search Express and Passport GitHub issues, Stack Overflow discussions, and their documentation to diagnose the root cause and locate an official or community-recommended fix.
+# Row 266 | ability: web_navigation | domain: Software Engineering | lang: en

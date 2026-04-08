@@ -1,0 +1,3 @@
+instruction: |
+  Create a Google Sheet to organize a shopping list for home office supplies under $200. Research affordable options for a desk, ergonomic chair, and monitor stand across Ikea, Staples, and Amazon. Categorize each item in the sheet with its price, store name, and availability link.
+# Row 211 | ability: web_navigation | domain: Shopping | lang: en

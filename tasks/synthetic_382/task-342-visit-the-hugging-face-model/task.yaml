@@ -1,0 +1,3 @@
+instruction: |
+  Visit the Hugging Face Model Hub, search for sentiment analysis models, and complete the filter workflow to show models trained on the IMDb dataset, with at least 90% accuracy and available for PyTorch. Report the names and links of the top 3 matching models.
+# Row 460 | ability: web_navigation | domain: Data & ML Engineering | lang: en

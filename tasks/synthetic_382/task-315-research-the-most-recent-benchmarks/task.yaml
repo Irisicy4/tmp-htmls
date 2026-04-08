@@ -1,0 +1,3 @@
+instruction: |
+  Research the most recent benchmarks for image classification models using the CIFAR-10 dataset. Compare 3 models from papers on arXiv based on accuracy, training time, and hardware requirements. Create a table summarizing your findings.
+# Row 433 | ability: web_navigation | domain: Data & ML Engineering | lang: en

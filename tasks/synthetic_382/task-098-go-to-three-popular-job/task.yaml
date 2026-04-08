@@ -1,0 +1,3 @@
+instruction: |
+  Go to three popular job posting sites, filter for 'Software Engineer' jobs in San Francisco with salaries over $100,000, and extract the top 5 listings from each. Include job title, company name, and salary range.
+# Row 216 | ability: web_navigation | domain: Daily Activities | lang: en

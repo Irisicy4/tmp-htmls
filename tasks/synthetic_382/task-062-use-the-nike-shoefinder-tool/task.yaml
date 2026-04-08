@@ -1,0 +1,3 @@
+instruction: |
+  Use the Nike shoe-finder tool (Nike.com) to find running shoes for men with size 11 feet and under $100, then apply filters for 'neutral stability' and lightweight. Report the top 3 shoe models displayed with their prices and descriptions.
+# Row 180 | ability: web_navigation | domain: Shopping | lang: en

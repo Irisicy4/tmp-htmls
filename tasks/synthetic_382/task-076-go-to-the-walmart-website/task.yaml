@@ -1,0 +1,3 @@
+instruction: |
+  Go to the Walmart website and search for baby strollers under $200. Apply filters for strollers that are lightweight and designed for travel. Extract the top 5 matching results with their prices, ratings, and seller details.
+# Row 194 | ability: web_navigation | domain: Shopping | lang: en

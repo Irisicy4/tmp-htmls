@@ -1,0 +1,3 @@
+instruction: |
+  Investigate five different cloud providers (AWS, GCP, Azure, DigitalOcean, and Linode) for deploying machine learning models. Calculate the monthly hosting cost for deploying a model using a GPU with 16GB RAM and running 24/7 for inference. Recommend the most cost-effective option and provide the calculation breakdown.
+# Row 461 | ability: web_navigation | domain: Data & ML Engineering | lang: en

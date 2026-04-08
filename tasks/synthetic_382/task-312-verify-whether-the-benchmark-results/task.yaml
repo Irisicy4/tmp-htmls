@@ -1,0 +1,3 @@
+instruction: |
+  Verify whether the benchmark results of YOLOv7 for object detection are reproducible as claimed. Check official repositories, linked datasets, and the stated testing conditions, including hardware and configuration details.
+# Row 430 | ability: web_navigation | domain: Data & ML Engineering | lang: en

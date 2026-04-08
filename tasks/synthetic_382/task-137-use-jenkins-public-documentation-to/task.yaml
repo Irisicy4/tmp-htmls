@@ -1,0 +1,3 @@
+instruction: |
+  Use Jenkins' public documentation to configure a sample CI/CD pipeline that builds and tests a Python application using pytest. Navigate the pipeline setup documentation and identify necessary steps for implementing build triggers, testing stages, and reporting results. Report the final pipeline configuration steps you would follow.
+# Row 255 | ability: web_navigation | domain: Software Engineering | lang: en

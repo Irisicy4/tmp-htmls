@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of a 7-day trip to London, UK for one person. Include roundtrip flight costs, 7 nights at a mid-range hotel, public transportation pass, and daily food budget. Use Expedia for flights, Booking.com for hotel costs, and the official Transport for London site for public transport pricing.
+# Row 402 | ability: web_navigation | domain: Travel & Planning | lang: en

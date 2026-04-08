@@ -1,0 +1,3 @@
+instruction: |
+  Use Kaggle's dataset search to find datasets tagged with 'time series' and published after 2021. Filter results for datasets with more than 1,000 rows and report the metadata for the first 3 matching datasets, including name, description, and creator.
+# Row 444 | ability: web_navigation | domain: Data & ML Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Use the Facebook Ad Library to search for active video ad campaigns related to 'content creation tools'. Filter for ads currently running in the United States and extract their impressions, run dates, and advertiser names. Report data from the top 5 ads shown.
+# Row 354 | ability: web_navigation | domain: (Self) Media | lang: en

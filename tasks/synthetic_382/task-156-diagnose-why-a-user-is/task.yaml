@@ -1,0 +1,3 @@
+instruction: |
+  Diagnose why a user is encountering 'ImportError: cannot import name 'ABC' from 'xyz'' in Python when using Flask with SQLAlchemy. Research GitHub issues, Stack Overflow, and Flask documentation to identify the root cause, affected versions, and resolution steps.
+# Row 274 | ability: web_navigation | domain: Software Engineering | lang: en

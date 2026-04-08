@@ -1,0 +1,3 @@
+instruction: |
+  Complete the booking workflow for a round-trip train ticket from London to Edinburgh departing on the 10th of next month and returning on the 13th through Trainline. Select options that include standard class tickets. Report the final screen's output including price and trip details.
+# Row 407 | ability: web_navigation | domain: Travel & Planning | lang: en

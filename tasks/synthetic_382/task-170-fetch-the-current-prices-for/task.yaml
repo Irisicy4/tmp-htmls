@@ -1,0 +1,3 @@
+instruction: |
+  Fetch the current prices for hosting a small-scale project on AWS EC2, Google Cloud Compute Engine, and Microsoft Azure Virtual Machines. Calculate the monthly cost for running a Linux instance with 2 CPUs and 8 GB RAM, and recommend the cheapest option.
+# Row 288 | ability: web_navigation | domain: Software Engineering | lang: en

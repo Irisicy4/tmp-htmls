@@ -1,0 +1,3 @@
+instruction: |
+  Book an appointment for a flu vaccination using Walgreens' online scheduling tool. Enter ZIP code 94103, select the first available appointment at a nearby store, and complete the workflow. Report back the confirmed appointment time and location shown at the final screen.
+# Row 226 | ability: web_navigation | domain: Daily Activities | lang: en

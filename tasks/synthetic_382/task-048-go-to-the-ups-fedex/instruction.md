@@ -1,0 +1,1 @@
+Go to the UPS, FedEx, and DHL express shipping rate calculators. Input the same shipment details: a 2 kg package with dimensions 30x20x15 cm being shipped from New York, USA (ZIP 10001) to London, UK (ZIP WC2N). Extract the quoted express shipping rates and estimated delivery times from each site.

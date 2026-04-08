@@ -1,0 +1,3 @@
+instruction: |
+  Fetch the current prices for a 7-night cruise departing from Miami to the Caribbean from Royal Caribbean, Norwegian Cruise Line, and Carnival. Calculate the total cost of the trip, factoring in cruise fares, port fees, and estimated gratuities for a party of two. Recommend the best value.
+# Row 386 | ability: web_navigation | domain: Travel & Planning | lang: en

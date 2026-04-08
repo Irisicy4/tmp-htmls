@@ -1,0 +1,1 @@
+Verify whether U.S. citizens currently need a visa to visit Brazil for tourism. Check the official Brazil embassy website, the U.S. State Department travel advisory page, and IATA's travel regulation map for current information on entry requirements. Provide a verification report stating the visa status and citing the evidence from the sources.

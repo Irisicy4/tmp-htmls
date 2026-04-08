@@ -1,0 +1,1 @@
+Research and compare three online grocery delivery services (e.g., Instacart, Amazon Fresh, and Walmart Grocery) available in New York City. For each, find their delivery fees, delivery times, and any membership/subscription requirements. Summarize the findings in a table.

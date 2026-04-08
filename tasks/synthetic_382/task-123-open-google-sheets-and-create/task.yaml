@@ -1,0 +1,3 @@
+instruction: |
+  Open Google Sheets and create a weekly meal plan template for a family of four. Include breakfast, lunch, dinner, and snacks for Monday through Sunday, with spaces for ingredient lists in each section. Use live dietary guidelines from EatRight.org to ensure balanced nutrition.
+# Row 241 | ability: web_navigation | domain: Daily Activities | lang: en

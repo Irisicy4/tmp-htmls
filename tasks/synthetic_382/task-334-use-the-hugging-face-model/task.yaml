@@ -1,0 +1,3 @@
+instruction: |
+  Use the Hugging Face model hub to search for a sentiment analysis model optimized for performance on large datasets. Navigate the filters and complete the workflow for selecting an appropriate model. Report the chosen model's name, version, and key performance metrics.
+# Row 452 | ability: web_navigation | domain: Data & ML Engineering | lang: en

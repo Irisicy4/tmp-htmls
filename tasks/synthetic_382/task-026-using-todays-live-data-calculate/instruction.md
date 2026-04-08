@@ -1,0 +1,1 @@
+Using today's live data, calculate whether it's better to invest in a 1-year Treasury bond or a 1-year Certificate of Deposit (CD). Fetch the current 1-year Treasury yield from the U.S. Treasury website, and find the highest 1-year CD rate on Bankrate. Compare the two options considering the risk-free nature and liquidity restrictions of each investment.

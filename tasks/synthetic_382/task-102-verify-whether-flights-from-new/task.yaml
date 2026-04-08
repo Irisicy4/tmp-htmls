@@ -1,0 +1,3 @@
+instruction: |
+  Verify whether flights from New York (JFK) to London (LHR) are being delayed today. Check real-time departure status from three sources and report whether there are widespread delays with timestamps and percentages of delayed flights.
+# Row 220 | ability: web_navigation | domain: Daily Activities | lang: en

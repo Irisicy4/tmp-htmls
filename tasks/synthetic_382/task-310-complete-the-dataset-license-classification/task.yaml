@@ -1,0 +1,3 @@
+instruction: |
+  Complete the dataset license classification workflow on the OpenML website. Submit the metadata of any public dataset, ensuring you select appropriate data license options and complete all required fields. Report the summary of the final page confirmation screen.
+# Row 428 | ability: web_navigation | domain: Data & ML Engineering | lang: en

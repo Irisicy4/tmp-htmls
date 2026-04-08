@@ -1,0 +1,3 @@
+instruction: |
+  Verify whether the latest version of Material Design guidelines recommends the use of bottom navigation bars in mobile app designs. Check the official Material Design documentation and produce a report summarizing whether the feature is recommended, deprecated, or has specific constraints.
+# Row 469 | ability: web_navigation | domain: Design | lang: en

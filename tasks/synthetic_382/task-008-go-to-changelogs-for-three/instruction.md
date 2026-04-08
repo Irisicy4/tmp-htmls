@@ -1,0 +1,1 @@
+Go to changelogs for three popular open-source libraries—React, Lodash, and Axios—and extract all breaking changes introduced between two specific versions: React v17 to v18, Lodash v4.17.21 to v5, and Axios v0.23 to v1. List the breaking changes along with the version they were introduced and a brief description for each.

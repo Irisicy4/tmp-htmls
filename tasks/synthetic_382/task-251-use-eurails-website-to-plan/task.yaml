@@ -1,0 +1,3 @@
+instruction: |
+  Use Eurail's website to plan a train journey through Germany, starting in Berlin on April 1st and ending in Munich on April 5th with one stop in Frankfurt. Select the best Eurail pass for this itinerary and report the full cost and journey details as displayed on the final confirmation page.
+# Row 369 | ability: web_navigation | domain: Travel & Planning | lang: en

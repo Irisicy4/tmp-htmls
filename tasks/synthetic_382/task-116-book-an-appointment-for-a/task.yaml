@@ -1,0 +1,3 @@
+instruction: |
+  Book an appointment for a haircut in New York City on StyleSeat, Booksy, and Fresha. Complete the booking workflow, filtering for stylists with over 4-star reviews, and report the date, time, and stylist selected from one platform.
+# Row 234 | ability: web_navigation | domain: Daily Activities | lang: en

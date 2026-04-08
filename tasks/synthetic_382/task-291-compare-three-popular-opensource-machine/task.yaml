@@ -1,0 +1,3 @@
+instruction: |
+  Compare three popular open-source machine learning frameworks: PyTorch, TensorFlow, and JAX. Assess them on criteria such as model training speed, GPU compatibility, ease of API use, and community support. Use sources like their official documentation, GitHub repositories, and recent blog articles.
+# Row 409 | ability: web_navigation | domain: Data & ML Engineering | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Create a grocery shopping list template in Google Sheets that includes columns for item name, category, store name, price, and quantity. Use Target's website to look up three common grocery items with their prices and add them to the sheet to demonstrate usability.
+# Row 171 | ability: web_navigation | domain: Shopping | lang: en

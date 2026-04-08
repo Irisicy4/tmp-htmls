@@ -1,0 +1,3 @@
+instruction: |
+  Diagnose why searching for train tickets on SNCF’s English website (Oui.sncf) for Paris to Lyon on December 15, 2024, is showing errors during checkout. Check confirmation from SNCF's help section, forums like TripAdvisor, and technical announcements on their site.
+# Row 380 | ability: web_navigation | domain: Travel & Planning | lang: en

@@ -1,0 +1,1 @@
+Verify whether the latest WCAG guidelines recommend a minimum contrast ratio of 4.5:1 for text and background colors in web design. Cross-check the recommendation against the WCAG official site and two prominent accessibility resources.

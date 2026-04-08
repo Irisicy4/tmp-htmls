@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of purchasing a DSLR camera from Amazon, including accessories (tripod and memory card) and shipping fees. Compare these costs with the same camera and accessory bundle on Adorama and B&H Photo Video. Recommend the platform with the lowest total cost, explaining the breakdown.
+# Row 205 | ability: web_navigation | domain: Shopping | lang: en

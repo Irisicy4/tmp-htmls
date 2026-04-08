@@ -1,0 +1,3 @@
+instruction: |
+  Use the Apple Trade-In program to estimate the trade-in value of a used iPhone 12 (128GB, good condition) on apple.com. Complete the trade-in value workflow and summarize the value quoted at the final step.
+# Row 212 | ability: web_navigation | domain: Shopping | lang: en

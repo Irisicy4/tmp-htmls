@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of a 5-day trip to Paris for two people. Include flights from Los Angeles to Paris, a central hotel near the Eiffel Tower, and daily meal costs based on mid-range restaurants. Use Google Flights for airfare, Booking.com for hotel options, and Numbeo for food cost estimates. Provide your recommendation based on the data gathered.
+# Row 408 | ability: web_navigation | domain: Travel & Planning | lang: en

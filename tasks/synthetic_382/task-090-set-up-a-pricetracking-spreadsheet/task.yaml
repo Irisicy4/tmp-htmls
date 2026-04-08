@@ -1,0 +1,3 @@
+instruction: |
+  Set up a price-tracking spreadsheet in Google Sheets for five home kitchen products (e.g., blender, toaster, coffee maker) from Amazon, Walmart, and Home Depot. Include columns for product name, current price, date last checked, and store link. Provide the publicly accessible link to the spreadsheet.
+# Row 208 | ability: web_navigation | domain: Shopping | lang: en

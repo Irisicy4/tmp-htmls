@@ -1,0 +1,3 @@
+instruction: |
+  Navigate through Airbnb's listing filters to find accommodations in Kyoto, Japan, with a budget of $100-$150 per night, availability in November, and amenities such as Wi-Fi and air conditioning. Extract the top 5 listings with their nightly price and customer ratings.
+# Row 359 | ability: web_navigation | domain: Travel & Planning | lang: en

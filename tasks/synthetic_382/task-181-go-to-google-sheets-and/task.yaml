@@ -1,0 +1,3 @@
+instruction: |
+  Go to Google Sheets and set up an Agile sprint tracking sheet. Create columns for 'Task Name', 'Status', 'Assignee', 'Priority', and 'Estimated Hours', and add 10 sample rows with realistic task data. Format the 'Status' column as a dropdown with values 'To Do', 'In Progress', and 'Done'.
+# Row 299 | ability: web_navigation | domain: Software Engineering | lang: en

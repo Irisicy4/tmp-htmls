@@ -1,0 +1,1 @@
+Plan a three-day itinerary for a visit to Rome, Italy, using public websites like Google Maps for locations, Lonely Planet for recommendations, and Rome's official tourism page for events. Populate a Google Sheet template with daily activities, including landmarks, dining options, activity durations, and estimated costs for each day.

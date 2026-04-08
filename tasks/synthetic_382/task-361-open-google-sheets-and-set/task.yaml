@@ -1,0 +1,3 @@
+instruction: |
+  Open Google Sheets and set up a design project tracker. Create columns for tasks, assigned designers, deadlines, and status. Add conditional formatting to highlight overdue tasks in red. Populate the sheet with three example tasks and report the final setup.
+# Row 479 | ability: web_navigation | domain: Design | lang: en

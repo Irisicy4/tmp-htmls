@@ -1,0 +1,3 @@
+instruction: |
+  Go to the Airbnb website and search for listings in Boston, MA for a weekend stay (Friday to Sunday, two weeks from today). Apply filters for entire homes under $200 per night, that have at least 2 bedrooms and free Wi-Fi. Extract the first five matching listings along with their names, prices, and overall ratings.
+# Row 248 | ability: web_navigation | domain: Daily Activities | lang: en

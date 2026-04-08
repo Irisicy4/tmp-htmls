@@ -1,0 +1,3 @@
+instruction: |
+  Estimate the total cost of a 7-day trip to Bali, including flights, mid-range accommodation, daily meals, and site entrance fees. Gather flight prices from Skyscanner, accommodation rates from Agoda, and meal/site cost estimates from Nomadic Matt’s travel blog.
+# Row 394 | ability: web_navigation | domain: Travel & Planning | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  A user reports that sizing information for a specific Adidas jacket (Product ID: HZ9876) appears inconsistent across listings on Amazon, Zappos, and Adidas.com. Investigate the root cause of the discrepancy by checking size charts, user reviews, and product descriptions across these listings. Provide a diagnosis and recommended workaround or clarification path.
+# Row 207 | ability: web_navigation | domain: Shopping | lang: en

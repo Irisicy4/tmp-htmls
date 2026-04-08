@@ -1,0 +1,3 @@
+instruction: |
+  Use Hugging Face Spaces to set up a basic demo for text classification. Configure the space with a public RoBERTa model, upload a small dataset, and set up a UI that allows users to input text and see predictions. Report the final demo URL and configuration details.
+# Row 448 | ability: web_navigation | domain: Data & ML Engineering | lang: en

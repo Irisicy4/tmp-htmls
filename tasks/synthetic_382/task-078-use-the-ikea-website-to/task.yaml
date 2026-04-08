@@ -1,0 +1,3 @@
+instruction: |
+  Use the IKEA website to design and customize a modular shelving unit. Choose the white finish, specify dimensions to fit a 50-inch wide space, and add optional glass doors. Report the final price and configuration summary from the checkout page (do not proceed to checkout).
+# Row 196 | ability: web_navigation | domain: Shopping | lang: en

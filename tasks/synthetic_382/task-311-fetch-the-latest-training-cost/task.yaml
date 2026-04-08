@@ -1,0 +1,3 @@
+instruction: |
+  Fetch the latest training cost estimates for three popular machine learning models (ResNet-50, GPT-3, ViT) from public sources. Calculate the total GPU hours needed for training each based on published benchmark data and recommend the most cost-effective option for a mid-sized dataset.
+# Row 429 | ability: web_navigation | domain: Data & ML Engineering | lang: en

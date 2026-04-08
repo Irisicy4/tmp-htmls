@@ -1,0 +1,3 @@
+instruction: |
+  Set up a new Hugging Face Space to benchmark sentiment analysis models on the IMDb dataset. Configure the space with a CPU-only runtime environment, load three pre-trained models (BERT, DistilBERT, RoBERTa), and set up evaluation metrics for accuracy and inference speed. Report the configured environment and model list.
+# Row 424 | ability: web_navigation | domain: Data & ML Engineering | lang: en

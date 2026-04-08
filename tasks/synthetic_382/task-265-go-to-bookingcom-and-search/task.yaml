@@ -1,0 +1,3 @@
+instruction: |
+  Go to Booking.com and search for hotels in Reykjavik, Iceland for a stay from June 15–20, applying filters for 'Free Wi-Fi' and 'Breakfast Included'. Extract the top 5 hotels ranked by guest ratings. Provide names, nightly rates, and guest ratings.
+# Row 383 | ability: web_navigation | domain: Travel & Planning | lang: en

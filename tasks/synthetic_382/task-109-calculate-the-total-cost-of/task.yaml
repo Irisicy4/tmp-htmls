@@ -1,0 +1,3 @@
+instruction: |
+  Calculate the total cost of a 5-day trip from New York City to Miami, FL. Include the cost of round-trip flights, a hotel stay, and daily meals. Use Kayak to find flight prices, Booking.com for hotels, and Numbeo for average meal costs in Miami. Provide a total cost breakdown and recommend the most budget-friendly options for each category.
+# Row 227 | ability: web_navigation | domain: Daily Activities | lang: en

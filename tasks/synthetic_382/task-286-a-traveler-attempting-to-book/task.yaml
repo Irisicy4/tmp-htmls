@@ -1,0 +1,3 @@
+instruction: |
+  A traveler attempting to book tickets on the Eurail website is unable to add a second adult ticket to their cart. Find the root cause of the issue by consulting Eurail's help center, forums, and recent announcements on their Twitter page.
+# Row 404 | ability: web_navigation | domain: Travel & Planning | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Use the Hugging Face Spaces platform and set up a demo space for a text classification model. Include configuration for input text, prediction, and a visualization dashboard of class probabilities. Report the final configuration state with space URL and settings shown.
+# Row 440 | ability: web_navigation | domain: Data & ML Engineering | lang: en

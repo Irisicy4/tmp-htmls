@@ -1,0 +1,3 @@
+instruction: |
+  Go to Nike's official website, filter for men's running shoes priced under $120, and extract the top 5 options based on customer ratings and availability. Verify that all options are available in size 10.
+# Row 186 | ability: web_navigation | domain: Shopping | lang: en

@@ -1,0 +1,3 @@
+instruction: |
+  Using Google Sheets, set up a design token system for a mobile app theme. Include columns for token name, token type (color, spacing, typography), and token value (e.g., hex codes for colors). Populate the sheet with at least ten sample tokens found from Material Design resources.
+# Row 471 | ability: web_navigation | domain: Design | lang: en

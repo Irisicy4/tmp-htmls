@@ -1,0 +1,3 @@
+instruction: |
+  Research on Amazon.com, Lowes.com, and HomeDepot.com to find cordless drills priced under $150. Include warranty cost, shipping fees, and accessory costs (such as extra batteries). Calculate the total cost of ownership for the best option and recommend the most cost-effective drill.
+# Row 181 | ability: web_navigation | domain: Shopping | lang: en

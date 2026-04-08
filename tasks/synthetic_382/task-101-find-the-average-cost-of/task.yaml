@@ -1,0 +1,3 @@
+instruction: |
+  Find the average cost of monthly internet plans in New York City by comparing rates from three providers (e.g., Spectrum, Verizon, and Optimum). Calculate which provider offers the best value based on speed-to-price ratio for a 500 Mbps plan.
+# Row 219 | ability: web_navigation | domain: Daily Activities | lang: en

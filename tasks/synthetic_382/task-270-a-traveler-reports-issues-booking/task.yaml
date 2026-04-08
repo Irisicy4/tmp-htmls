@@ -1,0 +1,3 @@
+instruction: |
+  A traveler reports issues booking tickets through Eurail's website for a France-Spain pass. Investigate the root cause by checking Eurail's official support page, recent community forum threads, and social media updates from Eurail. Identify the problem and suggest solutions.
+# Row 388 | ability: web_navigation | domain: Travel & Planning | lang: en

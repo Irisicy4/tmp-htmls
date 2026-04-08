@@ -1,0 +1,7 @@
+# Build context is this directory (environment/).
+# All glue files are co-located — no repo-root context needed.
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile

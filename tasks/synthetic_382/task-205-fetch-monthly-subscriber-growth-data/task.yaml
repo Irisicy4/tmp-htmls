@@ -1,0 +1,3 @@
+instruction: |
+  Fetch monthly subscriber growth data and average earnings per subscriber for creators on YouTube, Twitch, and Facebook Gaming for the last 6 months. Use this data to calculate which platform offers the highest revenue potential per subscriber and recommend the top choice.
+# Row 323 | ability: web_navigation | domain: (Self) Media | lang: en

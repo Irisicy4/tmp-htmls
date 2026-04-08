@@ -1,0 +1,3 @@
+instruction: |
+  Use the Visual Studio Code Marketplace to search for extensions compatible with Python development. Apply filters to display only free extensions and select those with at least 100,000 downloads. Report the names and descriptions of the top five results.
+# Row 287 | ability: web_navigation | domain: Software Engineering | lang: en

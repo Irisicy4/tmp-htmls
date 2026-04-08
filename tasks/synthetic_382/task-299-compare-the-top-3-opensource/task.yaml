@@ -1,0 +1,3 @@
+instruction: |
+  Compare the top 3 open-source ML libraries for time-series forecasting: Facebook Prophet, Darts, and ARIMA implementations. Focus on their feature set, ease of use, active community size, and performance benchmarks cited in recent papers or blogs. Summarize your findings in a table format.
+# Row 417 | ability: web_navigation | domain: Data & ML Engineering | lang: en

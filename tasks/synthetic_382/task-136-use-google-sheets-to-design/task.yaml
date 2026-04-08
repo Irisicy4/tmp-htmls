@@ -1,0 +1,3 @@
+instruction: |
+  Use Google Sheets to design a bug-tracking template for a software project. Include columns for Bug ID, Severity, Priority, Date Reported, Assigned Developer, and Status. Populate the sheet with 5 example entries based on common bug scenarios you find online.
+# Row 254 | ability: web_navigation | domain: Software Engineering | lang: en

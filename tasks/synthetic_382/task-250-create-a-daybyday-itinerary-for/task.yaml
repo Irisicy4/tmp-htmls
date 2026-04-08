@@ -1,0 +1,3 @@
+instruction: |
+  Create a day-by-day itinerary for a 5-day vacation in Barcelona, Spain using Google Sheets. Include day-by-day activities with estimated costs sourced from GetYourGuide, TripAdvisor, and Viator. Organize the itinerary into activity categories like sightseeing, dining, and transportation.
+# Row 368 | ability: web_navigation | domain: Travel & Planning | lang: en

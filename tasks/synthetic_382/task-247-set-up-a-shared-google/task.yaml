@@ -1,0 +1,3 @@
+instruction: |
+  Set up a shared Google Sheets template to track travel expenses for a group trip to Tokyo. Include columns for participant names, date, expense category (meals, transport, lodging), and total cost, and pre-fill sample entries for demonstration.
+# Row 365 | ability: web_navigation | domain: Travel & Planning | lang: en

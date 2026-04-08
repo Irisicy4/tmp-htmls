@@ -1,0 +1,3 @@
+instruction: |
+  Set up a GitHub Actions workflow to automatically lint Python code using 'flake8' on every pull request. You must use GitHub's documentation to configure the YAML file, select the appropriate runner, and add a step to fail the workflow if any linting issues are detected. Provide the final YAML file content and explain its configuration.
+# Row 302 | ability: web_navigation | domain: Software Engineering | lang: en
