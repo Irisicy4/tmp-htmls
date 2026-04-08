@@ -159,8 +159,8 @@ def main():
     )
     parser.add_argument(
         "--tasks-dir",
-        default="tasks/batch-1",
-        help="Task directory relative to repo root (default: tasks/batch-1)",
+        default="tasks/updated-deprivacy-100",
+        help="Task directory relative to repo root (default: tasks/updated-deprivacy-100)",
     )
     parser.add_argument(
         "--first-n",

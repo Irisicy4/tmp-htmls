@@ -47,13 +47,13 @@ harbor_image = (
         "pydantic>=2.0",
         "shortuuid>=1.0",
     )
-    .add_local_dir("tasks/batch-1", "/harbor-bench/tasks/batch-1", copy=True)
+    .add_local_dir("tasks", "/harbor-bench/tasks", copy=True)
     .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
 )
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-TASKS_BASE = Path("/harbor-bench/tasks/batch-1")
+TASKS_ROOT = Path("/harbor-bench/tasks")
 RESULTS_BASE = Path("/results")
 
 # Base sandbox image: browser + Python, no agent.  Harbor installs the agent.
@@ -107,14 +107,20 @@ def _load_task_metadata(task_dir: Path) -> dict:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+def _tasks_base(tasks_dir: str) -> Path:
+    """Resolve tasks_dir (e.g. 'tasks/updated-deprivacy-100') to container path."""
+    return TASKS_ROOT / Path(tasks_dir).name
+
+
 def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[dict]:
-    """Return ordered task dicts (name + metadata) from TASKS_BASE."""
+    """Return ordered task dicts (name + metadata) from the given tasks_dir."""
+    base = _tasks_base(tasks_dir)
     if task_names_csv:
         names = [t.strip() for t in task_names_csv.split(",") if t.strip()]
     else:
         names = sorted(
             d.name
-            for d in TASKS_BASE.iterdir()
+            for d in base.iterdir()
             if d.is_dir() and (d / "instruction.md").exists()
         )
         if first_n > 0:
@@ -122,7 +128,7 @@ def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[d
 
     tasks = []
     for name in names:
-        meta = _load_task_metadata(TASKS_BASE / name)
+        meta = _load_task_metadata(base / name)
         tasks.append({"task_name": name, **meta})
     return tasks
 
@@ -286,12 +292,84 @@ AGENT_OUTPUT_PARSERS = {
 }
 
 
-def _evaluate(task_name: str, result: dict, run_tag: str) -> dict:
+# ── Proxy config injection ───────────────────────────────────────────────────
+
+async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env):
+    """Write proxy config files into the sandbox AFTER agent install, BEFORE run.
+
+    Codex CLI: writes config.toml with a custom model_provider pointing to the proxy.
+    Claude Code: wraps the claude binary so the correct env vars are always set,
+                 because Harbor merges AUTH_TOKEN into API_KEY which breaks proxies.
+    """
+    openai_base = extra_env.get("OPENAI_BASE_URL", "")
+    anthropic_base = extra_env.get("ANTHROPIC_BASE_URL", "")
+    anthropic_key = extra_env.get("ANTHROPIC_API_KEY", "")
+    model_name = extra_env.get("_CLAUDE_MODEL", "")
+
+    if agent_name == "codex" and openai_base:
+        from harbor.models.trial.paths import EnvironmentPaths
+        codex_home = EnvironmentPaths.agent_dir.as_posix()
+
+        config_toml = (
+            f'model_provider = "uniapi"\n'
+            f'model_reasoning_effort = "high"\n'
+            f'\n'
+            f'[model_providers.uniapi]\n'
+            f'name = "uniapi"\n'
+            f'base_url = "{openai_base}"\n'
+            f'env_key = "OPENAI_API_KEY"\n'
+        )
+        write_cmd = f'cat > "{codex_home}/config.toml" << \'TOMLEOF\'\n{config_toml}TOMLEOF'
+
+        try:
+            result = await harbor_env._sandbox.exec.aio("bash", "-c", write_cmd)
+            await result.wait.aio()
+            print(f"  [proxy] Wrote codex config.toml -> {openai_base}")
+        except Exception as e:
+            print(f"  [proxy] Failed to write codex config.toml: {e}")
+
+    elif agent_name == "claude-code" and anthropic_base and anthropic_key:
+        model = model_name or "claude-sonnet-4-20250514"
+
+        wrapper_script = f"""#!/bin/bash
+# Proxy wrapper — overrides Harbor's env vars for Claude Code CLI
+export ANTHROPIC_API_KEY="{anthropic_key}"
+export ANTHROPIC_BASE_URL="{anthropic_base}"
+export ANTHROPIC_MODEL="{model}"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="{model}"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="{model}"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="{model}"
+export CLAUDE_CODE_SUBAGENT_MODEL="{model}"
+exec /root/.local/bin/claude.real "$@"
+"""
+        rename_and_wrap = (
+            "if [ -f /root/.local/bin/claude ] && [ ! -f /root/.local/bin/claude.real ]; then "
+            "  mv /root/.local/bin/claude /root/.local/bin/claude.real && "
+            "  cat > /root/.local/bin/claude << 'WRAPEOF'\n"
+            f"{wrapper_script}"
+            "WRAPEOF\n"
+            "  chmod +x /root/.local/bin/claude && "
+            "  echo '[proxy] Claude wrapper installed'; "
+            "fi"
+        )
+
+        try:
+            result = await harbor_env._sandbox.exec.aio("bash", "-c", rename_and_wrap)
+            await result.wait.aio()
+            stdout = await _read_stdout(result)
+            print(f"  [proxy] Claude Code wrapper -> {anthropic_base} (model: {model})")
+            if stdout:
+                print(f"  [proxy] {stdout}")
+        except Exception as e:
+            print(f"  [proxy] Failed to install Claude Code wrapper: {e}")
+
+
+def _evaluate(task_name: str, result: dict, tasks_dir: str) -> dict:
     """
     Load test_task.py for the given task and call its test() function.
     Returns the full eval_result dict.
     """
-    test_script = TASKS_BASE / task_name / "tests" / "test_task.py"
+    test_script = _tasks_base(tasks_dir) / task_name / "tests" / "test_task.py"
     if not test_script.exists():
         print(f"[{task_name}] No test_task.py — skipping evaluation")
         return {"passed": False, "overall_score": 0.0, "feedback": "no evaluator"}
@@ -412,13 +490,26 @@ def _make_harbor_env(session_id: str, trial_paths):
             """Stop sandbox and delete the ephemeral app to avoid hitting the 200 app limit."""
             try:
                 await super().stop(delete=delete)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[{self.session_id}] sandbox stop error (non-fatal): {e}")
+            # App.stop() doesn't exist in the SDK — use the gRPC API directly
             try:
-                app = await _modal.App.lookup.aio(name=self.session_id)
-                await app.stop.aio()
-            except Exception:
-                pass
+                from modal.client import _Client
+                from modal_proto import api_pb2
+                client = await _Client.from_env.aio()
+                req = api_pb2.AppGetByDeploymentNameRequest(
+                    name=self.session_id, environment_name=""
+                )
+                resp = await client.stub.AppGetByDeploymentName(req)
+                if resp.app_id:
+                    stop_req = api_pb2.AppStopRequest(
+                        app_id=resp.app_id,
+                        source=api_pb2.APP_STOP_SOURCE_CLI,
+                    )
+                    await client.stub.AppStop(stop_req)
+                    print(f"[{self.session_id}] ephemeral app stopped")
+            except Exception as e:
+                print(f"[{self.session_id}] app cleanup failed: {e}")
 
     return _PatchedEnv(
         environment_dir=Path("/tmp"),   # unused — start() is overridden
@@ -437,6 +528,7 @@ async def _run_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
+    tasks_dir: str = "tasks/updated-deprivacy-100",
     skill_config: dict | None = None,
 ) -> dict:
     """
@@ -454,7 +546,7 @@ async def _run_task(
     skill_config = skill_config or {}
     started_at = datetime.now(timezone.utc).isoformat()
 
-    task_dir = TASKS_BASE / task_name
+    task_dir = _tasks_base(tasks_dir) / task_name
     instruction = (task_dir / "instruction.md").read_text().strip()
 
     # Tell agents to save output files to /output/
@@ -540,6 +632,10 @@ async def _run_task(
         print(f"[{task_name}] Setting up agent ({agent_name}) …")
         await agent.setup(env)
 
+        # Inject proxy config after agent install, before run
+        extra = agent_kwargs.get("extra_env", {})
+        await _inject_proxy_config(agent_name, extra, env)
+
         print(f"[{task_name}] Running agent …")
         await agent.run(instruction, env, context)
     except Exception as exc:
@@ -618,7 +714,7 @@ async def _run_task(
         json.dumps(result_dict, indent=2, default=str)
     )
 
-    eval_result = _evaluate(task_name, result_dict, run_tag)
+    eval_result = _evaluate(task_name, result_dict, tasks_dir)
 
     score = float(eval_result.get("details", {}).get("overall_score", 0)
                   or eval_result.get("overall_score", 0))
@@ -684,10 +780,11 @@ async def run_harbor_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
+    tasks_dir: str = "tasks/updated-deprivacy-100",
     skill_config: dict | None = None,
 ) -> dict:
     """Run a single task with a Harbor agent. Used by run_harbor_experiment via starmap."""
-    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, task_meta, skill_config)
+    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, task_meta, tasks_dir, skill_config)
 
 
 @app.function(
@@ -699,7 +796,7 @@ async def run_harbor_experiment(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
-    tasks_dir: str = "tasks/batch-1",
+    tasks_dir: str = "tasks/updated-deprivacy-100",
     first_n: int = 0,
     task_names_csv: str = "",
     skill_config: dict | None = None,
@@ -713,13 +810,14 @@ async def run_harbor_experiment(
 
     print(f"\n=== Harbor Experiment: {run_tag} ===")
     print(f"Agent : {agent_name}  Model: {model_name}")
+    print(f"Tasks dir: {tasks_dir}")
     print(f"Tasks : {len(tasks)}")
     if skill_config:
         print(f"Skills: {skill_config}")
 
     results = []
     async for result in run_harbor_task.starmap.aio(
-        [(t["task_name"], agent_name, agent_kwargs, run_tag, t, skill_config) for t in tasks]
+        [(t["task_name"], agent_name, agent_kwargs, run_tag, t, tasks_dir, skill_config) for t in tasks]
     ):
         results.append(result)
         n_done = len(results)
@@ -810,7 +908,7 @@ async def run_harbor_skill_experiment(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
-    tasks_dir: str = "tasks/batch-1",
+    tasks_dir: str = "tasks/updated-deprivacy-100",
     first_n: int = 0,
     task_names_csv: str = "",
 ) -> dict:
