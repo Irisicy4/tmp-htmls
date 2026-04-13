@@ -1,1 +1,0 @@
-Complete the quote workflow for a custom-designed gaming PC on Origin PC's custom configurator. Choose AMD Ryzen 7 processor, NVIDIA GeForce RTX 3060 graphics card, 16GB RAM, and a 1TB SSD. Apply any available promotions or discounts visible on the product page. Report the final configuration details and the quoted price.

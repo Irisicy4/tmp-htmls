@@ -1,1 +1,0 @@
-Go to Indeed.com and search for 'Technical Recruiter' roles in New York City posted in the last 14 days. Apply filters for salaries above $80,000 and job types marked as full-time. Extract the first 10 matching job postings and record the following details for each: company name, job title, salary range, work mode (remote/hybrid/on-site), and posting date.

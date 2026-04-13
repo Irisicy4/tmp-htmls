@@ -1,1 +1,0 @@
-Verify whether Instagram recently announced or implemented a change to its algorithm affecting content visibility. Cross-check this information on Instagram’s official blog, the company's Twitter account, and a reputable tech news site like TechCrunch.

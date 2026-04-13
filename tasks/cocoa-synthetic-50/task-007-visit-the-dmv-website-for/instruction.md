@@ -1,1 +1,0 @@
-Visit the DMV website for California, find the appointment scheduling tool, and go through the workflow to select an available date for a driver's license renewal appointment in ZIP code 90210. Report the first three available appointment dates and times.

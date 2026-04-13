@@ -1,1 +1,0 @@
-Research and compare 3-5 options for noise-canceling headphones under $150 across Amazon, Best Buy, and Walmart. Focus on features like battery life, Bluetooth version, active noise-canceling quality, and customer reviews. Summarize the key features and price differences in a table.

@@ -1,1 +1,0 @@
-Calculate the total cost of buying a new iPad Air (latest generation) with an Apple Pencil and Smart Keyboard Folio across Apple, Amazon, and Best Buy. Include base product prices, shipping fees, and sales tax (assume 7% sales tax for all platforms). Based on your calculations, recommend the cheapest platform for purchasing the full bundle.

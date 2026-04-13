@@ -1,1 +1,0 @@
-For the smartphone game Blue Archive's Total Assault mode featuring Wakamo Hovercraft on Torment difficulty, gather and organize information about effective team compositions, focusing primarily on YouTube videos.

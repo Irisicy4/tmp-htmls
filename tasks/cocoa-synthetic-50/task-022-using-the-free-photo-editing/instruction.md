@@ -1,1 +1,0 @@
-Using the free photo editing tool Photopea, create a banner-sized graphic (1200x300px) for a fictional online coffee shop. Include the shop’s fictional name ('Java Paradise'), a tagline ('Wake Up to Paradise'), and an image of a coffee cup overlaid on a tropical background. Use publicly available image resources for the assets.

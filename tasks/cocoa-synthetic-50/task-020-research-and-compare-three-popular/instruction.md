@@ -1,1 +1,0 @@
-Research and compare three popular icon libraries for UI design: Material Design Icons, Font Awesome, and Feather Icons. Focus on the following aspects: total icon count, licensing terms, and availability of outlined vs. filled styles. Summarize your findings in a comparison table.

@@ -1429,7 +1429,7 @@ def main(collect: str = "", list_runs: bool = False):
         return
 
     if collect:
-        out_dir = Path(f"results/harbor/{collect}")
+        out_dir = Path(f"results/deprivacy-batch-1/{collect}")
         out_dir.mkdir(parents=True, exist_ok=True)
         print(f"Downloading {collect} → {out_dir}")
         subprocess.run(

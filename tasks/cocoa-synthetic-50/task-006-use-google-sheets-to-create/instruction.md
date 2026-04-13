@@ -1,1 +1,0 @@
-Use Google Sheets to create a weekly meal plan for one person. Include data from three recipe websites (e.g., AllRecipes, Food Network, and BBC Good Food) to populate meals for breakfast, lunch, and dinner, ensuring variety. Link the recipe URLs in the plan.

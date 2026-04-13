@@ -1,1 +1,0 @@
-Diagnose why `vite` fails to build when paired with `vue3` and `@vue/compiler-sfc` in a specific setup. Research issues on the Vite GitHub issue tracker, the Vue documentation, and Stack Overflow. Identify the root cause, affected version range, and recommended fix.

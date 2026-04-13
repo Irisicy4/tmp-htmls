@@ -1,1 +1,0 @@
-Search for rental car options in Los Angeles from November 10th to November 15th. Use Hertz, Enterprise, and Avis websites to apply filters for sedan rentals, unlimited mileage, and pickup/drop-off at LAX airport. Extract the top three options from each site with rental provider, total cost, daily rate, and key features like insurance packages or fuel policy.

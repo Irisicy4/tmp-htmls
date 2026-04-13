@@ -1,1 +1,0 @@
-Research and compare three popular ad platforms — Google Ads, Facebook Ads, and TikTok Ads — based on their average CPM (cost per thousand impressions), audience targeting capabilities, and ease of use for small businesses. Extract this information from their respective official documentation pages and recent third-party marketing blogs.

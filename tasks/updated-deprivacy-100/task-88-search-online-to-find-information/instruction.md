@@ -1,1 +1,0 @@
-Search online to find information about the current foot traffic and popularity of Jewel Changi Airport shopping mall in Singapore. Look for recent visitor reviews, social media posts, and any available foot traffic data. Summarize your findings.

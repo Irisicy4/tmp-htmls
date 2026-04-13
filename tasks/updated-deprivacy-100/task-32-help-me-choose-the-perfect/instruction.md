@@ -1,1 +1,0 @@
-Help me choose the perfect birthday gift for my 28-year-old male friend. He likes gaming, computers and gadgets. The budget should be 10,000-15,000 yen, and it should be something you can buy on Amazon. Pick 3 different options and add them to your shopping cart.

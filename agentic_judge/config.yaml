@@ -1,0 +1,21 @@
+result_dirs:
+  original: results/deprivacy-batch-1/20260407-190347/20260407-190347/trials
+  synthetic: results/synthetic/20260407-190347/20260407-190347/trials
+
+task_dirs:
+  original: tasks/batch-1
+  synthetic: tasks/synthetic_382
+
+verification_output:
+  original: agentic_judge/results/original/
+  synthetic: agentic_judge/results/synthetic/
+
+agent:
+  model: gpt-4o
+  max_iterations: 10
+  timeout_seconds: 120
+
+sampling:
+  mode: stratified
+  total_sample_size: 30
+  only_static_passed: true

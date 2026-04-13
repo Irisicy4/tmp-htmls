@@ -1,1 +1,0 @@
-Research and compare three popular online brokers (e.g., Schwab, Fidelity, and Interactive Brokers) for trading stocks in the United States. Specifically, compare them on trading fees, account minimums, types of investments offered, and customer support options. Use their official websites and at least one independent review platform to verify claims and identify differences.
