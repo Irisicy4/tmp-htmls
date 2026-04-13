@@ -56,18 +56,33 @@ harbor_image = (
         "shortuuid>=1.0",
     )
     .add_local_dir(
-        "tasks/updated-deprivacy-100",
-        "/harbor-bench/tasks/updated-deprivacy-100",
+        "tasks",
+        "/harbor-bench/tasks",
         copy=True,
     )
+    # Harness modules for skill extraction/injection (agent-agnostic)
+    .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
+    .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
+    # History module for trace injection
+    .add_local_file("scripts_batch/history.py", "/harness/history.py", copy=True)
+    # Pre-harvested skills for evolve experiments
+    .add_local_dir("evolve-skills", "/evolve-skills", copy=True, ignore=["__pycache__"])
 )
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-TASKS_BASE = Path("/harbor-bench/tasks/updated-deprivacy-100")
+TASKS_ROOT = Path("/harbor-bench/tasks")
+DEFAULT_TASKS_DIR = "updated-deprivacy-100"
 RESULTS_BASE = Path("/results")
 SANDBOX_BASE_IMAGE = "ghcr.io/agent-infra/sandbox:latest"
+
+# Seed tasks used as skill examples — tagged in results for analysis
+_SEED_TASKS: set[str] = set()
+_seed_manifest = Path("/evolve-skills/_seed_manifest.json")
+if _seed_manifest.exists():
+    import json as _json
+    _SEED_TASKS = {s["task"] for s in _json.loads(_seed_manifest.read_text())}
 
 # Directory inside the sandbox where agents should save output files
 AGENT_OUTPUT_DIR = "/output"
@@ -119,13 +134,20 @@ def _load_task_metadata(task_dir: Path) -> dict:
     return meta
 
 
-def _discover_tasks(first_n: int = 0, task_names_csv: str = "") -> list[dict]:
+def _get_tasks_base(tasks_dir: str = "") -> Path:
+    """Resolve tasks directory from name or default."""
+    name = tasks_dir or DEFAULT_TASKS_DIR
+    return TASKS_ROOT / name
+
+
+def _discover_tasks(first_n: int = 0, task_names_csv: str = "", tasks_dir: str = "") -> list[dict]:
     """Discover tasks and attach metadata."""
+    base = _get_tasks_base(tasks_dir)
     if task_names_csv:
         names = [t.strip() for t in task_names_csv.split(",") if t.strip()]
     else:
         names = sorted(
-            d.name for d in TASKS_BASE.iterdir()
+            d.name for d in base.iterdir()
             if d.is_dir() and (d / "instruction.md").exists()
         )
         if first_n > 0:
@@ -133,7 +155,7 @@ def _discover_tasks(first_n: int = 0, task_names_csv: str = "") -> list[dict]:
 
     tasks = []
     for name in names:
-        task_dir = TASKS_BASE / name
+        task_dir = base / name
         meta = _load_task_metadata(task_dir)
         tasks.append({"task_name": name, **meta})
     return tasks
@@ -239,8 +261,8 @@ AGENT_OUTPUT_PARSERS = {
 # Evaluator
 # ---------------------------------------------------------------------------
 
-def _evaluate(task_name: str, result: dict) -> dict:
-    test_script = TASKS_BASE / task_name / "tests" / "test_task.py"
+def _evaluate(task_name: str, result: dict, tasks_dir: str = "") -> dict:
+    test_script = _get_tasks_base(tasks_dir) / task_name / "tests" / "test_task.py"
     if not test_script.exists():
         return {"passed": False, "overall_score": 0.0, "feedback": "no evaluator"}
     spec = importlib.util.spec_from_file_location("test_task", test_script)
@@ -257,6 +279,12 @@ def _evaluate(task_name: str, result: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def _make_harbor_env(session_id: str, trial_paths):
+    """Create a lightweight sandbox environment that does NOT deploy persistent apps.
+
+    Previous approach used App.lookup(create_if_missing=True) which created one
+    deployed app per task, hitting Modal's 200-app limit. This version uses
+    Sandbox.create() directly — no persistent app, auto-cleans on terminate.
+    """
     import modal as _modal
     from harbor.environments.modal import ModalEnvironment
     from harbor.models.task.config import EnvironmentConfig as TaskEnvConfig
@@ -268,25 +296,20 @@ def _make_harbor_env(session_id: str, trial_paths):
 
         async def start(self, force_build: bool) -> None:
             self._image = _modal.Image.from_registry(SANDBOX_BASE_IMAGE)
-            self._app = await _modal.App.lookup.aio(
-                name=self.session_id, create_if_missing=True,
-            )
-            self._sandbox = await self._create_sandbox(
-                gpu_config=None, secrets_config=[], volumes_config={},
+            # Use Sandbox.create directly — no App.lookup, no persistent deployed app
+            self._sandbox = await _modal.Sandbox.create.aio(
+                image=self._image,
+                cpu=1.0,
+                memory=1024,
+                timeout=900,
             )
             await self._sandbox.mkdir.aio(str(EnvironmentPaths.agent_dir), parents=True)
             await self._sandbox.mkdir.aio(str(EnvironmentPaths.verifier_dir), parents=True)
 
         async def stop(self, delete: bool = True) -> None:
-            """Stop sandbox and delete the ephemeral app to avoid hitting the 200 app limit."""
+            """Terminate the sandbox. No app cleanup needed."""
             try:
-                await super().stop(delete=delete)
-            except Exception:
-                pass
-            # Delete the deployed app so it doesn't linger
-            try:
-                app = await _modal.App.lookup.aio(name=self.session_id)
-                await app.stop.aio()
+                await self._sandbox.terminate.aio()
             except Exception:
                 pass
 
@@ -376,17 +399,53 @@ export ANTHROPIC_DEFAULT_SONNET_MODEL="{model}"
 export ANTHROPIC_DEFAULT_OPUS_MODEL="{model}"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="{model}"
 export CLAUDE_CODE_SUBAGENT_MODEL="{model}"
+# Disable features that Bedrock/proxy don't support
+export DISABLE_PROMPT_CACHING="1"
+export MAX_THINKING_TOKENS="0"
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
+# Source nvm so node is on PATH (needed for npm-installed claude)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 exec /root/.local/bin/claude.real "$@"
 """
-        # Rename real claude -> claude.real, install wrapper as claude
+        # Pin Claude Code to known-working version, then install proxy wrapper.
+        # Harbor's install.sh installs latest (2.1.101+) via curl which sends
+        # beta flags incompatible with Bedrock-routed proxies like UniAPI.
+        # Version 2.1.92 works. We replace the curl-installed binary entirely.
+        #
+        # Harbor's run command uses: export PATH="$HOME/.local/bin:$PATH"; claude ...
+        # So the wrapper MUST be at /root/.local/bin/claude
+        pin_version = "2.1.92"
         rename_and_wrap = (
             "if [ -f /root/.local/bin/claude ] && [ ! -f /root/.local/bin/claude.real ]; then "
-            "  mv /root/.local/bin/claude /root/.local/bin/claude.real && "
+            # Install node via nvm (sandbox may not have it)
+            "  if ! command -v node >/dev/null 2>&1; then "
+            "    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash && "
+            "    export NVM_DIR=\"$HOME/.nvm\" && . \"$NVM_DIR/nvm.sh\" || true && "
+            "    nvm install 22; "
+            "  else "
+            "    export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\" || true; "
+            "  fi && "
+            # Completely remove the curl-installed claude
+            "  rm -f /root/.local/bin/claude && "
+            # Install pinned version via npm globally
+            f"  npm install -g @anthropic-ai/claude-code@{pin_version} && "
+            # Create a claude.real at .local/bin that delegates to npm's claude
+            "  NPM_CLAUDE=$(which claude) && "
+            "  cat > /root/.local/bin/claude.real << REALEOF\n"
+            "#!/bin/bash\n"
+            "export NVM_DIR=\"\\$HOME/.nvm\"\n"
+            "[ -s \"\\$NVM_DIR/nvm.sh\" ] && . \"\\$NVM_DIR/nvm.sh\"\n"
+            "exec \"$NPM_CLAUDE\" \"\\$@\"\n"
+            "REALEOF\n"
+            "  chmod +x /root/.local/bin/claude.real && "
+            # Write proxy wrapper at /root/.local/bin/claude
             "  cat > /root/.local/bin/claude << 'WRAPEOF'\n"
             f"{wrapper_script}"
             "WRAPEOF\n"
             "  chmod +x /root/.local/bin/claude && "
-            "  echo '[proxy] Claude wrapper installed'; "
+            f"  /root/.local/bin/claude.real --version && "
+            f"  echo '[proxy] Claude {pin_version} + wrapper installed'; "
             "fi"
         )
 
@@ -411,23 +470,84 @@ async def _run_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
+    learning_config: dict = None,
+    tasks_dir: str = "",
 ) -> dict:
     """
-    Run one task end-to-end. Returns an ENRICHED result dict with:
-      - agent, model, category, tags  (for cross-agent analysis)
-      - timestamps (started_at, finished_at, elapsed_sec)
-      - dimension_scores (flattened from eval details)
+    Run one task end-to-end. Returns an ENRICHED result dict.
+
+    learning_config (optional):
+      - history_from: str — run tag to load previous trace from
+      - use_skills_from: str — path to skills dir on volume
+      - extract_skills: bool — extract skill after evaluation
+      - skill_threshold: float — min score for extraction (default 3.0)
+      - skill_model: str — LLM model for skill extraction (default gpt-4o-mini)
+    tasks_dir: subfolder name under tasks/ (e.g. "batch-1", "updated-deprivacy-100")
     """
     from harbor.agents.factory import AgentFactory
     from harbor.models.agent.context import AgentContext
     from harbor.models.agent.name import AgentName
     from harbor.models.trial.paths import TrialPaths
 
+    learning_config = learning_config or {}
     started_at = datetime.now(timezone.utc).isoformat()
 
-    task_dir = TASKS_BASE / task_name
+    task_dir = _get_tasks_base(tasks_dir) / task_name
     instruction = (task_dir / "instruction.md").read_text().strip()
     instruction += OUTPUT_DIR_INSTRUCTION
+
+    # --- Learning injection: history trace ---
+    history_tag = learning_config.get("history_from", "")
+    if history_tag:
+        sys.path.insert(0, "/harness")
+        from history import build_history_injection
+        history_text = build_history_injection(RESULTS_BASE, history_tag, task_name)
+        if history_text:
+            instruction = history_text + "\n" + instruction
+            print(f"[{task_name}] Injected history from {history_tag}")
+        else:
+            print(f"[{task_name}] No history found for {history_tag}")
+
+    # --- Learning injection: skills ---
+    skills_dir = learning_config.get("use_skills_from", "")
+    if skills_dir:
+        sys.path.insert(0, "/harness")
+        from skill_store import SkillStore
+        store = SkillStore(skills_dir=skills_dir)
+
+        same_cat_only = learning_config.get("same_category_only", False)
+        task_category = task_meta.get("category", "")
+
+        if same_cat_only and task_category:
+            # Filter: only load skills whose metadata.category matches this task
+            all_skills = store.list_skills()
+            cat_key = task_category.lower().replace(" & ", "_").replace(" ", "_")
+            matched = [
+                s for s in all_skills
+                if cat_key in [t.lower() for t in (s.get("metadata", {}).get("tags", []))]
+                or s.get("metadata", {}).get("category", "").lower() == task_category.lower()
+            ]
+            if matched:
+                skill_bodies = [s["full_body"] for s in matched[:3]]
+            else:
+                skill_bodies = []
+            print(f"[{task_name}] Category filter '{task_category}': {len(matched)} skill(s) matched")
+        else:
+            # LLM-based search across all skills
+            skill_bodies = store.search_skills(task_description=instruction, top_k=3)
+
+        if skill_bodies:
+            combined = "\n\n---\n\n".join(skill_bodies)
+            instruction = (
+                "Here are some relevant strategies from similar past tasks:\n\n"
+                f"{combined}\n\n"
+                "---\n\n"
+                "Now, here is your actual task:\n\n"
+                f"{instruction}"
+            )
+            print(f"[{task_name}] Injected {len(skill_bodies)} skill(s)")
+        else:
+            print(f"[{task_name}] No relevant skills found")
 
     if agent_name == "codex":
         instruction = _wrap_codex_instruction(instruction)
@@ -563,7 +683,7 @@ async def _run_task(
     ) if artifacts_dir.exists() else []
 
     # --- Evaluate ---
-    eval_result = _evaluate(task_name, result_dict)
+    eval_result = _evaluate(task_name, result_dict, tasks_dir=tasks_dir)
 
     score = float(
         eval_result.get("details", {}).get("overall_score", 0)
@@ -571,12 +691,50 @@ async def _run_task(
     )
     passed = bool(eval_result.get("passed", False))
 
-    return _build_result(
+    # --- Learning extraction: store skill if good enough ---
+    extracted_skill = None
+    if learning_config.get("extract_skills") and score > 0:
+        sys.path.insert(0, "/harness")
+        from skill_extractor import SkillExtractor
+        from skill_store import SkillStore
+
+        threshold = learning_config.get("skill_threshold", 3.0)
+        skill_model = learning_config.get("skill_model", "gpt-4o-mini")
+        skills_out = str(RESULTS_BASE / run_tag / "skills")
+
+        if score >= threshold:
+            extractor = SkillExtractor(model=skill_model)
+            config = {"skill_score_threshold": threshold}
+            decision = extractor.should_store(result_dict, eval_result, config)
+
+            if decision.get("store"):
+                task_data = {"task_name": task_name, "instruction": instruction}
+                skill_md = extractor.extract_skill(task_data, result_dict, eval_result)
+
+                store = SkillStore(skills_dir=skills_out)
+                metadata = {
+                    "score": score,
+                    "task_type": decision.get("task_type", ""),
+                    "tags": decision.get("tags", []),
+                    "agent": agent_name,
+                }
+                path = store.save_skill(skill_md, task_name, metadata)
+                extracted_skill = skill_md
+                await results_volume.commit.aio()
+                print(f"[{task_name}] Extracted skill -> {path.name}")
+            else:
+                print(f"[{task_name}] Skill not generalizable: {decision.get('reason', '')}")
+
+    result = _build_result(
         task_name, agent_name, agent_kwargs, run_tag, task_meta,
         started_at, score=score, passed=passed,
         eval_result=eval_result,
         artifacts=collected_artifacts,
+        task_result=result_dict.get("task_result", ""),
     )
+    if extracted_skill:
+        result["extracted_skill"] = extracted_skill
+    return result
 
 
 def _build_result(
@@ -591,6 +749,7 @@ def _build_result(
     eval_result: dict = None,
     error: str = "",
     artifacts: list[str] = None,
+    task_result: str = "",
 ) -> dict:
     """Build the enriched result dict with all metadata for cross-agent analysis."""
     finished_at = datetime.now(timezone.utc).isoformat()
@@ -629,8 +788,14 @@ def _build_result(
         "started_at": started_at,
         "finished_at": finished_at,
 
+        # --- Agent output (truncated for storage, full version in trials/) ---
+        "task_result": task_result[:10000] if task_result else "",
+
         # --- Artifacts ---
         "artifacts": artifacts or [],
+
+        # --- Learning ---
+        "is_seed": task_name in _SEED_TASKS,
 
         # --- Error ---
         "error": error,
@@ -653,8 +818,10 @@ async def run_task_remote(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
+    learning_config: dict = None,
+    tasks_dir: str = "",
 ) -> dict:
-    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, task_meta)
+    return await _run_task(task_name, agent_name, agent_kwargs, run_tag, task_meta, learning_config, tasks_dir)
 
 
 @app.function(
@@ -668,19 +835,33 @@ async def run_deprivacy_experiment(
     run_tag: str,
     first_n: int = 0,
     task_names_csv: str = "",
+    learning_config: dict = None,
+    tasks_dir: str = "",
 ) -> dict:
-    """Orchestrate a full deprivacy-100 run for one agent."""
-    tasks = _discover_tasks(first_n=first_n, task_names_csv=task_names_csv)
+    """Orchestrate a full experiment run for one agent on any task set."""
+    learning_config = learning_config or {}
+    tasks_dir = tasks_dir or DEFAULT_TASKS_DIR
+    tasks = _discover_tasks(first_n=first_n, task_names_csv=task_names_csv, tasks_dir=tasks_dir)
 
     model_name = agent_kwargs.get("model_name", "default")
+    learning_desc = ""
+    if learning_config.get("history_from"):
+        learning_desc += f"  History from: {learning_config['history_from']}\n"
+    if learning_config.get("use_skills_from"):
+        learning_desc += f"  Skills from: {learning_config['use_skills_from']}\n"
+    if learning_config.get("extract_skills"):
+        learning_desc += f"  Extract skills: threshold={learning_config.get('skill_threshold', 3.0)}\n"
+
     print(f"\n{'='*60}")
-    print(f"  Deprivacy-100 Experiment: {run_tag}")
+    print(f"  Experiment: {run_tag}")
     print(f"  Agent: {agent_name}  Model: {model_name}")
-    print(f"  Tasks: {len(tasks)}")
+    print(f"  Tasks dir: {tasks_dir} ({len(tasks)} tasks)")
+    if learning_desc:
+        print(learning_desc.rstrip())
     print(f"{'='*60}\n")
 
     starmap_args = [
-        (t["task_name"], agent_name, agent_kwargs, run_tag, t)
+        (t["task_name"], agent_name, agent_kwargs, run_tag, t, learning_config, tasks_dir)
         for t in tasks
     ]
 
@@ -734,7 +915,7 @@ async def run_deprivacy_experiment(
         "run_tag": run_tag,
         "agent": agent_name,
         "model": model_name,
-        "tasks_dir": "tasks/updated-deprivacy-100",
+        "tasks_dir": tasks_dir,
         "n_tasks": len(results),
         "n_passed": sum(1 for r in results if r.get("passed")),
         "n_errors": len(errors),
@@ -780,7 +961,10 @@ def main(collect: str = "", list_runs: bool = False):
         return
 
     if collect:
-        out_dir = Path(f"results/deprivacy/{collect}")
+        # Derive tasks_dir from run tag: "real118-codex" -> "real118", "synthetic_382-claude" -> "synthetic_382"
+        parts = collect.rsplit("-", 1)
+        tasks_dir_name = parts[0] if len(parts) > 1 else collect
+        out_dir = Path(f"results/{tasks_dir_name}/{collect}")
         out_dir.mkdir(parents=True, exist_ok=True)
         print(f"Downloading {collect} -> {out_dir}")
         subprocess.run(

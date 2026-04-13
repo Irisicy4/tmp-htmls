@@ -144,9 +144,25 @@ def main():
         choices=["claude-code", "codex", "gemini-cli", "aider", "opencode"],
     )
     parser.add_argument("--model", default="", help="Model name override")
-    parser.add_argument("--first-n", type=int, default=0, help="Run only first N tasks (0 = all 100)")
+    parser.add_argument("--tasks-dir", default="", help="Task subfolder under tasks/ (e.g. batch-1, updated-deprivacy-100, real_118)")
+    parser.add_argument("--first-n", type=int, default=0, help="Run only first N tasks (0 = all)")
     parser.add_argument("--task-names", default="", help="Comma-separated task names")
     parser.add_argument("--run-tag", default="", help="Custom run tag (default: auto)")
+
+    # Learning flags
+    parser.add_argument("--history-from", default="",
+                        help="Run tag to inject history traces from (approach 1)")
+    parser.add_argument("--use-skills-from", default="",
+                        help="Path to skills dir on Modal volume, e.g. deprivacy-codex-v3/skills (approach 2)")
+    parser.add_argument("--extract-skills", action="store_true",
+                        help="Extract skills from high-scoring results after evaluation (approach 2)")
+    parser.add_argument("--skill-threshold", type=float, default=3.0,
+                        help="Min score for skill extraction (default: 3.0)")
+    parser.add_argument("--skill-model", default="gpt-4o-mini",
+                        help="LLM model for skill extraction/search (default: gpt-4o-mini)")
+    parser.add_argument("--evolve-same-category", action="store_true",
+                        help="Only inject skills from the same category as the current task")
+
     args = parser.parse_args()
 
     _load_env()
@@ -156,6 +172,23 @@ def main():
     tag = args.run_tag or f"deprivacy/{args.agent}/{ts}"
     agent_kwargs = _build_agent_kwargs(args.agent, args.model)
 
+    # Build learning config
+    learning_config = {}
+    if args.history_from:
+        learning_config["history_from"] = args.history_from
+    if args.use_skills_from:
+        # Skills dir is on the Modal volume at /results/<path>
+        skills_path = args.use_skills_from
+        if not skills_path.startswith("/"):
+            skills_path = f"/results/{skills_path}"
+        learning_config["use_skills_from"] = skills_path
+    if args.extract_skills:
+        learning_config["extract_skills"] = True
+        learning_config["skill_threshold"] = args.skill_threshold
+        learning_config["skill_model"] = args.skill_model
+    if args.evolve_same_category:
+        learning_config["same_category_only"] = True
+
     fn = modal.Function.from_name("deprivacy-100-bench", "run_deprivacy_experiment")
     handle = fn.spawn(
         args.agent,
@@ -163,18 +196,23 @@ def main():
         tag,
         first_n=args.first_n,
         task_names_csv=args.task_names,
+        learning_config=learning_config or None,
+        tasks_dir=args.tasks_dir,
     )
 
-    print(f"\nDispatched deprivacy-100 experiment.")
+    print(f"\nDispatched experiment.")
     print(f"  Agent     : {args.agent}")
     print(f"  Model     : {args.model or '(default)'}")
+    print(f"  Tasks dir : {args.tasks_dir or '(default: updated-deprivacy-100)'}")
     print(f"  Run tag   : {tag}")
     if args.task_names:
         print(f"  Tasks     : {args.task_names}")
     elif args.first_n:
         print(f"  Tasks     : first {args.first_n}")
     else:
-        print(f"  Tasks     : all 100")
+        print(f"  Tasks     : all")
+    if learning_config:
+        print(f"  Learning  : {learning_config}")
     print(f"\nYour laptop can disconnect now.")
     print(f"\nCollect results when done:")
     print(f"  modal run scripts_batch/deprivacy_modal_runner.py --collect {tag}")
