@@ -102,7 +102,12 @@ def apply_env_overrides(config: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def maybe_inject_skills(task: dict, config: dict) -> dict:
-    """Phase 2: search stored skills and prepend relevant ones to the instruction."""
+    """Phase 2: inject reflection (per-task) + workflows (cross-task).
+
+    Reflection is the primary signal — the evaluator's exact feedback on the
+    previous attempt at this task. Workflows provide supplementary cross-task
+    patterns.
+    """
     if not config.get("use_skills"):
         return task
 
@@ -110,53 +115,75 @@ def maybe_inject_skills(task: dict, config: dict) -> dict:
 
     skills_dir = config.get("skills_dir", "/skills")
     store = SkillStore(skills_dir=skills_dir)
+    task_name = task.get("task_name", "")
+
+    # Load per-task reflection (primary signal)
+    reflection = store.load_reflection(task_name) if task_name else None
+
+    # Search for relevant cross-task workflows (supplementary)
     skill_bodies = store.search_skills(
         task_description=task.get("instruction", ""),
         top_k=3,
     )
-    if not skill_bodies:
-        print("[skills] No relevant skills found")
+
+    # Build combined injection
+    injection = store.format_full_injection(reflection, skill_bodies)
+    if not injection:
+        print("[skills] No reflection or workflows found")
         return task
 
-    combined = "\n\n---\n\n".join(skill_bodies)
-    augmented = (
-        "Here are some relevant strategies from similar past tasks:\n\n"
-        f"{combined}\n\n"
-        "---\n\n"
-        "Now, here is your actual task:\n\n"
-        f"{task['instruction']}"
-    )
+    augmented = injection + task["instruction"]
     task = {**task, "instruction": augmented, "description": augmented}
-    print(f"[skills] Injected {len(skill_bodies)} skill(s) into instruction")
+    ref_str = f"reflection (score={reflection['score']})" if reflection else "no reflection"
+    wf_str = f"{len(skill_bodies)} workflow(s)" if skill_bodies else "no workflows"
+    print(f"[skills] Injected {ref_str} + {wf_str}")
     return task
 
 
 def maybe_store_skill(task: dict, result: dict, eval_result: dict, config: dict) -> None:
-    """Phase 1: extract and store a skill if the result is good enough."""
+    """Phase 1: generate reflection + optionally extract a per-task skill.
+
+    Reflection is always generated (for every task). Skill extraction only
+    happens for high-quality results that pass dimension-level gating.
+    """
     if not config.get("store_skills"):
         return
 
-    from skill_extractor import SkillExtractor
+    from skill_extractor import SkillExtractor, check_quality_gate, generate_reflection
     from skill_store import SkillStore
+
+    task_name = task.get("task_name", "unknown")
+    instruction = task.get("instruction", result.get("instruction", ""))
+    store = SkillStore(skills_dir=config.get("skills_dir", "/skills"))
+
+    # Always generate and save a reflection (primary per-task signal)
+    reflection = generate_reflection(task_name, eval_result, instruction, result.get("task_result", ""))
+    store.save_reflection(task_name, reflection)
+    print(f"[skills] Saved reflection for {task_name} (score={reflection['score']}, "
+          f"weak={[d for d,v in reflection['weaknesses']]})")
+
+    # Quality gate for skill extraction (stricter)
+    gate = check_quality_gate(eval_result, config)
+    if not gate["pass"]:
+        print(f"[skills] Quality gate failed for skill extraction: {gate['reason']}")
+        return
 
     extractor = SkillExtractor(model=config.get("skill_model", "gpt-4o-mini"))
     decision = extractor.should_store(result, eval_result, config)
     if not decision.get("store"):
-        print(f"[skills] Not storing: {decision.get('reason', 'unknown')}")
+        print(f"[skills] Not storing skill: {decision.get('reason', 'unknown')}")
         return
 
     print(f"[skills] Extracting skill: {decision.get('reason', '')}")
     skill_md = extractor.extract_skill(task, result, eval_result)
 
-    store = SkillStore(skills_dir=config.get("skills_dir", "/skills"))
     metadata = {
         "score": (eval_result.get("details", {}) or {}).get("overall_score"),
         "task_type": decision.get("task_type", ""),
         "tags": decision.get("tags", []),
     }
-    task_name = task.get("task_name", "unknown")
     path = store.save_skill(skill_md, task_name, metadata)
-    print(f"[skills] Saved: {path}")
+    print(f"[skills] Saved skill: {path}")
 
 
 # ---------------------------------------------------------------------------

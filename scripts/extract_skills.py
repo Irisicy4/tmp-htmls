@@ -90,9 +90,13 @@ def main():
     parser = argparse.ArgumentParser(description="Extract skills from Harbor results")
     parser.add_argument("results_dir", help="Harbor output directory (e.g. results/modal/<run-dir>)")
     parser.add_argument("--output", "-o", default="skills/", help="Output directory for skill .md files")
-    parser.add_argument("--threshold", "-t", type=float, default=2.0,
+    parser.add_argument("--threshold", "-t", type=float, default=3.5,
                         help="Minimum score to consider for skill extraction")
+    parser.add_argument("--dim-floor", type=int, default=2,
+                        help="Reject tasks where any dimension scored <= this value")
     parser.add_argument("--model", "-m", default="gpt-4o-mini", help="Model for skill extraction LLM calls")
+    parser.add_argument("--cross-task", action="store_true",
+                        help="Run AWM-style cross-task workflow induction (batch all results)")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be extracted without writing")
     args = parser.parse_args()
 
@@ -108,15 +112,19 @@ def main():
 
     print(f"Found {len(tasks)} task result(s) in {results_dir}")
 
+    from skill_extractor import check_quality_gate, induce_workflows_cross_task
+
     extractor = SkillExtractor(model=args.model)
-    config = {"skill_score_threshold": args.threshold}
+    config = {
+        "skill_score_threshold": args.threshold,
+        "skill_dimension_floor": args.dim_floor,
+    }
 
     if not args.dry_run:
         store = SkillStore(skills_dir=args.output)
 
-    extracted = 0
-    skipped = 0
-
+    # Normalize eval_results and run quality gate for all tasks
+    all_task_data = []
     for task in tasks:
         task_name = task["task_name"]
         result = task["result"]
@@ -124,35 +132,68 @@ def main():
 
         if eval_result is None:
             print(f"  [skip] {task_name}: no eval result")
-            skipped += 1
+            all_task_data.append(None)
             continue
 
-        # Normalize eval_result: Harbor reward.json has "details" at top level
-        # while inline eval has "details" nested
+        # Normalize eval_result structure
         if "details" not in eval_result and "overall_score" in eval_result:
             eval_result = {"details": eval_result, "passed": eval_result.get("passed", False)}
+        task["eval_result"] = eval_result
 
-        score = (eval_result.get("details", {}) or {}).get("overall_score")
-        if score is None:
-            print(f"  [skip] {task_name}: no score")
+        gate = check_quality_gate(eval_result, config)
+        score = (eval_result.get("details", {}) or {}).get("overall_score", "?")
+        print(f"  {task_name}: score={score}  gate={'PASS' if gate['pass'] else 'FAIL'} — {gate['reason']}")
+
+        all_task_data.append({
+            "task_name": task_name,
+            "result": result,
+            "eval_result": eval_result,
+            "quality_gate": gate,
+        })
+
+    valid_tasks = [t for t in all_task_data if t is not None]
+
+    # ── Cross-task workflow induction (AWM-style) ──
+    if args.cross_task and valid_tasks:
+        print(f"\n--- Cross-task workflow induction ({len(valid_tasks)} tasks) ---")
+        if args.dry_run:
+            print("  [dry-run] Would induce workflows from all tasks")
+        else:
+            workflows = induce_workflows_cross_task(valid_tasks, model=args.model)
+            print(f"  Induced {len(workflows)} cross-task workflow(s)")
+            if workflows:
+                source_names = [t["task_name"] for t in valid_tasks]
+                paths = store.save_workflows(workflows, source_names)
+                for p in paths:
+                    print(f"    Saved: {p}")
+
+    # ── Per-task skill extraction ──
+    extracted = 0
+    skipped = 0
+    print(f"\n--- Per-task skill extraction ---")
+
+    for td in valid_tasks:
+        if td is None:
             skipped += 1
             continue
 
-        print(f"  {task_name}: score={score}", end="")
+        task_name = td["task_name"]
+        result = td["result"]
+        eval_result = td["eval_result"]
+        gate = td["quality_gate"]
 
-        if float(score) < args.threshold:
-            print(f" (below threshold {args.threshold})")
+        if not gate["pass"]:
             skipped += 1
             continue
 
         # Ask LLM if this is generalizable
         decision = extractor.should_store(result, eval_result, config)
         if not decision.get("store"):
-            print(f" — not storing: {decision.get('reason', 'unknown')}")
+            print(f"  {task_name} — not storing: {decision.get('reason', 'unknown')}")
             skipped += 1
             continue
 
-        print(f" — extracting skill: {decision.get('reason', '')}")
+        print(f"  {task_name} — extracting: {decision.get('reason', '')}")
 
         if args.dry_run:
             extracted += 1
@@ -162,6 +203,7 @@ def main():
         task_data = {"task_name": task_name, "instruction": result.get("instruction", "")}
         skill_md = extractor.extract_skill(task_data, result, eval_result)
 
+        score = (eval_result.get("details", {}) or {}).get("overall_score")
         metadata = {
             "score": score,
             "task_type": decision.get("task_type", ""),
@@ -172,11 +214,11 @@ def main():
         extracted += 1
 
     print(f"\n--- Summary ---")
-    print(f"Total tasks:  {len(tasks)}")
-    print(f"Extracted:    {extracted}")
-    print(f"Skipped:      {skipped}")
+    print(f"Total tasks:       {len(tasks)}")
+    print(f"Per-task extracted: {extracted}")
+    print(f"Skipped:           {skipped}")
     if not args.dry_run and extracted > 0:
-        print(f"Skills dir:   {args.output}")
+        print(f"Skills dir:        {args.output}")
         print(f"\nNext: run ./scripts/sync-harness.sh to sync skills to task environments")
 
 
