@@ -528,6 +528,22 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env):
     elif agent_name == "claude-code" and anthropic_base and anthropic_key:
         model = model_name or "claude-sonnet-4-20250514"
 
+        # MCP config: give Claude Code a headless Playwright browser so it can
+        # actually interact with websites instead of guessing from memory.
+        # --no-sandbox is required because the Modal sandbox runs as root and
+        # Chromium refuses to launch as root without it.
+        mcp_config_json = json.dumps({
+            "mcpServers": {
+                "playwright": {
+                    "command": "npx",
+                    "args": [
+                        "-y", "@playwright/mcp@latest",
+                        "--headless", "--isolated", "--no-sandbox",
+                    ],
+                }
+            }
+        }, indent=2)
+
         wrapper_script = f"""#!/bin/bash
 # Proxy wrapper — overrides Harbor's env vars for Claude Code CLI
 export ANTHROPIC_API_KEY="{anthropic_key}"
@@ -537,9 +553,31 @@ export ANTHROPIC_DEFAULT_SONNET_MODEL="{model}"
 export ANTHROPIC_DEFAULT_OPUS_MODEL="{model}"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="{model}"
 export CLAUDE_CODE_SUBAGENT_MODEL="{model}"
-exec /root/.local/bin/claude.real "$@"
+MCP_ARGS=()
+if [ -f /root/claude-code-mcp.json ]; then
+  MCP_ARGS+=(--mcp-config /root/claude-code-mcp.json --strict-mcp-config)
+fi
+exec /root/.local/bin/claude.real "${{MCP_ARGS[@]}}" "$@"
 """
-        rename_and_wrap = (
+        setup_cmd = (
+            # 1. Write the Playwright MCP server config.
+            "cat > /root/claude-code-mcp.json << 'MCPEOF'\n"
+            f"{mcp_config_json}\n"
+            "MCPEOF\n"
+            # 2. Ensure Node.js + npx are present (needed to launch Playwright MCP).
+            "if ! command -v npx >/dev/null 2>&1; then "
+            "  echo '[proxy] Installing nodejs for Playwright MCP...'; "
+            "  apt-get update -qq >/dev/null 2>&1 && "
+            "  apt-get install -y -qq --no-install-recommends nodejs npm >/dev/null 2>&1 || "
+            "  echo '[proxy] WARN: nodejs install failed — browser MCP will not work'; "
+            "fi && "
+            # 3. Pre-cache @playwright/mcp and its Chromium so the first task call
+            #    doesn't eat a 30–60s download inside the measured run.
+            "if command -v npx >/dev/null 2>&1; then "
+            "  echo '[proxy] Pre-caching @playwright/mcp + Chromium...'; "
+            "  npx -y @playwright/mcp@latest --help >/dev/null 2>&1 || true; "
+            "fi && "
+            # 4. Install the claude-code wrapper (rename real binary, drop shim).
             "if [ -f /root/.local/bin/claude ] && [ ! -f /root/.local/bin/claude.real ]; then "
             "  mv /root/.local/bin/claude /root/.local/bin/claude.real && "
             "  cat > /root/.local/bin/claude << 'WRAPEOF'\n"
@@ -551,10 +589,11 @@ exec /root/.local/bin/claude.real "$@"
         )
 
         try:
-            result = await harbor_env._sandbox.exec.aio("bash", "-c", rename_and_wrap)
+            result = await harbor_env._sandbox.exec.aio("bash", "-c", setup_cmd)
             await result.wait.aio()
             stdout = await _read_stdout(result)
             print(f"  [proxy] Claude Code wrapper -> {anthropic_base} (model: {model})")
+            print("  [proxy] Browser MCP: @playwright/mcp via /root/claude-code-mcp.json")
             if stdout:
                 print(f"  [proxy] {stdout}")
         except Exception as e:
@@ -795,6 +834,9 @@ async def _run_task(
         instruction = (
             "IMPORTANT: Do NOT use plan mode. Implement the solution directly and immediately. "
             "Do not ask clarifying questions. Make reasonable assumptions and proceed. "
+            "If the task requires interacting with a website (browsing, clicking, filling forms, "
+            "reading page content), use the mcp__playwright__* browser tools to drive a real browser "
+            "rather than guessing from memory or fabricating results. "
             "After creating any files, print each file's complete contents to stdout "
             "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
             "Task:\n" + instruction
