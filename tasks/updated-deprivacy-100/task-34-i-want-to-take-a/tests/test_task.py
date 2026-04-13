@@ -26,10 +26,17 @@ def _extract_response(result):
     return ""
 
 def _parse(text):
-    match = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
-    if not match: return None
-    try: return json.loads(match.group(1).strip())
-    except: return None
+    m = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
+    if m:
+        try: return json.loads(m.group(1).strip())
+        except Exception: pass
+    try: return json.loads(text.strip())
+    except Exception: pass
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if m:
+        try: return json.loads(m.group())
+        except Exception: pass
+    return None
 
 def _call(agent_response, execution_summary):
     try:

@@ -135,10 +135,17 @@ def _extract_response(result):
     return ""
 
 def _parse_answer_tag(text):
-    match = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
-    if not match: return None
-    try: return json.loads(match.group(1).strip())
-    except json.JSONDecodeError: return None
+    m = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
+    if m:
+        try: return json.loads(m.group(1).strip())
+        except Exception: pass
+    try: return json.loads(text.strip())
+    except Exception: pass
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if m:
+        try: return json.loads(m.group())
+        except Exception: pass
+    return None
 
 def _call_judge_once(agent_response, execution_summary):
     try:
