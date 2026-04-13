@@ -61,6 +61,9 @@ _DEFAULT_MODELS = {
     "codex": "openai/gpt-4.1-mini",
     "gemini-cli": "google/gemini-2.5-flash",
     "aider": "openai/gpt-4.1-mini",
+    "cocoa-agent": "openai/gpt-4.1-mini",
+    "openhands": "openai/gpt-4.1-mini",
+    "terminus-2": "openai/gpt-4.1-mini",
 }
 
 
@@ -105,7 +108,47 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
             extra_env["GEMINI_API_BASE_URL"] = f"{uniapi_base}/gemini"
             print(f"  [proxy] gemini-cli -> {uniapi_base}/gemini")
 
-    if agent_name not in ("claude-code", "codex", "aider", "gemini-cli"):
+    elif agent_name == "cocoa-agent":
+        # Cocoa uses OpenAI-compatible API (via controller.args)
+        key = os.environ.get("OPENAI_API_KEY", "") or uniapi_key
+        base_url = os.environ.get("OPENAI_BASE_URL", "")
+        if not base_url and uniapi_base:
+            base_url = f"{uniapi_base}/v1"
+        if key:
+            extra_env["OPENAI_API_KEY"] = key
+        if base_url:
+            extra_env["OPENAI_BASE_URL"] = base_url
+            print(f"  [proxy] cocoa-agent -> {base_url}")
+
+    elif agent_name == "openhands":
+        # OpenHands uses LLM_API_KEY / LLM_BASE_URL, with fallback to provider vars
+        key = os.environ.get("OPENAI_API_KEY", "") or uniapi_key
+        base_url = os.environ.get("OPENAI_BASE_URL", "")
+        if not base_url and uniapi_base:
+            base_url = f"{uniapi_base}/v1"
+        if key:
+            extra_env["LLM_API_KEY"] = key
+            extra_env["OPENAI_API_KEY"] = key
+        if base_url:
+            extra_env["LLM_BASE_URL"] = base_url
+            extra_env["OPENAI_BASE_URL"] = base_url
+            print(f"  [proxy] openhands -> {base_url}")
+
+    elif agent_name == "terminus-2":
+        # Terminus-2 runs in the orchestrator process and calls the LLM via
+        # LiteLLM. LiteLLM reads OPENAI_API_KEY from env; api_base is passed
+        # as a direct constructor kwarg on Terminus2.
+        key = os.environ.get("OPENAI_API_KEY", "") or uniapi_key
+        base_url = os.environ.get("OPENAI_BASE_URL", "")
+        if not base_url and uniapi_base:
+            base_url = f"{uniapi_base}/v1"
+        if key:
+            extra_env["OPENAI_API_KEY"] = key
+            extra_env["OPENAI_API_BASE"] = base_url or ""
+        if base_url:
+            print(f"  [proxy] terminus-2 -> {base_url}")
+
+    if agent_name not in ("claude-code", "codex", "aider", "gemini-cli", "cocoa-agent", "openhands", "terminus-2"):
         print(f"  [warn] No credential mapping for agent '{agent_name}' — extra_env will be empty")
 
     if not model:
@@ -137,6 +180,12 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
         kwargs["model_name"] = model
     kwargs["judge_env"] = judge_env
 
+    # Terminus2 accepts api_base as a constructor kwarg (forwarded to LiteLLM).
+    if agent_name == "terminus-2":
+        tb = extra_env.get("OPENAI_API_BASE", "")
+        if tb:
+            kwargs["api_base"] = tb
+
     return kwargs
 
 
@@ -149,7 +198,7 @@ def main():
     parser.add_argument(
         "--agent",
         default="claude-code",
-        choices=["claude-code", "codex", "gemini-cli", "aider", "opencode"],
+        choices=["claude-code", "codex", "gemini-cli", "aider", "opencode", "cocoa-agent", "openhands", "terminus-2"],
         help="Harbor agent name (default: claude-code)",
     )
     parser.add_argument(
