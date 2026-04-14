@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "HR & Recruiting"
-tags = ["evolvebench", "web_nagivation", "hr_recruiting", "zh"]
+tags = ["evolvebench", "web_navigation", "hr_recruiting", "zh"]
 
 [agent]
 timeout_sec = 900.0

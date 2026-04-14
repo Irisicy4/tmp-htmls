@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Travel & Planning"
-tags = ["evolvebench", "web_nagivation", "travel_planning", "en"]
+tags = ["evolvebench", "web_navigation", "travel_planning", "en"]
 
 [agent]
 timeout_sec = 900.0

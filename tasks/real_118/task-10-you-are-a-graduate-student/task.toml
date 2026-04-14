@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Design"
-tags = ["evolvebench", "web_nagivation, image_edit", "design", "en"]
+tags = ["evolvebench", "web_navigation, image_edit", "design", "en"]
 
 [agent]
 timeout_sec = 900.0

@@ -1,7 +1,7 @@
 version = "1.0"
 
 [metadata]
-category = "Daily activities"
+category = "Daily Activities"
 tags = ["evolvebench", "send_email", "daily_activities", "en"]
 
 [agent]

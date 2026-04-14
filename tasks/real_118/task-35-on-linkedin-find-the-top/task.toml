@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Marketing & Analytics"
-tags = ["evolvebench", "web_nagivation, save_to_document", "marketing_analytics", "zh"]
+tags = ["evolvebench", "web_navigation, save_to_document", "marketing_analytics", "zh"]
 
 [agent]
 timeout_sec = 900.0
