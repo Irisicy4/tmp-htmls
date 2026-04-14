@@ -544,47 +544,68 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env):
             }
         }, indent=2)
 
+        # Harbor's create_run_agent_commands() merges AUTH_TOKEN into API_KEY
+        # and strips empty values, which breaks UniAPI / OpenRouter proxies that
+        # require API_KEY="" (explicitly empty) and AUTH_TOKEN set separately.
+        # The wrapper below overrides both unconditionally.
         wrapper_script = f"""#!/bin/bash
-# Proxy wrapper — overrides Harbor's env vars for Claude Code CLI
-export ANTHROPIC_API_KEY="{anthropic_key}"
+export ANTHROPIC_API_KEY=""
+export ANTHROPIC_AUTH_TOKEN="{anthropic_key}"
 export ANTHROPIC_BASE_URL="{anthropic_base}"
 export ANTHROPIC_MODEL="{model}"
 export ANTHROPIC_DEFAULT_SONNET_MODEL="{model}"
 export ANTHROPIC_DEFAULT_OPUS_MODEL="{model}"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="{model}"
 export CLAUDE_CODE_SUBAGENT_MODEL="{model}"
+# Disable features Bedrock-routed proxies don't support
+export DISABLE_PROMPT_CACHING="1"
+export MAX_THINKING_TOKENS="0"
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
 MCP_ARGS=()
 if [ -f /root/claude-code-mcp.json ]; then
   MCP_ARGS+=(--mcp-config /root/claude-code-mcp.json --strict-mcp-config)
 fi
 exec /root/.local/bin/claude.real "${{MCP_ARGS[@]}}" "$@"
 """
+        # Pin Claude Code to a known-working version. Harbor's install.sh fetches
+        # the latest via curl, which in 2.1.101+ sends beta flags that Bedrock-
+        # routed proxies like UniAPI reject. 2.1.92 is known to work.
+        pin_version = "2.1.92"
         setup_cmd = (
             # 1. Write the Playwright MCP server config.
             "cat > /root/claude-code-mcp.json << 'MCPEOF'\n"
             f"{mcp_config_json}\n"
             "MCPEOF\n"
-            # 2. Ensure Node.js + npx are present (needed to launch Playwright MCP).
-            "if ! command -v npx >/dev/null 2>&1; then "
-            "  echo '[proxy] Installing nodejs for Playwright MCP...'; "
+            # 2. Ensure Node.js + npm are present (needed for both Playwright
+            #    MCP and the pinned claude install).
+            "if ! command -v npm >/dev/null 2>&1; then "
+            "  echo '[proxy] Installing nodejs for Playwright MCP + claude pin...'; "
             "  apt-get update -qq >/dev/null 2>&1 && "
             "  apt-get install -y -qq --no-install-recommends nodejs npm >/dev/null 2>&1 || "
-            "  echo '[proxy] WARN: nodejs install failed — browser MCP will not work'; "
+            "  echo '[proxy] WARN: nodejs install failed'; "
             "fi && "
-            # 3. Pre-cache @playwright/mcp and its Chromium so the first task call
-            #    doesn't eat a 30–60s download inside the measured run.
+            # 3. Pre-cache @playwright/mcp and its Chromium so the first task
+            #    call doesn't eat a 30–60s download inside the measured run.
             "if command -v npx >/dev/null 2>&1; then "
             "  echo '[proxy] Pre-caching @playwright/mcp + Chromium...'; "
             "  npx -y @playwright/mcp@latest --help >/dev/null 2>&1 || true; "
             "fi && "
-            # 4. Install the claude-code wrapper (rename real binary, drop shim).
+            # 4. Replace Harbor's latest claude with the pinned version and
+            #    install the proxy wrapper.
             "if [ -f /root/.local/bin/claude ] && [ ! -f /root/.local/bin/claude.real ]; then "
-            "  mv /root/.local/bin/claude /root/.local/bin/claude.real && "
+            "  rm -f /root/.local/bin/claude && "
+            f"  npm install -g @anthropic-ai/claude-code@{pin_version} >/dev/null 2>&1 && "
+            "  NPM_CLAUDE=$(which claude) && "
+            "  cat > /root/.local/bin/claude.real << REALEOF\n"
+            "#!/bin/bash\n"
+            "exec \"$NPM_CLAUDE\" \"\\$@\"\n"
+            "REALEOF\n"
+            "  chmod +x /root/.local/bin/claude.real && "
             "  cat > /root/.local/bin/claude << 'WRAPEOF'\n"
             f"{wrapper_script}"
             "WRAPEOF\n"
             "  chmod +x /root/.local/bin/claude && "
-            "  echo '[proxy] Claude wrapper installed'; "
+            f"  echo '[proxy] Claude {pin_version} + wrapper installed'; "
             "fi"
         )
 
@@ -701,8 +722,9 @@ def _make_harbor_env(session_id: str, trial_paths, agent_name: str = ""):
     Returns a ModalEnvironment subclass instance that:
     1. Uses ghcr.io/agent-infra/sandbox:latest instead of a per-task Dockerfile.
        For cocoa-agent, uses cocoa_sandbox_image (which includes cocoa + Playwright).
-    2. Uses session_id as the Modal app name to avoid the "__harbor__" locking bug.
-    3. Cleans up the ephemeral app on stop to avoid hitting the 200 app limit.
+    2. Calls Sandbox.create directly — no per-task App.lookup, so there is no
+       ephemeral deployed app to clean up (avoids the 200-app limit entirely
+       and sandboxes attach to the parent evolve-bench-harbor app).
     """
     import modal as _modal
     from harbor.environments.modal import ModalEnvironment
@@ -720,15 +742,11 @@ def _make_harbor_env(session_id: str, trial_paths, agent_name: str = ""):
                 self._image = cocoa_sandbox_image
             else:
                 self._image = _modal.Image.from_registry(SANDBOX_BASE_IMAGE)
-            # Each task uses a unique Modal app name → avoids __harbor__ locking
-            self._app = await _modal.App.lookup.aio(
-                name=self.session_id,
-                create_if_missing=True,
-            )
-            self._sandbox = await self._create_sandbox(
-                gpu_config=None,
-                secrets_config=[],
-                volumes_config={},
+            self._sandbox = await _modal.Sandbox.create.aio(
+                image=self._image,
+                cpu=1.0,
+                memory=1024,
+                timeout=1800,
             )
             await self._sandbox.mkdir.aio(
                 str(EnvironmentPaths.agent_dir), parents=True
@@ -738,29 +756,10 @@ def _make_harbor_env(session_id: str, trial_paths, agent_name: str = ""):
             )
 
         async def stop(self, delete: bool = True) -> None:
-            """Stop sandbox and delete the ephemeral app to avoid hitting the 200 app limit."""
             try:
-                await super().stop(delete=delete)
-            except Exception as e:
-                print(f"[{self.session_id}] sandbox stop error (non-fatal): {e}")
-            # App.stop() doesn't exist in the SDK — use the gRPC API directly
-            try:
-                from modal.client import _Client
-                from modal_proto import api_pb2
-                client = await _Client.from_env.aio()
-                req = api_pb2.AppGetByDeploymentNameRequest(
-                    name=self.session_id, environment_name=""
-                )
-                resp = await client.stub.AppGetByDeploymentName(req)
-                if resp.app_id:
-                    stop_req = api_pb2.AppStopRequest(
-                        app_id=resp.app_id,
-                        source=api_pb2.APP_STOP_SOURCE_CLI,
-                    )
-                    await client.stub.AppStop(stop_req)
-                    print(f"[{self.session_id}] ephemeral app stopped")
-            except Exception as e:
-                print(f"[{self.session_id}] app cleanup failed: {e}")
+                await self._sandbox.terminate.aio()
+            except Exception:
+                pass
 
     return _PatchedEnv(
         environment_dir=Path("/tmp"),   # unused — start() is overridden
