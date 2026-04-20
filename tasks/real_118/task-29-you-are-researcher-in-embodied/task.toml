@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "Data & ML Engineering"
-tags = ["evolvebench", "web_nagivation, save_to_document", "data_ml_engineering", "zh"]
+tags = ["evolvebench", "web_navigation, save_to_document", "data_ml_engineering", "zh"]
 
 [agent]
 timeout_sec = 900.0

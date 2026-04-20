@@ -2,7 +2,7 @@ version = "1.0"
 
 [metadata]
 category = "(Self) Media"
-tags = ["evolvebench", "web_nagivation, save_to_document", "self_media", "zh"]
+tags = ["evolvebench", "web_navigation, save_to_document", "self_media", "zh"]
 
 [agent]
 timeout_sec = 900.0

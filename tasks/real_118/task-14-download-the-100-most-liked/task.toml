@@ -1,8 +1,8 @@
 version = "1.0"
 
 [metadata]
-category = "Daily activities"
-tags = ["evolvebench", "download_file, web_nagivation", "daily_activities", "cn"]
+category = "Daily Activities"
+tags = ["evolvebench", "download_file, web_navigation", "daily_activities", "cn"]
 
 [agent]
 timeout_sec = 900.0
