@@ -1,0 +1,1 @@
+Company A is preparing for liquidation and dissolution. It has discovered that it still has accounts payable to Company B on its books. However, Company B has already been dissolved. After Company A begins its liquidation process, does it still have an obligation to notify Company B? Please answer based on Chinese law.

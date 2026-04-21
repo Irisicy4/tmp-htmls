@@ -15,6 +15,7 @@ HARNESS_FILES=(
     harness/run_task.py
     harness/skill_store.py
     harness/skill_extractor.py
+    harness/evaluator.py
 )
 
 ADAPTER_FILES=(
