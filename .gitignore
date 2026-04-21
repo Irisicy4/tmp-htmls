@@ -18,6 +18,7 @@ build/
 tasks/*/*/environment/run_task.py
 tasks/*/*/environment/skill_store.py
 tasks/*/*/environment/skill_extractor.py
+tasks/*/*/environment/evaluator.py
 tasks/*/*/environment/adapters/
 tasks/*/*/environment/configs/
 tasks/*/*/environment/skills/
