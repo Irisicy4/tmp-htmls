@@ -9,12 +9,7 @@ Task: Go to https://mightydelivery.meetmighty.com/admin and log in, navigate
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Go to https://mightydelivery.meetmighty.com/admin and log in with email: "
-    "admin@mightydelivery.com and password: 12345678. Navigate to the deliveries "
-    "or orders section and extract only the items scheduled for today. Present them "
-    "in a structured table with order ID, recipient, address, and scheduled delivery time."
-)
+TASK_INSTRUCTION = """Go to https://mightydelivery.meetmighty.com/admin and log in with email: admin@mightydelivery.com and password: 12345678. Navigate to the deliveries or orders section and extract only the items scheduled for today. Present them in a structured table with order ID, recipient, address, and scheduled delivery time."""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully logged into an admin panel, filtered for today's deliveries, and presented the results clearly.

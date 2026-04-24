@@ -24,14 +24,7 @@ sketch/image was produced — not just a textual description of a design.
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "You are a graduate student in architecture. You want to build a lakeside park on the "
-    "main campus of Tsinghua University. It is located on the central axis of the campus. "
-    "It covers an area of about 4,000 square meters and has a height difference of half a "
-    "meter. Find relevant cases that can be learned and generate a design sketch. It is "
-    "required to reflect the genius loci of the place combined with northern Chinese garden "
-    "characteristics."
-)
+TASK_INSTRUCTION = """You are a graduate student in architecture. You want to build a lakeside park on the main campus of Tsinghua University. It is located on the central axis of the campus. It covers an area of about 4,000 square meters and has a height difference of half a meter. Find relevant cases that can be learned and generate a design sketch. It is required to reflect the genius loci of the place combined with northern Chinese garden characteristics."""
 
 PASS_THRESHOLD = 3.0
 

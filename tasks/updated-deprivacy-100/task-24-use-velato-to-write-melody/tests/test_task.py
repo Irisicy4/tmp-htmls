@@ -12,12 +12,7 @@ produce "Merry Christmas" as program output when compiled.
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Use Velato to write a melody and save the project. The melody should have a Christmas feel, "
-    "and when the program represented by the melody is compiled, it should output a greeting like "
-    "'Merry Christmas'. Ensure the note arrangement encodes the letters logically, and the generated "
-    "code must include compilation instructions."
-)
+TASK_INSTRUCTION = """Use Velato to write a melody and save the project. The melody should have a Christmas feel, and when the program represented by the melody is compiled, it should output a greeting like 'Merry Christmas'. Ensure the note arrangement encodes the letters logically, and the generated code must include compilation instructions."""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. You are assessing a task involving Velato — an esoteric programming language where programs are encoded as MIDI music.

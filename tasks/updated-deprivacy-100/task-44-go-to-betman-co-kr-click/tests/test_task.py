@@ -10,11 +10,7 @@ Task: Go to https://www.betman.co.kr/, click on game purchase hit results,
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Go to https://www.betman.co.kr/, click on game purchase hit results, "
-    "set the period from January 1, 2025 to the current date, set the game "
-    "type to soccer toto win/draw/loss, search, and save the results to Google Sheets."
-)
+TASK_INSTRUCTION = """Go to https://www.betman.co.kr/, click on game purchase hit results, set the period from January 1, 2025 to the current date, set the game type to soccer toto win/draw/loss, search, and save the results to Google Sheets."""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully completed a web data extraction and spreadsheet saving task.

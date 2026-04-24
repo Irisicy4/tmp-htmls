@@ -9,11 +9,7 @@ Task: "Help me book a hotel near Abisko, Sweden. The budget is 800-1000.
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Help me book a hotel near Abisko, Sweden. "
-    "The budget is 800-1000. Requirements: close to the lake, within walking "
-    "distance, and with high hygiene standards."
-)
+TASK_INSTRUCTION = """Help me book a hotel near Abisko, Sweden. The budget is 800-1000. Requirements: close to the lake, within walking distance, and with high hygiene standards."""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully completed a browser-based hotel booking or hotel search task.

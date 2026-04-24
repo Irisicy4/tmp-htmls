@@ -1,24 +1,25 @@
 """
-LLM-as-judge evaluator for EvolveBench task-12.
+LLM-as-judge evaluator for EvolveBench task-11-apply-the-following-effects-in.
 
-Category: Daily Activities
-Task: Compose and prepare (but do NOT send) an email to Taehoon Kim about
-      Java class availability on Nov 29/30, with polite weather-related closing.
-      Stop just before pressing send.
+Category: GIF Creation
+Task: Apply the following effects in order to the original image to create a GIF.
+  1. The image fades in and is revealed slowly.
+  2. The image rotates one rotation clockwise.
+  3. The heartbeat effect imp
 """
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Please send an email to Taehoon Kim [NAME_PLACEHOLDER]. Please tell me that the "
-    "one-day basic Java class I requested last time is available on either November 29th "
-    "or November 30th. Since the weather has gotten colder, please write politely, "
-    "including the message to be careful not to catch a cold. Stop the action just before "
-    "pressing the send email button."
-)
+TASK_INSTRUCTION = """Apply the following effects in order to the original image to create a GIF.
+  1. The image fades in and is revealed slowly.
+  2. The image rotates one rotation clockwise.
+  3. The heartbeat effect implemented earlier appears once.
+  4. The image fades out and slowly disappears.
+  
+  Let each movement last for 1 second."""
 PASS_THRESHOLD = 3.0
 
-SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully composed an email and stopped correctly before sending it.
+SYSTEM_PROMPT = """The judge is evaluating the agent's ability to correctly apply specified visual effects to an image in sequence, ensuring the resulting GIF adheres to the task instructions. The evaluation focuses on the accuracy of the effects, their timing, and the overall coherence of the animation.
 
 You will be given:
 1. The task instruction
@@ -31,10 +32,11 @@ USER_PROMPT_TEMPLATE = """## Task Instruction
 {task_instruction}
 
 ## Task-Specific Constraints
-- Recipient: Taehoon Kim (email placeholder — any plausible email address is acceptable)
-- Content required: (a) Java class is available on Nov 29 or Nov 30, (b) polite tone, (c) weather/cold warning message
-- Critical stopping rule: agent must NOT send the email — it must stop at the compose/draft stage, just before clicking send
-- Sending the email is a FAILURE even if the email content is perfect
+- The GIF must include all four specified effects in the correct order: fade-in, clockwise rotation, heartbeat effect, fade-out.
+- Each effect must last exactly 1 second.
+- The heartbeat effect must match the implementation described in earlier instructions.
+- The transitions between effects must be smooth and visually coherent.
+- The final GIF must loop seamlessly.
 
 ## Agent Final Response
 {agent_response}
@@ -47,50 +49,58 @@ USER_PROMPT_TEMPLATE = """## Task Instruction
 ## Evaluation Instructions
 
 ### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent compose an email (open email client, fill recipient/subject/body)?
-- Is the recipient addressed to Taehoon Kim?
-- Does the email mention Java class availability on Nov 29 or Nov 30 (or both)?
-- Does the email include a weather/cold warning message?
-- Is the tone polite and appropriate?
-- Did the agent stop before sending? Or did it send the email? Cite evidence from trace.
+- Does the GIF include all four effects in the correct order?
+- Does each effect last exactly 1 second?
+- Is the heartbeat effect implemented as described in earlier instructions?
+- Are the transitions between effects smooth and visually coherent?
+- Does the GIF loop seamlessly without visible glitches?
 
 ### Step 2: Dimension Scoring
 
-#### A. Stopping Behaviour
-Did the agent correctly stop just before sending?
+#### A. Effect Sequence Accuracy
+Measures whether the effects are applied in the correct order.
 
-5 — Agent explicitly stopped at the compose/draft stage and confirmed it did not send; trace confirms no send action.
-4 — Agent stopped at compose stage; trace is ambiguous about whether send was clicked but response states it stopped.
-3 — Agent describes stopping but trace shows the send button was reached with no clear confirmation either way.
-2 — Agent sent the email despite the instruction to stop, OR agent never opened an email client at all.
-1 — Agent explicitly sent the email or completely ignored the stopping instruction.
+5 — All four effects are applied in the correct order without any omissions or rearrangements.
+4 — All effects are applied in the correct order, but minor deviations are present (e.g., slight timing misalignment).
+3 — Most effects are applied in the correct order, but one effect is missing or out of sequence.
+2 — Several effects are missing or applied out of sequence.
+1 — The sequence is completely incorrect or missing entirely.
 
-#### B. Email Content Accuracy
-Does the email contain all required information?
+#### B. Timing Precision
+Evaluates whether each effect lasts exactly 1 second as specified.
 
-5 — Email includes: (a) Java class available Nov 29 or Nov 30, (b) weather/cold warning, (c) addressed to Taehoon Kim.
-4 — All three elements present but one is vague (e.g. dates mentioned without specifying Nov 29/30 explicitly).
-3 — Two of three elements present; one is missing (e.g. no weather message, or wrong dates).
-2 — Only one element present; email is substantially incomplete.
-1 — Email content is entirely wrong or no email was composed.
+5 — All effects last exactly 1 second with no deviations.
+4 — All effects are close to 1 second, with minor deviations of less than 0.2 seconds.
+3 — Most effects are close to 1 second, but one or more have noticeable timing deviations.
+2 — Several effects have significant timing deviations exceeding 0.5 seconds.
+1 — Timing is completely inconsistent or ignored.
 
-#### C. Tone & Politeness
-Is the email written politely and appropriately?
+#### C. Heartbeat Effect Quality
+Assesses the fidelity of the heartbeat effect implementation.
 
-5 — Polite salutation and closing; formal but warm tone; weather message is naturally integrated (not forced).
-4 — Polite overall; minor awkwardness in phrasing or the weather message feels slightly tacked on.
-3 — Content is present but tone is neutral/flat rather than genuinely polite.
-2 — Tone is inappropriate (too casual, too terse, or impersonal) for a professional email.
-1 — No email text produced or tone is completely wrong.
+5 — The heartbeat effect matches the earlier implementation perfectly in appearance and timing.
+4 — The heartbeat effect is mostly accurate, with minor deviations in appearance or timing.
+3 — The heartbeat effect is somewhat accurate but has noticeable deviations in appearance or timing.
+2 — The heartbeat effect is poorly implemented and does not resemble the earlier description.
+1 — The heartbeat effect is missing or completely incorrect.
 
-#### D. Execution Completeness
-Did the agent fully compose the email (subject, body, recipient all filled in) before stopping?
+#### D. Transition Smoothness
+Evaluates the smoothness and coherence of transitions between effects.
 
-5 — All fields complete: recipient (Taehoon Kim), subject line, full email body.
-4 — Recipient and body complete; subject line missing or generic.
-3 — Body complete but recipient or subject field not filled in the email client.
-2 — Agent only drafted the email text in the response without opening an email client.
-1 — No email drafted; agent only described what it would write.
+5 — Transitions between all effects are smooth and visually coherent.
+4 — Transitions are mostly smooth, with minor visual inconsistencies.
+3 — Transitions are somewhat smooth, but noticeable glitches or abrupt changes are present.
+2 — Transitions are poorly executed, with significant visual disruptions.
+1 — Transitions are completely incoherent or missing.
+
+#### E. Loop Quality
+Assesses whether the GIF loops seamlessly without visible glitches.
+
+5 — The GIF loops seamlessly with no visible glitches.
+4 — The GIF loops mostly seamlessly, with minor visual inconsistencies at the loop point.
+3 — The GIF loops somewhat seamlessly, but noticeable glitches are present at the loop point.
+2 — The GIF does not loop seamlessly, with significant visual disruptions at the loop point.
+1 — The GIF does not loop at all or has major glitches throughout.
 
 ### Step 3: Output
 Respond ONLY with valid JSON inside <Answer></Answer> tags:
@@ -98,15 +108,17 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "stopping_behaviour": <1-5>,
-  "email_content_accuracy": <1-5>,
-  "tone_politeness": <1-5>,
-  "execution_completeness": <1-5>,
+  "effect_sequence_accuracy": <1-5>,
+  "timing_precision": <1-5>,
+  "heartbeat_effect_quality": <1-5>,
+  "transition_smoothness": <1-5>,
+  "loop_quality": <1-5>,
   "dimension_reasoning": {{
-    "stopping_behaviour": "<one sentence citing specific evidence>",
-    "email_content_accuracy": "<one sentence citing specific evidence>",
-    "tone_politeness": "<one sentence citing specific evidence>",
-    "execution_completeness": "<one sentence citing specific evidence>"
+    "effect_sequence_accuracy": "<one sentence citing specific evidence>",
+    "timing_precision": "<one sentence citing specific evidence>",
+    "heartbeat_effect_quality": "<one sentence citing specific evidence>",
+    "transition_smoothness": "<one sentence citing specific evidence>",
+    "loop_quality": "<one sentence citing specific evidence>"
   }},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
@@ -114,16 +126,14 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 </Answer>
 """
 
-# Stopping behaviour is top-weighted — sending the email is an explicit failure mode.
-# Content accuracy is second — the email must contain the right information.
 DIMENSION_WEIGHTS = {
-    "stopping_behaviour":      0.35,
-    "email_content_accuracy":  0.30,
-    "tone_politeness":         0.20,
-    "execution_completeness":  0.15,
+    "effect_sequence_accuracy": 0.3,
+    "timing_precision":    0.25,
+    "heartbeat_effect_quality": 0.2,
+    "transition_smoothness": 0.15,
+    "loop_quality":        0.1,
 }
 DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
-
 
 def _extract_response(result):
     task_result = result.get("task_result") or ""

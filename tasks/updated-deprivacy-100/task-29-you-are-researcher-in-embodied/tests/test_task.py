@@ -13,14 +13,7 @@ Note: This is a single-session instantiation of a "long-term" task.
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "You are a researcher in embodied AI. Please act as a long-term collaborator to help "
-    "with technical insight: continuously scan the latest frontier progress in embodied "
-    "intelligence, including but not limited to new technical demos, blogs, papers, and "
-    "technical interpretations. Summarize key findings weekly and generate reports, with "
-    "focus on fast-slow systems, VLA, embodied reinforcement learning, world models, "
-    "teleoperation, force feedback, robot configurations, and related technologies."
-)
+TASK_INSTRUCTION = """You are a researcher in embodied AI. Please act as a long-term collaborator to help with technical insight: continuously scan the latest frontier progress in embodied intelligence, including but not limited to new technical demos, blogs, papers, and technical interpretations. Summarize key findings weekly and generate reports, with focus on fast-slow systems, VLA, embodied reinforcement learning, world models, teleoperation, force feedback, robot configurations, and related technologies."""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. This is a research monitoring task. Because a single agent session cannot span weeks, evaluate: (1) the quality of the agent's immediate research scan and report, and (2) whether the agent provides a credible, specific framework for ongoing weekly monitoring."""

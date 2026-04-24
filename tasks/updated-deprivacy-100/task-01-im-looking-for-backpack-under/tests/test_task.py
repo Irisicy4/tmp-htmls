@@ -21,11 +21,7 @@ import re
 # Task metadata
 # ---------------------------------------------------------------------------
 
-TASK_INSTRUCTION = (
-    "im looking for a backpack under $75 that has all the features of this one: "
-    "https://www.amazon.com/dp/B09YRC9Y3G please do some research and find 3-5 options"
-    "and summarize their key features and prices, comparing them to the original."
-)
+TASK_INSTRUCTION = """im looking for a backpack under $75 that has all the features of this one: https://www.amazon.com/dp/B09YRC9Y3G please do some research and find 3-5 optionsand summarize their key features and prices, comparing them to the original."""
 
 PASS_THRESHOLD = 3.0
 

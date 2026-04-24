@@ -1,20 +1,16 @@
 """
-LLM-as-judge evaluator for EvolveBench task-06.
+LLM-as-judge evaluator for EvolveBench task-07-save-todays-top-traded-etf.
 
-Category: (Self) Media
-Task: "help me download a song named happy birthday from youtube"
-
-Note: This task involves a download action. Success requires the agent to
-identify a specific YouTube video AND produce or initiate an actual download,
-not merely provide a link or instructions.
+Category: Data Collection and Documentation
+Task: Save today’s top traded ETF stocks from Naver Securities to Google Docs
 """
 
 import os, json, re
 
-TASK_INSTRUCTION = "help me download a song named happy birthday from youtube"
+TASK_INSTRUCTION = """Save today’s top traded ETF stocks from Naver Securities to Google Docs"""
 PASS_THRESHOLD = 3.0
 
-SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully completed a media download task from YouTube.
+SYSTEM_PROMPT = """The judge is evaluating the agent's ability to accurately retrieve today's top traded ETF stocks from Naver Securities and document them in Google Docs. The evaluation focuses on the correctness, completeness, formatting, and adherence to the task constraints. The judge should ensure the agent followed the specified workflow and produced a usable output.
 
 You will be given:
 1. The task instruction
@@ -27,10 +23,11 @@ USER_PROMPT_TEMPLATE = """## Task Instruction
 {task_instruction}
 
 ## Task-Specific Constraints
-- Platform: YouTube specifically
-- Content: a "Happy Birthday" song — any widely recognised version is acceptable
-- Action required: an actual download must be attempted or completed, not just a link provided or instructions given
-- File output: ideally an audio file (mp3, m4a, wav) or video file; the agent should confirm what was downloaded
+- Retrieve data specifically from Naver Securities.
+- Focus only on ETF stocks and identify the top traded ones.
+- Save the data in a Google Docs document with clear formatting.
+- Ensure the document is accessible and properly titled.
+- Avoid including irrelevant or outdated information.
 
 ## Agent Final Response
 {agent_response}
@@ -43,49 +40,49 @@ USER_PROMPT_TEMPLATE = """## Task Instruction
 ## Evaluation Instructions
 
 ### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent navigate to YouTube? Cite evidence.
-- Did the agent identify a specific "Happy Birthday" video (title, channel, URL)?
-- Did the agent attempt or complete a download? What method was used (yt-dlp, browser download, third-party tool)?
-- Is there evidence the file was actually saved (file path, confirmation message, download completion)?
-- Did the agent only provide instructions or a link instead of executing the download?
+- Did the agent retrieve the data from Naver Securities as instructed?
+- Does the document include only ETF stocks and identify the top traded ones?
+- Is the Google Docs document properly formatted and titled?
+- Is the information accurate and complete?
+- Is the document accessible and free of irrelevant content?
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Execution
-Did the agent actually navigate YouTube to find the content?
+#### A. Data Accuracy
+Measures whether the retrieved ETF stock data is accurate and matches Naver Securities.
 
-5 — Agent navigated YouTube, identified a specific Happy Birthday video with title/URL.
-4 — Agent found a YouTube video but with limited detail (e.g. URL only, no title or channel).
-3 — Agent searched YouTube but did not access a specific video page.
-2 — Agent used a non-YouTube source or only searched generally without finding a specific video.
-1 — No search performed; response is instructions only or from prior knowledge.
+5 — All ETF stock data is accurate and matches Naver Securities perfectly.
+4 — Most ETF stock data is accurate, with minor discrepancies.
+3 — Some ETF stock data is accurate, but there are noticeable errors.
+2 — Significant inaccuracies in the ETF stock data retrieved.
+1 — ETF stock data is entirely inaccurate or missing.
 
-#### B. Download Execution
-Did the agent actually attempt or complete the download?
+#### B. Data Completeness
+Evaluates whether all top traded ETF stocks are included in the document.
 
-5 — Download completed; file saved with confirmation (file path, size, or format mentioned).
-4 — Download initiated and likely completed based on trace; no explicit confirmation in response.
-3 — Download attempted but outcome uncertain (e.g. tool invoked but no success confirmation).
-2 — Agent provided a download link or instructions but did not execute the download itself.
-1 — No download attempted; agent only described how to download or refused.
+5 — All top traded ETF stocks are included without omissions.
+4 — Most top traded ETF stocks are included, with minor omissions.
+3 — Some top traded ETF stocks are included, but key entries are missing.
+2 — Few top traded ETF stocks are included, with major omissions.
+1 — No top traded ETF stocks are included or the list is irrelevant.
 
-#### C. Content Match
-Is the downloaded or identified content a "Happy Birthday" song as requested?
+#### C. Document Formatting
+Assesses the clarity and organization of the Google Docs document.
 
-5 — Content is clearly a Happy Birthday song (title confirms it; well-known version).
-4 — Content is likely a Happy Birthday song but title is ambiguous or version is obscure.
-3 — Agent found Happy Birthday content but it may be a cover, instrumental, or unrelated remix.
-2 — Content is loosely related (birthday music) but not "Happy Birthday" specifically.
-1 — Content is unrelated or agent could not find any matching content.
+5 — The document is well-organized, clearly formatted, and easy to read.
+4 — The document is mostly well-organized, with minor formatting issues.
+3 — The document has noticeable formatting issues but is still readable.
+2 — The document is poorly formatted and difficult to read.
+1 — The document is completely disorganized and unreadable.
 
-#### D. Response Clarity
-Does the agent clearly communicate what was found and downloaded?
+#### D. Task Adherence
+Checks whether the agent followed all task constraints and instructions.
 
-5 — Response states: video title, source URL, download method, and file format/location.
-4 — Most details present; one piece missing (e.g. no file path or no format mentioned).
-3 — Agent confirms a download but with minimal detail.
-2 — Response is vague; unclear whether anything was actually downloaded.
-1 — No useful output; response is a refusal, error, or generic instructions.
+5 — All task constraints and instructions were followed perfectly.
+4 — Most task constraints and instructions were followed, with minor deviations.
+3 — Some task constraints and instructions were followed, but there are noticeable deviations.
+2 — Few task constraints and instructions were followed, with major deviations.
+1 — None of the task constraints or instructions were followed.
 
 ### Step 3: Output
 Respond ONLY with valid JSON inside <Answer></Answer> tags:
@@ -93,15 +90,15 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_execution": <1-5>,
-  "download_execution": <1-5>,
-  "content_match": <1-5>,
-  "response_clarity": <1-5>,
+  "data_accuracy": <1-5>,
+  "data_completeness": <1-5>,
+  "document_formatting": <1-5>,
+  "task_adherence": <1-5>,
   "dimension_reasoning": {{
-    "platform_execution": "<one sentence citing specific evidence>",
-    "download_execution": "<one sentence citing specific evidence>",
-    "content_match": "<one sentence citing specific evidence>",
-    "response_clarity": "<one sentence citing specific evidence>"
+    "data_accuracy": "<one sentence citing specific evidence>",
+    "data_completeness": "<one sentence citing specific evidence>",
+    "document_formatting": "<one sentence citing specific evidence>",
+    "task_adherence": "<one sentence citing specific evidence>"
   }},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
@@ -110,13 +107,12 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "platform_execution":  0.20,
-    "download_execution":  0.40,
-    "content_match":       0.25,
-    "response_clarity":    0.15,
+    "data_accuracy":       0.35,
+    "data_completeness":   0.25,
+    "document_formatting": 0.2,
+    "task_adherence":      0.2,
 }
 DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
-
 
 def _extract_response(result):
     task_result = result.get("task_result") or ""

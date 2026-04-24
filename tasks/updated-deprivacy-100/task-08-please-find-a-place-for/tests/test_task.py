@@ -8,10 +8,7 @@ Task: "Please find a place for a date in Sydney, Australia on December 25, 2025.
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Please find a place for a date in Sydney, Australia on December 25, 2025. "
-    "I wish there was a place with easy parking."
-)
+TASK_INSTRUCTION = """Please find a place for a date in Sydney, Australia on December 25, 2025. I wish there was a place with easy parking."""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully found suitable date spots in Sydney, Australia for Christmas Day (December 25, 2025).

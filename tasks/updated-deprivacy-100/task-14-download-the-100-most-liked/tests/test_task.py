@@ -1,17 +1,16 @@
 """
-LLM-as-judge evaluator for EvolveBench task-15.
+LLM-as-judge evaluator for EvolveBench task-14-download-the-100-most-liked.
 
-Category: Data & ML Engineering
-Task: Get all 2025 publication info from https://m.douban.com/subject_collection/ECNA7Y7GA
-      and save as an Excel file.
+Category: Web Research
+Task: Download the 100 most liked videos on tiktok about diving mask and diving snorkel
 """
 
 import os, json, re
 
-TASK_INSTRUCTION = "Help me get all 2025 publication info from https://m.douban.com/subject_collection/ECNA7Y7GA and save as an Excel file."
+TASK_INSTRUCTION = """Download the 100 most liked videos on tiktok about diving mask and diving snorkel"""
 PASS_THRESHOLD = 3.0
 
-SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Your job is to assess whether an AI agent successfully scraped publication data from a specific Douban URL and saved it to Excel.
+SYSTEM_PROMPT = """The judge is evaluating the agent's ability to accurately identify, download, and organize the 100 most liked TikTok videos related to diving masks and diving snorkels. The evaluation focuses on the agent's adherence to the task constraints, the relevance of the videos to the specified topic, and the completeness of the dataset. The judge should also assess whether the agent followed ethical and legal guidelines while performing the task.
 
 You will be given:
 1. The task instruction
@@ -24,10 +23,11 @@ USER_PROMPT_TEMPLATE = """## Task Instruction
 {task_instruction}
 
 ## Task-Specific Constraints
-- Source: the exact URL https://m.douban.com/subject_collection/ECNA7Y7GA (must be accessed directly, not a general Douban search)
-- Filter: 2025 publications only
-- Output format: Excel file (.xlsx or .xls)
-- Data expected: publication titles, authors, and any available metadata (rating, date, genre); at minimum title and year
+- Only videos explicitly related to diving masks and diving snorkels should be included.
+- The dataset must consist of exactly 100 videos.
+- The videos must be ranked by the number of likes, starting from the most liked.
+- The agent must ensure compliance with TikTok's terms of service and copyright laws.
+- The videos must be downloaded in a format that preserves their original quality.
 
 ## Agent Final Response
 {agent_response}
@@ -40,49 +40,58 @@ USER_PROMPT_TEMPLATE = """## Task Instruction
 ## Evaluation Instructions
 
 ### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent navigate the specific Douban URL? Cite evidence.
-- How many publications did the agent retrieve? Are they filtered to 2025?
-- What fields were captured (title, author, date, rating, etc.)?
-- Was an Excel file created? Is there evidence of file creation (path, confirmation)?
-- Did the agent handle pagination to get all entries, or only the first page?
+- Did the agent collect exactly 100 videos?
+- Are all the videos directly related to diving masks and diving snorkels?
+- Are the videos ranked correctly by the number of likes?
+- Did the agent provide evidence of compliance with TikTok's terms of service and copyright laws?
+- Is the quality of the downloaded videos consistent with their original format?
 
 ### Step 2: Dimension Scoring
 
-#### A. Source Navigation
-Did the agent access the specific Douban URL as instructed?
+#### A. Relevance To Topic
+Measures how well the videos align with the topic of diving masks and diving snorkels.
 
-5 — Agent navigated the exact URL and retrieved content from that specific collection page.
-4 — Agent accessed the URL but may have only retrieved the first page without paginating.
-3 — Agent searched Douban generally without accessing the specific collection URL.
-2 — Agent used a different source or described what to do without navigating.
-1 — No navigation performed; response is fabricated or refused.
+5 — All 100 videos are directly and clearly related to diving masks and diving snorkels.
+4 — At least 90% of the videos are related to diving masks and diving snorkels, with minor deviations.
+3 — At least 75% of the videos are related to diving masks and diving snorkels, but some are off-topic.
+2 — Fewer than 75% of the videos are related to diving masks and diving snorkels.
+1 — The majority of the videos are unrelated to diving masks and diving snorkels.
 
-#### B. Data Completeness
-Did the agent retrieve all 2025 publications with adequate fields?
+#### B. Ranking Accuracy
+Assesses whether the videos are correctly ranked by the number of likes.
 
-5 — All 2025 entries retrieved with at minimum title and publication date; additional fields (author, rating) are a bonus.
-4 — Most 2025 entries retrieved; pagination may have missed some (e.g. only first 2 pages of 5).
-3 — Some 2025 entries retrieved but coverage is clearly incomplete (e.g. only 10-20 entries when more exist).
-2 — Data retrieved but not filtered to 2025, or very few entries captured.
-1 — No data retrieved or data is fabricated.
+5 — All 100 videos are perfectly ranked by the number of likes in descending order.
+4 — The ranking is mostly accurate, with minor errors affecting fewer than 5 videos.
+3 — The ranking has noticeable errors affecting 5-15 videos.
+2 — The ranking has significant errors affecting more than 15 videos.
+1 — The ranking is largely incorrect or absent.
 
-#### C. Excel Output
-Was the data saved as an Excel file?
+#### C. Dataset Completeness
+Evaluates whether the dataset contains exactly 100 videos.
 
-5 — Excel file created and confirmed (.xlsx/.xls); file path or download link provided.
-4 — Excel creation attempted and likely succeeded per trace; no explicit confirmation in response.
-3 — Agent produced data in a tabular format (e.g. CSV or JSON) but not Excel specifically.
-2 — Agent displayed the data in the response without saving to any file format.
-1 — No file output; agent only described the data or refused.
+5 — The dataset contains exactly 100 videos with no omissions or duplicates.
+4 — The dataset contains 95-99 videos, with no duplicates.
+3 — The dataset contains 90-94 videos, or includes a few duplicates.
+2 — The dataset contains 80-89 videos, or includes several duplicates.
+1 — The dataset contains fewer than 80 videos, or is riddled with duplicates.
 
-#### D. Data Quality
-Is the extracted data clean, structured, and accurate?
+#### D. Legal And Ethical Compliance
+Checks whether the agent adhered to TikTok's terms of service and copyright laws.
 
-5 — Data is well-structured in Excel with clear column headers; entries are accurate and consistently formatted.
-4 — Data is structured but minor formatting issues (e.g. inconsistent date formats, missing some fields for a few entries).
-3 — Data is present but poorly structured or requires significant cleaning.
-2 — Data is raw/unprocessed text dumped into Excel without proper column structure.
-1 — No structured data output.
+5 — The agent provided clear evidence of full compliance with TikTok's terms of service and copyright laws.
+4 — The agent provided some evidence of compliance, with minor gaps in documentation.
+3 — The agent provided limited evidence of compliance, with noticeable gaps in documentation.
+2 — The agent provided little evidence of compliance, with major gaps in documentation.
+1 — The agent provided no evidence of compliance or clearly violated terms of service or copyright laws.
+
+#### E. Video Quality Preservation
+Assesses whether the downloaded videos maintain their original quality.
+
+5 — All videos are downloaded in their original quality with no noticeable degradation.
+4 — Most videos are downloaded in their original quality, with minor degradation in a few.
+3 — Some videos show noticeable degradation in quality.
+2 — Many videos show significant degradation in quality.
+1 — The majority of the videos are of poor quality compared to their originals.
 
 ### Step 3: Output
 Respond ONLY with valid JSON inside <Answer></Answer> tags:
@@ -90,15 +99,17 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "source_navigation": <1-5>,
-  "data_completeness": <1-5>,
-  "excel_output": <1-5>,
-  "data_quality": <1-5>,
+  "relevance_to_topic": <1-5>,
+  "ranking_accuracy": <1-5>,
+  "dataset_completeness": <1-5>,
+  "legal_and_ethical_compliance": <1-5>,
+  "video_quality_preservation": <1-5>,
   "dimension_reasoning": {{
-    "source_navigation": "<one sentence citing specific evidence>",
-    "data_completeness": "<one sentence citing specific evidence>",
-    "excel_output": "<one sentence citing specific evidence>",
-    "data_quality": "<one sentence citing specific evidence>"
+    "relevance_to_topic": "<one sentence citing specific evidence>",
+    "ranking_accuracy": "<one sentence citing specific evidence>",
+    "dataset_completeness": "<one sentence citing specific evidence>",
+    "legal_and_ethical_compliance": "<one sentence citing specific evidence>",
+    "video_quality_preservation": "<one sentence citing specific evidence>"
   }},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
@@ -107,13 +118,13 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "source_navigation": 0.20,
-    "data_completeness": 0.30,
-    "excel_output":      0.30,
-    "data_quality":      0.20,
+    "relevance_to_topic":  0.25,
+    "ranking_accuracy":    0.25,
+    "dataset_completeness": 0.2,
+    "legal_and_ethical_compliance": 0.15,
+    "video_quality_preservation": 0.15,
 }
 DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
-
 
 def _extract_response(result):
     task_result = result.get("task_result") or ""

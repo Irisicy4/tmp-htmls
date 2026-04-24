@@ -20,10 +20,7 @@ import re
 # Task metadata
 # ---------------------------------------------------------------------------
 
-TASK_INSTRUCTION = (
-    "Help me search Xiaohongshu for all interview questions related to the National University "
-    "of Singapore (NUS) and summarize them into a list"
-)
+TASK_INSTRUCTION = """Help me search Xiaohongshu for all interview questions related to the National University of Singapore (NUS) and summarize them into a list"""
 
 PASS_THRESHOLD = 3.0
 

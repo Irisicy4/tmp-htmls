@@ -24,12 +24,7 @@ import re
 # Task metadata
 # ---------------------------------------------------------------------------
 
-TASK_INSTRUCTION = (
-    "busca las mejores casas rurales donde hospedarse en Catalonia. "
-    "Que tengan al menos 4 estrellas. Buscalo en Tripadvisor\n\n"
-    "(Translation: Search for the best rural houses to stay in Catalonia. "
-    "They must have at least 4 stars. Search on TripAdvisor.)"
-)
+TASK_INSTRUCTION = """busca las mejores casas rurales donde hospedarse en Catalonia. Que tengan al menos 4 estrellas. Buscalo en Tripadvisor"""
 
 PASS_THRESHOLD = 3.0
 

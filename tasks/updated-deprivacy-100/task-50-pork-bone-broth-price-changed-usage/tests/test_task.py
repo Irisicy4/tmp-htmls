@@ -64,11 +64,11 @@ def _vote(votes, dimensions, weights, pass_threshold):
 
 
 TASK_INSTRUCTION = """The price we receive from the manufacturer for the following product has changed. The usage amount has also changed, so I need a persuasive explanation of whether the actual unit cost for our store has gone up or down.
-
-Product name: Pork bone broth (domestic)
-Weight: 3kg
-Original price (VAT excluded): 3,700 won/3kg, mixed with water at 1:1 ratio (2x dilution)
-New price (VAT excluded): 5,600 won/3kg, mixed with water at 3:1 ratio (3x dilution)"""
+  
+  Product name: Pork bone broth (domestic)
+  Weight: 3kg
+  Original price (VAT excluded): 3,700 won/3kg, mixed with water at 1:1 ratio (2x dilution)
+  New price (VAT excluded): 5,600 won/3kg, mixed with water at 3:1 ratio (3x dilution)"""
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. Assess whether an AI agent correctly computed the actual unit cost impact of a price change combined with a dilution ratio change, and presented a persuasive argument."""
 

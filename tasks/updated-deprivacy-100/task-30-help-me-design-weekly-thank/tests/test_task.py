@@ -9,11 +9,7 @@ Task: Design a weekly thank-you card template for employees.
 
 import os, json, re
 
-TASK_INSTRUCTION = (
-    "Help me design a weekly thank-you card template to send to employees. "
-    "The card should include: this week's completed tasks + a philosophical quote "
-    "+ an encouraging message. (I will fill in the content; mainly help me design the template.)"
-)
+TASK_INSTRUCTION = """Help me design a weekly thank-you card template to send to employees. The card should include: this week's completed tasks + a philosophical quote + an encouraging message. (I will fill in the content; mainly help me design the template.)"""
 PASS_THRESHOLD = 3.0
 
 SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. This is a design task — the agent must produce a visual or well-structured card template. The user explicitly said they will fill in content, so the agent should focus on structure, layout, and visual design rather than writing the actual quote or tasks."""
