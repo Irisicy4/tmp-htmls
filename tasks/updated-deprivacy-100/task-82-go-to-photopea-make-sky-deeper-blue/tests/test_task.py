@@ -1,53 +1,29 @@
-"""
-LLM-as-judge evaluator for EvolveBench task-82-go-to-photopea-make-sky-deeper-blue.
+"""LLM-as-judge evaluator for task-82-go-to-photopea-make-sky-deeper-blue.
 
 Category: Image Editing
 Task: Go to https://www.photopea.com. Open this image URL: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/24701-nature-natural-beauty.jpg/1280px-24701-nature-natural-beauty.jpg. Use Photopea's se
 """
 
-import os, json, re
+import sys
+sys.path.insert(0, "/harness")
+from evaluator import run_judge
 
-TASK_INSTRUCTION = """Go to https://www.photopea.com. Open this image URL: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/24701-nature-natural-beauty.jpg/1280px-24701-nature-natural-beauty.jpg. Use Photopea's selection and Hue/Saturation adjustment tools to make the sky in the image a deeper, more vivid blue. Export the result as a PNG file."""
-PASS_THRESHOLD = 3.0
+TASK_INSTRUCTION = "Go to https://www.photopea.com. Open this image URL: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/24701-nature-natural-beauty.jpg/1280px-24701-nature-natural-beauty.jpg. Use Photopea's selection and Hue/Saturation adjustment tools to make the sky in the image a deeper, more vivid blue. Export the result as a PNG file."
 
-SYSTEM_PROMPT = """The judge is evaluating the agent's ability to perform precise image editing tasks using Photopea. This includes correctly accessing the specified image URL, utilizing the selection and Hue/Saturation adjustment tools to enhance the sky's color, and exporting the edited image as a PNG file. The evaluation focuses on the accuracy of the edits and adherence to the task instructions.
+SYSTEM_PROMPT_EXTRA = "Your job is to assess whether an AI agent successfully enhanced the sky's color in an image using Photopea's selection and Hue/Saturation adjustment tools. The task involves accessing the specified image URL, making precise edits to achieve a deeper, more vivid blue sky, and exporting the final result as a PNG file. Accuracy and adherence to the instructions are key evaluation criteria."
 
-You will be given:
-1. The task instruction
-2. The agent's final response
-3. A summary of the agent's tool-call trace (what it actually did, if available)
-
-Follow the evaluation steps exactly in order."""
-
-USER_PROMPT_TEMPLATE = """## Task Instruction
-{task_instruction}
-
-## Task-Specific Constraints
-- Access the image from the provided URL.
+CONSTRAINTS = """- Access the image from the provided URL.
 - Use Photopea's selection tool to isolate the sky area.
 - Adjust the Hue/Saturation settings to make the sky a deeper, more vivid blue.
-- Export the edited image as a PNG file.
+- Export the edited image as a PNG file."""
 
-## Agent Final Response
-{agent_response}
-
-## Agent Tool-Call Trace (what the agent actually did)
-{execution_summary}
-
----
-
-## Evaluation Instructions
-
-### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent successfully open the image from the provided URL in Photopea?
+EVIDENCE_QUESTIONS = """- Did the agent successfully open the image from the provided URL in Photopea?
 - Did the agent correctly isolate the sky using the selection tool?
 - Did the agent adjust the Hue/Saturation settings to achieve a deeper, more vivid blue for the sky?
 - Was the edited image exported as a PNG file?
-- Does the final image meet the visual expectations described in the task?
+- Does the final image meet the visual expectations described in the task?"""
 
-### Step 2: Dimension Scoring
-
-#### A. Image Access And Import
+DIMENSION_RUBRICS = """#### A. Image Access And Import
 Evaluates whether the agent successfully accessed and imported the image from the provided URL into Photopea.
 
 5 — The image was successfully accessed and imported without errors.
@@ -81,35 +57,23 @@ Evaluates whether the edited image was exported as a PNG file and retained high 
 4 — The image was exported as a PNG file with minor quality issues.
 3 — The image was exported as a PNG file but with noticeable quality issues.
 2 — The image was exported in the wrong format or with significant quality issues.
-1 — The image was not exported or the export was completely incorrect.
-
-### Step 3: Output
-Respond ONLY with valid JSON inside <Answer></Answer> tags:
-
-<Answer>
-{{
-  "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "image_access_and_import": <1-5>,
-  "sky_selection_accuracy": <1-5>,
-  "color_adjustment_quality": <1-5>,
-  "export_format_and_quality": <1-5>,
-  "dimension_reasoning": {{
-    "image_access_and_import": "<one sentence citing specific evidence>",
-    "sky_selection_accuracy": "<one sentence citing specific evidence>",
-    "color_adjustment_quality": "<one sentence citing specific evidence>",
-    "export_format_and_quality": "<one sentence citing specific evidence>"
-  }},
-  "overall_score": <weighted average, one decimal>,
-  "passed": <true or false based on overall_score >= 3.0>
-}}
-</Answer>
-"""
+1 — The image was not exported or the export was completely incorrect."""
 
 DIMENSION_WEIGHTS = {
-    "image_access_and_import": 0.2,
-    "sky_selection_accuracy": 0.3,
-    "color_adjustment_quality": 0.3,
-    "export_format_and_quality": 0.2,
+    'image_access_and_import': 0.2,
+    'sky_selection_accuracy': 0.3,
+    'color_adjustment_quality': 0.3,
+    'export_format_and_quality': 0.2,
 }
-DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
 
+
+def test(result):
+    return run_judge(
+        result,
+        task_instruction=TASK_INSTRUCTION,
+        system_prompt_extra=SYSTEM_PROMPT_EXTRA,
+        constraints=CONSTRAINTS,
+        evidence_questions=EVIDENCE_QUESTIONS,
+        dimension_rubrics=DIMENSION_RUBRICS,
+        dimension_weights=DIMENSION_WEIGHTS,
+    )

@@ -1,54 +1,30 @@
-"""
-LLM-as-judge evaluator for EvolveBench task-78-go-to-notion-weekly-planner-fill-sections.
+"""LLM-as-judge evaluator for task-78-go-to-notion-weekly-planner-fill-sections.
 
 Category: Content Creation
 Task: Go to https://www.notion.so/templates/weekly-planner and open the Weekly Planner template. Fill in all the empty sections of the planner with appropriate placeholder data — including goals, daily task
 """
 
-import os, json, re
+import sys
+sys.path.insert(0, "/harness")
+from evaluator import run_judge
 
-TASK_INSTRUCTION = """Go to https://www.notion.so/templates/weekly-planner and open the Weekly Planner template. Fill in all the empty sections of the planner with appropriate placeholder data — including goals, daily tasks, notes, and any other incomplete fields — to make the page fully complete."""
-PASS_THRESHOLD = 3.0
+TASK_INSTRUCTION = 'Go to https://www.notion.so/templates/weekly-planner and open the Weekly Planner template. Fill in all the empty sections of the planner with appropriate placeholder data — including goals, daily tasks, notes, and any other incomplete fields — to make the page fully complete.'
 
-SYSTEM_PROMPT = """The judge is evaluating the agent's ability to accurately and comprehensively fill out the Weekly Planner template on Notion with appropriate placeholder data. The evaluation focuses on whether the agent completed all sections of the planner, used relevant and realistic placeholder data, and maintained coherence and organization throughout the template.
+SYSTEM_PROMPT_EXTRA = 'Your job is to assess whether an AI agent successfully filled out the Weekly Planner template on Notion with appropriate placeholder data. The evaluation emphasizes completeness, ensuring all sections of the planner are populated, as well as the use of realistic and coherent placeholder content to maintain organization and relevance.'
 
-You will be given:
-1. The task instruction
-2. The agent's final response
-3. A summary of the agent's tool-call trace (what it actually did, if available)
-
-Follow the evaluation steps exactly in order."""
-
-USER_PROMPT_TEMPLATE = """## Task Instruction
-{task_instruction}
-
-## Task-Specific Constraints
-- Access the Weekly Planner template at https://www.notion.so/templates/weekly-planner.
+CONSTRAINTS = """- Access the Weekly Planner template at https://www.notion.so/templates/weekly-planner.
 - Fill in all empty sections, including goals, daily tasks, notes, and any other incomplete fields.
 - Ensure placeholder data is realistic, relevant, and coherent.
 - Maintain proper formatting and organization within the template.
-- Do not leave any sections incomplete or partially filled.
+- Do not leave any sections incomplete or partially filled."""
 
-## Agent Final Response
-{agent_response}
-
-## Agent Tool-Call Trace (what the agent actually did)
-{execution_summary}
-
----
-
-## Evaluation Instructions
-
-### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent access the correct Weekly Planner template from the provided URL?
+EVIDENCE_QUESTIONS = """- Did the agent access the correct Weekly Planner template from the provided URL?
 - Were all sections of the planner filled with appropriate placeholder data?
 - Is the placeholder data realistic and relevant to the context of a weekly planner?
 - Did the agent maintain proper formatting and organization throughout the template?
-- Are there any sections left incomplete or partially filled?
+- Are there any sections left incomplete or partially filled?"""
 
-### Step 2: Dimension Scoring
-
-#### A. Template Completion
+DIMENSION_RUBRICS = """#### A. Template Completion
 Measures whether all sections of the Weekly Planner template were fully completed.
 
 5 — All sections of the planner are fully completed with no omissions.
@@ -82,35 +58,23 @@ Measures the agent's thoroughness in addressing all aspects of the task.
 4 — Most details are addressed thoroughly, with only minor oversights.
 3 — Several details are overlooked or handled inadequately.
 2 — Many critical details are ignored or handled poorly.
-1 — The task lacks attention to detail, with numerous errors and omissions.
-
-### Step 3: Output
-Respond ONLY with valid JSON inside <Answer></Answer> tags:
-
-<Answer>
-{{
-  "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "template_completion": <1-5>,
-  "placeholder_data_quality": <1-5>,
-  "organization_and_formatting": <1-5>,
-  "attention_to_detail": <1-5>,
-  "dimension_reasoning": {{
-    "template_completion": "<one sentence citing specific evidence>",
-    "placeholder_data_quality": "<one sentence citing specific evidence>",
-    "organization_and_formatting": "<one sentence citing specific evidence>",
-    "attention_to_detail": "<one sentence citing specific evidence>"
-  }},
-  "overall_score": <weighted average, one decimal>,
-  "passed": <true or false based on overall_score >= 3.0>
-}}
-</Answer>
-"""
+1 — The task lacks attention to detail, with numerous errors and omissions."""
 
 DIMENSION_WEIGHTS = {
-    "template_completion": 0.35,
-    "placeholder_data_quality": 0.3,
-    "organization_and_formatting": 0.2,
-    "attention_to_detail": 0.15,
+    'template_completion': 0.35,
+    'placeholder_data_quality': 0.3,
+    'organization_and_formatting': 0.2,
+    'attention_to_detail': 0.15,
 }
-DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
 
+
+def test(result):
+    return run_judge(
+        result,
+        task_instruction=TASK_INSTRUCTION,
+        system_prompt_extra=SYSTEM_PROMPT_EXTRA,
+        constraints=CONSTRAINTS,
+        evidence_questions=EVIDENCE_QUESTIONS,
+        dimension_rubrics=DIMENSION_RUBRICS,
+        dimension_weights=DIMENSION_WEIGHTS,
+    )

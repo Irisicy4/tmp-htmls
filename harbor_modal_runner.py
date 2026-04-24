@@ -49,8 +49,10 @@ harbor_image = (
     )
     .add_local_dir("tasks", "/harbor-bench/tasks", copy=True)
     .add_local_file("harness/run_task.py", "/harness/run_task.py", copy=True)
+    .add_local_file("harness/seed_browser.py", "/harness/seed_browser.py", copy=True)
     .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
+    .add_local_file("harness/evaluator.py", "/harness/evaluator.py", copy=True)
     .add_local_dir("harness/adapters", "/harness/adapters", copy=True)
     .add_local_dir("configs", "/harness/configs", copy=True)
 )
@@ -131,6 +133,19 @@ def _tasks_base(tasks_dir: str) -> Path:
     return TASKS_ROOT / Path(tasks_dir).name
 
 
+def _load_task_instruction(task_dir: Path) -> str:
+    """Read TASK_INSTRUCTION from tests/test_task.py (single source of truth)."""
+    import ast
+    src = (task_dir / "tests" / "test_task.py").read_text()
+    tree = ast.parse(src)
+    for node in tree.body:
+        if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == "TASK_INSTRUCTION"):
+            return ast.literal_eval(node.value)
+    raise RuntimeError(f"TASK_INSTRUCTION not found in {task_dir}")
+
+
 def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[dict]:
     """Return ordered task dicts (name + metadata) from the given tasks_dir."""
     base = _tasks_base(tasks_dir)
@@ -140,7 +155,7 @@ def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[d
         names = sorted(
             d.name
             for d in base.iterdir()
-            if d.is_dir() and (d / "instruction.md").exists()
+            if d.is_dir() and (d / "tests" / "test_task.py").exists()
         )
         if first_n > 0:
             names = names[:first_n]
@@ -380,6 +395,7 @@ async def _copy_harness_to_sandbox(sandbox):
     # Files in the orchestrator → destination in the sandbox
     files_to_copy = [
         "/harness/run_task.py",
+        "/harness/seed_browser.py",
         "/harness/skill_store.py",
         "/harness/skill_extractor.py",
         "/harness/adapters/__init__.py",
@@ -797,7 +813,7 @@ async def _run_task(
     started_at = datetime.now(timezone.utc).isoformat()
 
     task_dir = _tasks_base(tasks_dir) / task_name
-    instruction = (task_dir / "instruction.md").read_text().strip()
+    instruction = _load_task_instruction(task_dir).strip()
 
     # Tell agents to save output files to /output/
     instruction += OUTPUT_DIR_INSTRUCTION

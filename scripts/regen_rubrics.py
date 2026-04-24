@@ -28,7 +28,7 @@ Given a task instruction, produce a strict JSON rubric the benchmark's LLM judge
 Output ONLY valid JSON (no markdown fences, no prose) with this exact schema:
 {
   "category": "short category label, e.g. 'Web Research', 'Data & ML Engineering', 'Content Creation'",
-  "system_prompt": "one paragraph (3-6 sentences) describing what the judge is evaluating, referencing the concrete subject of THIS task",
+  "system_prompt": "one paragraph (2-4 sentences) that MUST begin exactly with 'You are an expert evaluator for AI agent benchmarks.' followed by a sentence starting 'Your job is to assess whether an AI agent successfully <PAST-TENSE-VERB> ...' summarizing the task, plus optional short task-specific context. Do not include any 'You will be given:' boilerplate — that is appended automatically.",
   "constraints": ["bullet", "points", "of task-specific constraints derived from the instruction"],
   "evidence_questions": ["bullet", "points", "the judge should answer about the agent trace before scoring"],
   "dimensions": [
