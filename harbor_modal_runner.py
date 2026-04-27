@@ -958,8 +958,11 @@ async def _run_task(
     except Exception as exc:
         print(f"[{task_name}] Agent error: {exc}")
     finally:
-        # Collect artifacts from /output/. They live alongside the agent's other
-        # outputs in <trial>/agent/artifact_<name>; no separate top-level mirror.
+        # Collect artifacts into <trial>/artifacts/ (Harbor canonical layout),
+        # writing a manifest.json alongside.
+        artifacts_dir = trial_paths.artifacts_dir
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        artifact_manifest: list[dict] = []
 
         # For cocoa-agent: pull result.json from the sandbox before stopping
         if is_cocoa:
@@ -973,10 +976,16 @@ async def _run_task(
             except Exception as e:
                 print(f"[{task_name}] Failed to pull cocoa result.json: {e}")
 
+        # Cocoa runs with skip_docker=True, executing code directly in this
+        # sandbox but defaulting its workdir to /home/gem/output/. Scan both.
+        scan_dirs = [AGENT_OUTPUT_DIR]
+        if is_cocoa:
+            scan_dirs.append("/home/gem/output")
+
         try:
             result_obj = await env._sandbox.exec.aio(
                 "bash", "-c",
-                f"find {AGENT_OUTPUT_DIR} -type f 2>/dev/null | head -50"
+                f"find {' '.join(scan_dirs)} -type f 2>/dev/null | head -50"
             )
             await result_obj.wait.aio()
             output_files = await _read_stdout(result_obj)
@@ -999,21 +1008,26 @@ async def _run_task(
                         b64 = (await _read_stdout(cat_obj)).strip()
                         import base64 as _b64
                         data = _b64.b64decode(b64)
-                        (trial_paths.agent_dir / f"artifact_{fname}").write_bytes(data)
+                        (artifacts_dir / fname).write_bytes(data)
                         collected_artifacts.append(fname)
+                        artifact_manifest.append({"source": fpath, "destination": fname, "bytes": len(data)})
                         print(f"[{task_name}] Collected (binary): {fpath} ({len(data)} bytes)")
                     else:
                         cat_obj = await env._sandbox.exec.aio("cat", fpath)
                         await cat_obj.wait.aio()
                         content = await _read_stdout(cat_obj)
-                        (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
+                        (artifacts_dir / fname).write_text(content)
                         collected_artifacts.append(fname)
+                        artifact_manifest.append({"source": fpath, "destination": fname, "chars": len(content)})
                         print(f"[{task_name}] Collected: {fpath} ({len(content)} chars)")
                 except Exception as e:
                     print(f"[{task_name}] Collect failed {fpath}: {e}")
 
         except Exception as collect_exc:
             print(f"[{task_name}] Artifact collection skipped: {collect_exc}")
+
+        if artifact_manifest:
+            (artifacts_dir / "manifest.json").write_text(json.dumps(artifact_manifest, indent=2))
 
         try:
             await env.stop(delete=True)
@@ -1068,11 +1082,12 @@ async def _run_task(
 
     # Append collected artifact contents to task_result so the judge can evaluate them
     artifact_texts = []
-    for artifact_file in sorted(trial_paths.agent_dir.glob("artifact_*")):
+    for artifact_file in sorted(trial_paths.artifacts_dir.glob("*")):
+        if artifact_file.name == "manifest.json" or not artifact_file.is_file():
+            continue
         try:
             content = artifact_file.read_text()
-            fname = artifact_file.name[len("artifact_"):]
-            artifact_texts.append(f"\n\n=== FILE: {fname} ===\n{content}\n=== END FILE ===")
+            artifact_texts.append(f"\n\n=== FILE: {artifact_file.name} ===\n{content}\n=== END FILE ===")
         except Exception:
             pass
     if artifact_texts:

@@ -306,9 +306,15 @@ class VisualizationHandler(SimpleHTTPRequestHandler):
 
     def _resolve_task_artifacts_dir(self, task: str, artifacts_dir, trials_dir):
         """Return the on-disk dir for a task's artifacts and the filename
-        prefix (if any) that marks artifact files. Supports the legacy
-        <run>/artifacts/<task>/<file> layout and the new
-        <run>/<task>/agent/artifact_<file> layout."""
+        prefix (if any) that marks artifact files. Supports:
+          - Harbor canonical <run>/<task>/artifacts/<file>
+          - Legacy <run>/artifacts/<task>/<file>
+          - Legacy <run>/<task>/agent/artifact_<file>
+        """
+        if trials_dir is not None:
+            d = trials_dir / task / "artifacts"
+            if d.is_dir() and any(d.iterdir()):
+                return d, ""
         if artifacts_dir is not None:
             d = artifacts_dir / task
             if d.is_dir():
@@ -356,6 +362,8 @@ class VisualizationHandler(SimpleHTTPRequestHandler):
             if not p.is_file():
                 continue
             if prefix and not p.name.startswith(prefix):
+                continue
+            if p.name == "manifest.json":
                 continue
             display_name = p.name[len(prefix):] if prefix else p.name
             files.append({"name": display_name, "size": p.stat().st_size})
