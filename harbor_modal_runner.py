@@ -386,6 +386,29 @@ AGENT_OUTPUT_PARSERS = {
 
 # ── Cocoa-agent sandbox runner ────────────────────────────────────────────────
 
+async def _seed_task_data(harbor_env, task_dir: Path):
+    """If the task has an environment/data/ directory with seed files, copy them
+    into the sandbox at /app/data/ (the convention used in task instructions).
+    Handles binary files via base64.
+    """
+    data_dir = task_dir / "environment" / "data"
+    if not data_dir.is_dir():
+        return
+    import base64
+    files = [p for p in data_dir.rglob("*") if p.is_file()]
+    if not files:
+        return
+    sandbox = harbor_env._sandbox
+    for src in files:
+        rel = src.relative_to(data_dir)
+        dst = f"/app/data/{rel}"
+        b64 = base64.b64encode(src.read_bytes()).decode()
+        cmd = f"mkdir -p $(dirname {dst}) && echo '{b64}' | base64 -d > {dst}"
+        result = await sandbox.exec.aio("bash", "-c", cmd)
+        await result.wait.aio()
+    print(f"  [seed-data] Copied {len(files)} file(s) from environment/data/ into /app/data/")
+
+
 async def _copy_harness_to_sandbox(sandbox):
     """Copy harness files from the orchestrator container into a cocoa sandbox.
 
@@ -865,7 +888,7 @@ async def _run_task(
             "Task:\n" + instruction
         )
 
-    trial_dir = RESULTS_BASE / run_tag / "trials" / task_name
+    trial_dir = RESULTS_BASE / run_tag / task_name
     trial_dir.mkdir(parents=True, exist_ok=True)
 
     trial_paths = TrialPaths(trial_dir=trial_dir)
@@ -913,6 +936,12 @@ async def _run_task(
 
     collected_artifacts: list[str] = []
     try:
+        # Seed any task-specific data files (e.g. images) into /app/data/
+        try:
+            await _seed_task_data(env, _tasks_base(tasks_dir) / task_name)
+        except Exception as exc:
+            print(f"[{task_name}] Seed-data failed (non-fatal): {exc}")
+
         if is_cocoa:
             print(f"[{task_name}] Running cocoa-agent …")
             await _run_cocoa_in_sandbox(env, task_name, instruction, agent_kwargs)
@@ -929,9 +958,8 @@ async def _run_task(
     except Exception as exc:
         print(f"[{task_name}] Agent error: {exc}")
     finally:
-        # Collect artifacts from /output/
-        artifacts_dir = RESULTS_BASE / run_tag / "artifacts" / task_name
-        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        # Collect artifacts from /output/. They live alongside the agent's other
+        # outputs in <trial>/agent/artifact_<name>; no separate top-level mirror.
 
         # For cocoa-agent: pull result.json from the sandbox before stopping
         if is_cocoa:
@@ -957,22 +985,32 @@ async def _run_task(
             if output_files:
                 all_files.update(output_files.splitlines())
 
+            BINARY_EXTS = {".gif",".png",".jpg",".jpeg",".webp",".mp4",".mp3",".wav",".pdf",".zip",".tar",".gz",".xlsx",".docx",".pptx",".ico",".bmp",".mov",".avi"}
             for fpath in sorted(all_files):
                 fpath = fpath.strip()
                 if not fpath:
                     continue
+                fname = fpath.split("/")[-1]
+                is_binary = any(fname.lower().endswith(ext) for ext in BINARY_EXTS)
                 try:
-                    cat_obj = await env._sandbox.exec.aio("cat", fpath)
-                    await cat_obj.wait.aio()
-                    content = await _read_stdout(cat_obj)
-                    fname = fpath.split("/")[-1]
-
-                    (artifacts_dir / fname).write_text(content)
-                    (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
-                    collected_artifacts.append(fname)
-                    print(f"[{task_name}] Collected: {fpath} ({len(content)} chars)")
-                except Exception:
-                    pass
+                    if is_binary:
+                        cat_obj = await env._sandbox.exec.aio("bash", "-c", f"base64 -w0 {fpath}")
+                        await cat_obj.wait.aio()
+                        b64 = (await _read_stdout(cat_obj)).strip()
+                        import base64 as _b64
+                        data = _b64.b64decode(b64)
+                        (trial_paths.agent_dir / f"artifact_{fname}").write_bytes(data)
+                        collected_artifacts.append(fname)
+                        print(f"[{task_name}] Collected (binary): {fpath} ({len(data)} bytes)")
+                    else:
+                        cat_obj = await env._sandbox.exec.aio("cat", fpath)
+                        await cat_obj.wait.aio()
+                        content = await _read_stdout(cat_obj)
+                        (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
+                        collected_artifacts.append(fname)
+                        print(f"[{task_name}] Collected: {fpath} ({len(content)} chars)")
+                except Exception as e:
+                    print(f"[{task_name}] Collect failed {fpath}: {e}")
 
         except Exception as collect_exc:
             print(f"[{task_name}] Artifact collection skipped: {collect_exc}")
@@ -1163,7 +1201,7 @@ async def run_harbor_task(
         )
         # Persist error result so it's visible in downloaded results
         try:
-            trial_dir = RESULTS_BASE / run_tag / "trials" / task_name
+            trial_dir = RESULTS_BASE / run_tag / task_name
             trial_dir.mkdir(parents=True, exist_ok=True)
             (trial_dir / "result.json").write_text(json.dumps(result, indent=2))
             await results_volume.commit.aio()
@@ -1265,9 +1303,33 @@ async def run_harbor_experiment(
         "results": results,
     }
 
-    out_path = RESULTS_BASE / run_tag / "summary.json"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(summary, indent=2))
+    run_dir = RESULTS_BASE / run_tag
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "result.json").write_text(json.dumps(summary, indent=2))
+
+    config = {
+        "run_tag": run_tag,
+        "agent": agent_name,
+        "model": model_name,
+        "tasks_dir": tasks_dir,
+        "agent_kwargs": {k: v for k, v in agent_kwargs.items() if k not in ("extra_env", "judge_env")},
+        "n_tasks": len(tasks),
+        "task_names": [t["task_name"] for t in tasks],
+        "skill_config": skill_config,
+    }
+    (run_dir / "config.json").write_text(json.dumps(config, indent=2))
+
+    log_lines = [f"=== Harbor Experiment: {run_tag} ==="]
+    log_lines.append(f"agent={agent_name} model={model_name} tasks_dir={tasks_dir} n_tasks={len(tasks)}")
+    for r in results:
+        log_lines.append(
+            f"{r.get('task'):50s}  score={r.get('score', '?'):.2f}  passed={r.get('passed')}"
+        )
+    log_lines.append(
+        f"mean_score={summary['mean_score']:.3f} pass={summary['n_passed']}/{summary['n_tasks']} errors={summary['n_errors']}"
+    )
+    (run_dir / "job.log").write_text("\n".join(log_lines) + "\n")
+
     await results_volume.commit.aio()
 
     print(f"\n=== Experiment Complete ===")
@@ -1486,11 +1548,14 @@ def main(collect: str = "", list_runs: bool = False):
         return
 
     if collect:
-        out_dir = Path(f"results/deprivacy-batch-1/{collect}")
-        out_dir.mkdir(parents=True, exist_ok=True)
+        # `modal volume get <vol> <src> <dest>` writes into <dest>/<basename(src)>,
+        # so download into the parent and let modal create the run-tag subdir.
+        parent_dir = Path("results/deprivacy-batch-1")
+        parent_dir.mkdir(parents=True, exist_ok=True)
+        out_dir = parent_dir / collect
         print(f"Downloading {collect} → {out_dir}")
         subprocess.run(
-            [modal_bin, "volume", "get", "evolve-bench-results", collect, str(out_dir), "--force"],
+            [modal_bin, "volume", "get", "evolve-bench-results", collect, str(parent_dir), "--force"],
             check=True,
         )
         print(f"Done. Results in {out_dir}")

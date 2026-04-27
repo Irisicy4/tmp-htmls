@@ -4,19 +4,20 @@
 Expects a Harbor-style run directory produced by harbor_modal_runner:
 
     <run-tag>/
-        results.csv
-        summary.json
-        trials/
-            task-01-.../
-                result.json          # judge verdict (score, passed, feedback, _instruction)
-                agent_result.json    # cocoa-style: has visualization_data.iterations
-                agent/
-                    trajectory.json  # terminus ATIF: steps[]
-                    command-N/       # openhands: per-command stdout/stderr
+        result.json              # job-level aggregate (Harbor canonical)
+        config.json
+        job.log
+        results.csv              # optional, written by post-hoc rejudges
+        task-01-.../             # trial dirs sit DIRECTLY under run dir
+            result.json          # judge verdict (score, passed, feedback, _instruction)
+            agent_result.json    # cocoa-style: has visualization_data.iterations
+            agent/
+                trajectory.json  # terminus ATIF: steps[]
+                command-N/       # openhands: per-command stdout/stderr
+                artifact_*       # collected /output/ files
 
---data-dir can point at either the run folder or the trials/ folder; the server
-auto-detects. Cocoa, terminus, and openhands layouts all resolve into the
-{iterations: [...], eval: {...}} shape the frontend expects.
+Also tolerates the legacy `<run>/trials/<task>/` layout. --data-dir can point
+at either the run folder or its trials/ subfolder; the server auto-detects.
 """
 
 import argparse
@@ -28,18 +29,43 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 
+def _looks_like_trials_root(d: Path) -> bool:
+    """A directory is a 'trials root' if it directly contains trial dirs
+    (a child folder with result.json or an agent/ subfolder)."""
+    if not d.is_dir():
+        return False
+    for child in d.iterdir():
+        if not child.is_dir():
+            continue
+        if (child / "result.json").exists() or (child / "agent").is_dir() or (child / "agent_result.json").exists():
+            return True
+    return False
+
+
 def _resolve_trials_dir(data_dir: Path) -> Path | None:
-    """Given a user-supplied path, find the trials/ subfolder."""
-    if data_dir.name == "trials" and data_dir.is_dir():
+    """Find the directory that contains trial subdirs.
+
+    Supports the canonical Harbor layout (trials directly under <run>/) and
+    the legacy <run>/trials/ layout. Also tolerates a doubled-up nesting
+    (<run>/<run>/...) from older `modal volume get` collects.
+    """
+    if not data_dir.is_dir():
+        return None
+    if data_dir.name == "trials":
         return data_dir
-    direct = data_dir / "trials"
-    if direct.is_dir():
-        return direct
-    # Harbor's on-disk layout nests results/<tag>/<tag>/trials — allow either level.
-    nested = data_dir / data_dir.name / "trials"
+    legacy = data_dir / "trials"
+    if legacy.is_dir():
+        return legacy
+    # Doubled-nest from older collect runs: results/<tag>/<tag>/...
+    nested = data_dir / data_dir.name
     if nested.is_dir():
-        return nested
-    for child in data_dir.iterdir() if data_dir.is_dir() else []:
+        if (nested / "trials").is_dir():
+            return nested / "trials"
+        if _looks_like_trials_root(nested):
+            return nested
+    if _looks_like_trials_root(data_dir):
+        return data_dir
+    for child in data_dir.iterdir():
         if (child / "trials").is_dir():
             return child / "trials"
     return None
@@ -268,12 +294,30 @@ def _build_visualization_data(trial_dir: Path, csv_fallback: dict[str, dict]) ->
 
 class VisualizationHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, trials_dir=None, compare_dir=None,
+                 artifacts_dir=None, compare_artifacts_dir=None,
                  csv_fallback=None, compare_csv_fallback=None, **kwargs):
         self.trials_dir = trials_dir
         self.compare_dir = compare_dir
+        self.artifacts_dir = artifacts_dir
+        self.compare_artifacts_dir = compare_artifacts_dir
         self.csv_fallback = csv_fallback or {}
         self.compare_csv_fallback = compare_csv_fallback or {}
         super().__init__(*args, **kwargs)
+
+    def _resolve_task_artifacts_dir(self, task: str, artifacts_dir, trials_dir):
+        """Return the on-disk dir for a task's artifacts and the filename
+        prefix (if any) that marks artifact files. Supports the legacy
+        <run>/artifacts/<task>/<file> layout and the new
+        <run>/<task>/agent/artifact_<file> layout."""
+        if artifacts_dir is not None:
+            d = artifacts_dir / task
+            if d.is_dir():
+                return d, ""
+        if trials_dir is not None:
+            d = trials_dir / task / "agent"
+            if d.is_dir():
+                return d, "artifact_"
+        return None, ""
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -288,9 +332,62 @@ class VisualizationHandler(SimpleHTTPRequestHandler):
             return self._handle_data(qs, self.compare_dir, self.compare_csv_fallback)
         if path == "/api/compare":
             return self._handle_compare()
+        if path == "/api/artifacts":
+            return self._handle_artifact_list(qs, self.artifacts_dir, self.trials_dir)
+        if path == "/api/artifacts2":
+            return self._handle_artifact_list(qs, self.compare_artifacts_dir, self.compare_dir)
+        if path.startswith("/artifacts/"):
+            return self._serve_artifact(path[len("/artifacts/"):], self.artifacts_dir, self.trials_dir)
+        if path.startswith("/artifacts2/"):
+            return self._serve_artifact(path[len("/artifacts2/"):], self.compare_artifacts_dir, self.compare_dir)
         if path in ("/", "/index.html"):
             self.path = "/index.html"
         return super().do_GET()
+
+    def _handle_artifact_list(self, qs: dict, artifacts_dir, trials_dir):
+        task = qs.get("task", [None])[0]
+        if not task:
+            return self._send_json({"files": []})
+        d, prefix = self._resolve_task_artifacts_dir(task, artifacts_dir, trials_dir)
+        if d is None:
+            return self._send_json({"files": []})
+        files = []
+        for p in sorted(d.iterdir()):
+            if not p.is_file():
+                continue
+            if prefix and not p.name.startswith(prefix):
+                continue
+            display_name = p.name[len(prefix):] if prefix else p.name
+            files.append({"name": display_name, "size": p.stat().st_size})
+        self._send_json({"files": files})
+
+    def _serve_artifact(self, rel: str, artifacts_dir, trials_dir):
+        import mimetypes
+        if ".." in rel:
+            return self.send_error(404)
+        # rel is "<task>/<filename>"
+        parts = rel.split("/", 1)
+        if len(parts) != 2:
+            return self.send_error(404)
+        task, fname = parts
+        d, prefix = self._resolve_task_artifacts_dir(task, artifacts_dir, trials_dir)
+        if d is None:
+            return self.send_error(404)
+        target = (d / f"{prefix}{fname}").resolve()
+        try:
+            target.relative_to(d.resolve())
+        except ValueError:
+            return self.send_error(403)
+        if not target.is_file():
+            return self.send_error(404)
+        ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
+        data = target.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _send_json(self, obj, status=200):
         body = json.dumps(obj, indent=2).encode("utf-8")
@@ -379,13 +476,17 @@ class VisualizationHandler(SimpleHTTPRequestHandler):
 
 
 def _make_handler(trials_dir: Path, compare_dir: Path | None,
-                  csv_fallback: dict, compare_csv_fallback: dict):
+                  csv_fallback: dict, compare_csv_fallback: dict,
+                  artifacts_dir: Path | None = None,
+                  compare_artifacts_dir: Path | None = None):
     class Handler(VisualizationHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(
                 *args,
                 trials_dir=trials_dir,
                 compare_dir=compare_dir,
+                artifacts_dir=artifacts_dir,
+                compare_artifacts_dir=compare_artifacts_dir,
                 csv_fallback=csv_fallback,
                 compare_csv_fallback=compare_csv_fallback,
                 **kwargs,
@@ -418,8 +519,19 @@ def main():
     csv_fallback = _load_csv_fallback(trials_dir)
     compare_csv_fallback = _load_csv_fallback(compare_trials) if compare_trials else {}
 
+    # Artifacts dir is sibling to trials/ (e.g. .../<run-tag>/artifacts/<task>/<file>).
+    artifacts_dir = trials_dir.parent / "artifacts"
+    if not artifacts_dir.is_dir():
+        artifacts_dir = None
+    compare_artifacts_dir = None
+    if compare_trials:
+        compare_artifacts_dir = compare_trials.parent / "artifacts"
+        if not compare_artifacts_dir.is_dir():
+            compare_artifacts_dir = None
+
     os.chdir(Path(__file__).parent)
-    handler_cls = _make_handler(trials_dir, compare_trials, csv_fallback, compare_csv_fallback)
+    handler_cls = _make_handler(trials_dir, compare_trials, csv_fallback, compare_csv_fallback,
+                                artifacts_dir=artifacts_dir, compare_artifacts_dir=compare_artifacts_dir)
     server = HTTPServer((args.host, args.port), handler_cls)
 
     print(f"Visualization server: http://{args.host}:{args.port}")
