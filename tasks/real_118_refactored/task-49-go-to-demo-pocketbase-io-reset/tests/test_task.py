@@ -32,7 +32,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Navigation Execution (0.25)
+#### A. Navigation Execution (0.35)
 Did the agent navigate to pocketbase.io admin and access settings?
 
 5 — Agent navigated to pocketbase.io/_/ and accessed settings successfully.
@@ -41,7 +41,7 @@ Did the agent navigate to pocketbase.io admin and access settings?
 2 — Agent attempted navigation but failed to access admin.
 1 — No navigation attempted.
 
-#### B. Settings Discovery (0.3)
+#### B. Settings Discovery (0.26)
 Did the agent find and explore multiple settings sections?
 
 5 — Agent systematically explored multiple settings tabs/sections.
@@ -50,7 +50,7 @@ Did the agent find and explore multiple settings sections?
 2 — Agent described where settings might be without finding them.
 1 — No settings found.
 
-#### C. Reset Execution (0.35)
+#### C. Reset Execution (0.3)
 Did the agent successfully reset settings to defaults?
 
 5 — Agent executed reset/restore defaults in at least one section with confirmation.
@@ -59,7 +59,7 @@ Did the agent successfully reset settings to defaults?
 2 — Agent identified reset options without executing them.
 1 — No reset attempted.
 
-#### D. Completion Report (0.1)
+#### D. Completion Report (0.09)
 Did the agent clearly report what was done?
 
 5 — Clear summary of which sections were reset and what changed.
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "navigation_execution": <1-5>,
-  "settings_discovery": <1-5>,
-  "reset_execution": <1-5>,
-  "completion_report": <1-5>,
   "dimension_reasoning": {{
     "navigation_execution": "<one sentence citing specific evidence>",
     "settings_discovery": "<one sentence citing specific evidence>",
     "reset_execution": "<one sentence citing specific evidence>",
     "completion_report": "<one sentence citing specific evidence>",
   }},
+  "navigation_execution": <1-5>,
+  "settings_discovery": <1-5>,
+  "reset_execution": <1-5>,
+  "completion_report": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "navigation_execution": 0.25,
-    "settings_discovery": 0.3,
-    "reset_execution": 0.35,
-    "completion_report": 0.1,
+    "navigation_execution": 0.35,
+    "settings_discovery": 0.26,
+    "reset_execution": 0.3,
+    "completion_report": 0.09,
 }
 
 

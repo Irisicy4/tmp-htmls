@@ -75,16 +75,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "source_research": <1-5>,
-  "skill_specificity": <1-5>,
-  "sc_compliance": <1-5>,
-  "break_focus": <1-5>,
   "dimension_reasoning": {{
     "source_research": "<one sentence citing specific evidence>",
     "skill_specificity": "<one sentence citing specific evidence>",
     "sc_compliance": "<one sentence citing specific evidence>",
     "break_focus": "<one sentence citing specific evidence>",
   }},
+  "source_research": <1-5>,
+  "skill_specificity": <1-5>,
+  "sc_compliance": <1-5>,
+  "break_focus": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

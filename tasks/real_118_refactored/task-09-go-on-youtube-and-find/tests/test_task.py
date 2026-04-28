@@ -34,7 +34,7 @@ Carefully read the agent response and trace, then answer each question with dire
 ### Step 2: Dimension Scoring
 Score each dimension 1–5 using the rubrics below.
 
-#### A. Task Completion (0.36)
+#### A. YouTube Navigation (0.36)
 Did the agent find and present YouTube videos of Silent Hill 3 story explanations?
 
 5 — Agent navigated to YouTube, found multiple relevant story-explanation videos, and presented them with titles/channels/links.
@@ -43,7 +43,7 @@ Did the agent find and present YouTube videos of Silent Hill 3 story explanation
 2 — Agent attempted but failed to find relevant videos, or only described how to search rather than doing it.
 1 — Agent did not attempt the task or abandoned it.
 
-#### B. Information Quality (0.27)
+#### B. Video Relevance (0.27)
 Are the videos real, relevant, and accurately described?
 
 5 — Videos are clearly relevant to Silent Hill 3 story/lore; titles and channels are plausible and descriptions match the task.
@@ -52,7 +52,7 @@ Are the videos real, relevant, and accurately described?
 2 — Information appears hallucinated or inaccurate (non-existent videos, wrong game).
 1 — No real video information provided.
 
-#### C. Response Quality (0.18)
+#### C. Presentation Quality (0.18)
 Is the response well-organised and useful to the user?
 
 5 — Clear, structured list of videos with enough detail (title, channel, description) for the user to act immediately.
@@ -61,8 +61,8 @@ Is the response well-organised and useful to the user?
 2 — Sparse or hard to use.
 1 — Not useful.
 
-#### D. Completeness (0.18)
-Did the agent address all aspects of the request?
+#### D. Video Coverage (0.18)
+Did the agent find multiple videos covering the request?
 
 5 — Found multiple videos (2+), all relevant to the story, with actionable details.
 4 — Found videos but quantity or coverage is slightly short.
@@ -76,16 +76,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "response_quality": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
-    "task_completion": "<one sentence citing specific evidence>",
-    "information_quality": "<one sentence citing specific evidence>",
-    "response_quality": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>"
+    "youtube_navigation": "<one sentence citing specific evidence>",
+    "video_relevance": "<one sentence citing specific evidence>",
+    "presentation_quality": "<one sentence citing specific evidence>",
+    "video_coverage": "<one sentence citing specific evidence>"
   }},
+  "youtube_navigation": <1-5>,
+  "video_relevance": <1-5>,
+  "presentation_quality": <1-5>,
+  "video_coverage": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -93,10 +93,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "task_completion":    0.36,
-    "information_quality": 0.27,
-    "response_quality":   0.18,
-    "completeness":       0.18,
+    "youtube_navigation":  0.36,
+    "video_relevance":     0.27,
+    "presentation_quality": 0.18,
+    "video_coverage":      0.18,
 }
 
 

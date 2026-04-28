@@ -75,16 +75,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "location_relevance": <1-5>,
-  "christmas_availability": <1-5>,
-  "parking_coverage": <1-5>,
-  "recommendation_quality": <1-5>,
   "dimension_reasoning": {{
     "location_relevance": "<one sentence citing specific evidence>",
     "christmas_availability": "<one sentence citing specific evidence>",
     "parking_coverage": "<one sentence citing specific evidence>",
     "recommendation_quality": "<one sentence citing specific evidence>"
   }},
+  "location_relevance": <1-5>,
+  "christmas_availability": <1-5>,
+  "parking_coverage": <1-5>,
+  "recommendation_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

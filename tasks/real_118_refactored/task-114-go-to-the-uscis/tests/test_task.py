@@ -81,16 +81,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "uscis_navigation": <1-5>,
-  "h1b_data_accuracy": <1-5>,
-  "careers_glassdoor_research": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "uscis_navigation": "<one sentence citing specific evidence>",
     "h1b_data_accuracy": "<one sentence citing specific evidence>",
     "careers_glassdoor_research": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "uscis_navigation": <1-5>,
+  "h1b_data_accuracy": <1-5>,
+  "careers_glassdoor_research": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -98,10 +98,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "uscis_navigation":          0.30,
-    "h1b_data_accuracy":         0.25,
-    "careers_glassdoor_research": 0.25,
-    "output_table":              0.20,
+    "uscis_navigation": 0.35,
+    "h1b_data_accuracy": 0.23,
+    "careers_glassdoor_research": 0.23,
+    "output_table": 0.19,
 }
 
 

@@ -32,7 +32,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Navigation (0.25)
+#### A. Platform Navigation (0.35)
 Did the agent navigate to eastmoney.com?
 
 5 — Agent navigated to eastmoney.com and accessed the stock section.
@@ -41,7 +41,7 @@ Did the agent navigate to eastmoney.com?
 2 — Agent described eastmoney.com without navigating.
 1 — No navigation.
 
-#### B. Stock Identification (0.2)
+#### B. Stock Identification (0.17)
 Was the correct stock found?
 
 5 — CATL (宁德时代 (CATL)) found with correct stock code and exchange.
@@ -50,7 +50,7 @@ Was the correct stock found?
 2 — Wrong stock accessed.
 1 — Stock not found.
 
-#### C. Chart Retrieval (0.35)
+#### C. Chart Retrieval (0.3)
 Was the daily K-line chart accessed?
 
 5 — Daily K-line chart accessed; OHLC data for recent days reported.
@@ -59,7 +59,7 @@ Was the daily K-line chart accessed?
 2 — General stock info without chart data.
 1 — No chart retrieved.
 
-#### D. Data Reporting (0.2)
+#### D. Data Reporting (0.18)
 Was chart data clearly reported?
 
 5 — Recent OHLC prices, date range, 52-week high/low, and trend description.
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_navigation": <1-5>,
-  "stock_identification": <1-5>,
-  "chart_retrieval": <1-5>,
-  "data_reporting": <1-5>,
   "dimension_reasoning": {{
     "platform_navigation": "<one sentence citing specific evidence>",
     "stock_identification": "<one sentence citing specific evidence>",
     "chart_retrieval": "<one sentence citing specific evidence>",
     "data_reporting": "<one sentence citing specific evidence>",
   }},
+  "platform_navigation": <1-5>,
+  "stock_identification": <1-5>,
+  "chart_retrieval": <1-5>,
+  "data_reporting": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_navigation": 0.25,
-    "stock_identification": 0.2,
-    "chart_retrieval": 0.35,
-    "data_reporting": 0.2,
+    "platform_navigation": 0.35,
+    "stock_identification": 0.17,
+    "chart_retrieval": 0.3,
+    "data_reporting": 0.18,
 }
 
 

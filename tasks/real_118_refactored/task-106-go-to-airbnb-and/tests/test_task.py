@@ -84,16 +84,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "listing_retrieval": <1-5>,
-  "listing_data_quality": <1-5>,
-  "airdna_market_data": <1-5>,
-  "revenue_calc_and_table": <1-5>,
   "dimension_reasoning": {{
     "listing_retrieval": "<one sentence citing specific evidence>",
     "listing_data_quality": "<one sentence citing specific evidence>",
     "airdna_market_data": "<one sentence citing specific evidence>",
     "revenue_calc_and_table": "<one sentence citing specific evidence>"
   }},
+  "listing_retrieval": <1-5>,
+  "listing_data_quality": <1-5>,
+  "airdna_market_data": <1-5>,
+  "revenue_calc_and_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -101,10 +101,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "listing_retrieval":       0.25,
-    "listing_data_quality":    0.25,
-    "airdna_market_data":      0.25,
-    "revenue_calc_and_table":  0.25,
+    "listing_retrieval": 0.35,
+    "listing_data_quality": 0.22,
+    "airdna_market_data": 0.22,
+    "revenue_calc_and_table": 0.21,
 }
 
 

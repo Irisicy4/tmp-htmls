@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "youtube_access": <1-5>,
-  "download_method": <1-5>,
-  "download_success": <1-5>,
-  "file_quality": <1-5>,
   "dimension_reasoning": {{
     "youtube_access": "<one sentence citing specific evidence>",
     "download_method": "<one sentence citing specific evidence>",
     "download_success": "<one sentence citing specific evidence>",
     "file_quality": "<one sentence citing specific evidence>",
   }},
+  "youtube_access": <1-5>,
+  "download_method": <1-5>,
+  "download_success": <1-5>,
+  "file_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

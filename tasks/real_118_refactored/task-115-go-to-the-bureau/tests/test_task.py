@@ -82,16 +82,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "bls_data_retrieval": <1-5>,
-  "linkedin_position_count": <1-5>,
-  "levelsfyi_compensation": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "bls_data_retrieval": "<one sentence citing specific evidence>",
     "linkedin_position_count": "<one sentence citing specific evidence>",
     "levelsfyi_compensation": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "bls_data_retrieval": <1-5>,
+  "linkedin_position_count": <1-5>,
+  "levelsfyi_compensation": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -99,10 +99,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "bls_data_retrieval":      0.25,
-    "linkedin_position_count": 0.20,
-    "levelsfyi_compensation":  0.30,
-    "output_table":            0.25,
+    "bls_data_retrieval": 0.35,
+    "linkedin_position_count": 0.17,
+    "levelsfyi_compensation": 0.26,
+    "output_table": 0.22,
 }
 
 

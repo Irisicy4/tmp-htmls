@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "star_history_analysis": <1-5>,
-  "inflation_evidence": <1-5>,
-  "fork_analysis": <1-5>,
-  "report_quality": <1-5>,
   "dimension_reasoning": {{
     "star_history_analysis": "<one sentence citing specific evidence>",
     "inflation_evidence": "<one sentence citing specific evidence>",
     "fork_analysis": "<one sentence citing specific evidence>",
     "report_quality": "<one sentence citing specific evidence>",
   }},
+  "star_history_analysis": <1-5>,
+  "inflation_evidence": <1-5>,
+  "fork_analysis": <1-5>,
+  "report_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

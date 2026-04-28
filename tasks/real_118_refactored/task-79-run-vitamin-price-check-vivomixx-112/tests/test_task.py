@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "product_targeting": <1-5>,
-  "vendor_coverage": <1-5>,
-  "price_accuracy": <1-5>,
-  "report_structure": <1-5>,
   "dimension_reasoning": {{
     "product_targeting": "<one sentence citing specific evidence>",
     "vendor_coverage": "<one sentence citing specific evidence>",
     "price_accuracy": "<one sentence citing specific evidence>",
     "report_structure": "<one sentence citing specific evidence>",
   }},
+  "product_targeting": <1-5>,
+  "vendor_coverage": <1-5>,
+  "price_accuracy": <1-5>,
+  "report_structure": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

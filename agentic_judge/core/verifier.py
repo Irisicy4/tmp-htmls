@@ -74,14 +74,17 @@ def verify_task(
     # "task" is the field name in this repo; fall back to "task_name" then parent dir name
     task_name = result.get("task", result.get("task_name", Path(result_json_path).parent.name))
 
-    # task_result lives in a sibling agent_result.json; fall back to inline field for compat
+    # task_result and execution_summary live in sibling agent_result.json
     task_result_text = result.get("task_result", "") or ""
-    if not task_result_text:
-        agent_result_path = Path(result_json_path).parent / "agent_result.json"
-        if agent_result_path.exists():
-            with open(agent_result_path) as f:
-                agent_data = json.load(f)
+    execution_summary = result.get("execution_summary", "") or ""
+    agent_result_path = Path(result_json_path).parent / "agent_result.json"
+    if agent_result_path.exists():
+        with open(agent_result_path) as f:
+            agent_data = json.load(f)
+        if not task_result_text:
             task_result_text = agent_data.get("task_result", "") or ""
+        if not execution_summary:
+            execution_summary = agent_data.get("execution_summary", "") or ""
 
     # Static judge fields: flat in this repo, wrapped in "eval" in legacy format
     static_passed = result.get("passed", result.get("eval", {}).get("passed", False))
@@ -126,6 +129,7 @@ def verify_task(
         model=model,
         timeout_seconds=timeout_seconds,
         category=category,
+        execution_summary=execution_summary,
     )
 
     return {

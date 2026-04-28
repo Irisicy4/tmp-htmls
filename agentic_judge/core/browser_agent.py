@@ -168,6 +168,7 @@ def _call_gpt4o(
     observations: list[dict],
     model: str = "gpt-4o",
     category: str = "Unknown",
+    execution_summary: str = "",
 ) -> dict:
     """Call GPT-4o with observations (optionally including screenshots)."""
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
@@ -179,6 +180,7 @@ def _call_gpt4o(
     user_text = template.format(
         task_instruction=instruction,
         claimed_result=claimed_result,
+        execution_summary=execution_summary or "Not available.",
         browser_observations=obs_text,
         deliverable_url=deliverable_url,
     )
@@ -253,6 +255,7 @@ def verify(
     model: str = "gpt-4o",
     timeout_seconds: int = 120,
     category: str = "Unknown",
+    execution_summary: str = "",
 ) -> dict:
     """Verify a task result by navigating to its URLs and querying GPT-4o.
 
@@ -263,6 +266,7 @@ def verify(
         model: OpenAI model to use for judgment.
         timeout_seconds: Total timeout budget (used as Playwright per-page timeout).
         category: Domain/category string used to select the archetype prompt.
+        execution_summary: Tool call trace from the agent run (ground truth of what it did).
 
     Returns:
         Dict with keys: verified, finding, confidence, null_reason, verification_method.
@@ -286,7 +290,10 @@ def verify(
     verification_method = "browser_navigation" if has_screenshot else "url_check"
 
     try:
-        gpt_result = _call_gpt4o(instruction, claimed_result, observations, model=model, category=category)
+        gpt_result = _call_gpt4o(
+            instruction, claimed_result, observations,
+            model=model, category=category, execution_summary=execution_summary,
+        )
         verified = gpt_result.get("verified")
         finding = gpt_result.get("finding", "No finding returned.")
         confidence = gpt_result.get("confidence", "low")

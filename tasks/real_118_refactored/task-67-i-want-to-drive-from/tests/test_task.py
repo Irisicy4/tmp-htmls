@@ -76,16 +76,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "route_planning": <1-5>,
-  "feasibility_analysis": <1-5>,
-  "traffic_optimization": <1-5>,
-  "practical_details": <1-5>,
   "dimension_reasoning": {{
     "route_planning": "<one sentence citing specific evidence>",
     "feasibility_analysis": "<one sentence citing specific evidence>",
     "traffic_optimization": "<one sentence citing specific evidence>",
     "practical_details": "<one sentence citing specific evidence>",
   }},
+  "route_planning": <1-5>,
+  "feasibility_analysis": <1-5>,
+  "traffic_optimization": <1-5>,
+  "practical_details": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

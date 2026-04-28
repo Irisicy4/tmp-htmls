@@ -75,16 +75,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "job_coverage": <1-5>,
-  "age_group_relevance": <1-5>,
-  "organization_quality": <1-5>,
-  "practical_information": <1-5>,
   "dimension_reasoning": {{
     "job_coverage": "<one sentence citing specific evidence>",
     "age_group_relevance": "<one sentence citing specific evidence>",
     "organization_quality": "<one sentence citing specific evidence>",
     "practical_information": "<one sentence citing specific evidence>"
   }},
+  "job_coverage": <1-5>,
+  "age_group_relevance": <1-5>,
+  "organization_quality": <1-5>,
+  "practical_information": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

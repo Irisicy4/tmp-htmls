@@ -168,7 +168,18 @@ def _resolve_repo_root() -> Path:
 
 
 def main() -> None:
+    import argparse
     import yaml
+
+    parser = argparse.ArgumentParser(description="Compute static-vs-agentic agreement statistics")
+    parser.add_argument(
+        "--dataset",
+        choices=["original", "synthetic", "real118", "all"],
+        default="all",
+        help="Which dataset(s) to include (default: all)",
+    )
+    args = parser.parse_args()
+
     repo_root = _resolve_repo_root()
     config_path = Path(__file__).parent.parent / "config.yaml"
     if not config_path.exists():
@@ -176,12 +187,98 @@ def main() -> None:
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
-    original_dir = str(repo_root / "agentic_judge" / "results" / "original")
-    synthetic_dir = str(repo_root / "agentic_judge" / "results" / "synthetic")
-    original_result_dir = str(repo_root / config["result_dirs"]["original"])
-    synthetic_result_dir = str(repo_root / config["result_dirs"]["synthetic"])
+    aj_results = repo_root / "agentic_judge" / "results"
 
-    compute_agreement(original_dir, synthetic_dir, original_result_dir, synthetic_result_dir)
+    datasets = ["original", "synthetic", "real118"] if args.dataset == "all" else [args.dataset]
+
+    records = []
+    for dataset in datasets:
+        d = aj_results / dataset
+        if d.exists():
+            records += _load_verification_files(str(d))
+
+    if not records:
+        print("No verification files found for the requested datasets.")
+        return
+
+    result_dirs = {
+        ds: str(repo_root / config["result_dirs"][ds])
+        for ds in datasets
+        if ds in config.get("result_dirs", {})
+    }
+
+    # Reuse compute_agreement logic but feed pre-loaded records
+    # Write a merged report to agentic_judge/results/agreement_report.json
+    total_sampled = len(records)
+    verifiable = [r for r in records if r["agentic_verified"] is not None]
+    unverifiable = [r for r in records if r["agentic_verified"] is None]
+
+    from collections import defaultdict
+    reason_counts: dict[str, int] = defaultdict(int)
+    for r in unverifiable:
+        reason_counts[r.get("null_reason") or "unknown"] += 1
+
+    unverifiable_by_reason = {
+        reason: {
+            "count": count,
+            "pct_of_unverifiable": _pct(count, len(unverifiable)),
+            "pct_of_total": _pct(count, total_sampled),
+        }
+        for reason, count in reason_counts.items()
+    }
+
+    verifiable_count = len(verifiable)
+    unverifiable_count = len(unverifiable)
+    agreed = sum(1 for r in verifiable if r["static_judge_passed"] == bool(r["agentic_verified"]))
+    static_passed = [r for r in verifiable if r["static_judge_passed"]]
+    caught = sum(1 for r in static_passed if r["agentic_verified"] is False)
+    joint_passed = sum(1 for r in verifiable if r["static_judge_passed"] and r["agentic_verified"] is True)
+
+    by_category: dict[str, list[dict]] = defaultdict(list)
+    for r in verifiable:
+        by_category[r.get("category", "Unknown")].append(r)
+
+    category_breakdown = {}
+    for cat, cat_records in sorted(by_category.items()):
+        n = len(cat_records)
+        cat_passed = sum(1 for r in cat_records if r["static_judge_passed"])
+        cat_agentic = sum(1 for r in cat_records if r["agentic_verified"] is True)
+        cat_caught = sum(1 for r in cat_records if r["static_judge_passed"] and r["agentic_verified"] is False)
+        cat_agreed = sum(1 for r in cat_records if r["static_judge_passed"] == bool(r["agentic_verified"]))
+        category_breakdown[cat] = {
+            "n_verifiable": n,
+            "static_pass_rate": _pct(cat_passed, n),
+            "agentic_pass_rate": _pct(cat_agentic, n),
+            "agreement_rate": _pct(cat_agreed, n),
+            "catch_rate": _pct(cat_caught, cat_passed),
+        }
+
+    report = {
+        "datasets": datasets,
+        "total_sampled": total_sampled,
+        "verifiable_count": verifiable_count,
+        "unverifiable_count": unverifiable_count,
+        "unverifiable_pct": _pct(unverifiable_count, total_sampled),
+        "unverifiable_by_reason": unverifiable_by_reason,
+        "agreement_rate": _pct(agreed, verifiable_count),
+        "catch_rate": _pct(caught, len(static_passed)),
+        "joint_pass_rate": _pct(joint_passed, verifiable_count),
+        "agentic_verification_rate": _pct(
+            sum(1 for r in verifiable if r["agentic_verified"] is True), verifiable_count
+        ),
+        "category_breakdown": category_breakdown,
+    }
+
+    for ds, rdir in result_dirs.items():
+        if Path(rdir).exists():
+            p, t = _count_static_results(rdir)
+            report[f"static_pass_rate_{ds}"] = _pct(p, t)
+
+    report_path = aj_results / "agreement_report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(report_path, "w") as f:
+        json.dump(report, f, indent=2)
+    print(f"Agreement report written to {report_path}")
 
 
 if __name__ == "__main__":

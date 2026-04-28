@@ -37,7 +37,7 @@ Carefully read the agent response and trace, then answer each question:
 ### Step 2: Dimension Scoring
 Score each dimension 1–5 using the rubrics below.
 
-#### A. Task Completion (0.50)
+#### A. Draft Compliance (0.50)
 Did the agent compose the email and stop before sending?
 
 5 — Email fully composed with correct recipient; agent explicitly stopped before pressing send (confirmed by trace or stated in response).
@@ -55,7 +55,7 @@ Was the email correctly addressed, appropriately toned, and fully contentful?
 2 — Significant content errors (wrong recipient, wrong dates, missing health reminder).
 1 — Email content bears no relation to the task.
 
-#### C. Completeness (0.25)
+#### C. Content Requirements (0.25)
 Did the agent address every required element of the task?
 
 5 — All four elements present: correct recipient, both date options, polite tone, cold weather reminder.
@@ -70,14 +70,14 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "task_completion": <1-5>,
-  "email_quality": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
-    "task_completion": "<one sentence citing specific evidence>",
+    "draft_compliance": "<one sentence citing specific evidence>",
     "email_quality": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>"
+    "content_requirements": "<one sentence citing specific evidence>"
   }},
+  "draft_compliance": <1-5>,
+  "email_quality": <1-5>,
+  "content_requirements": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -85,9 +85,9 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "task_completion": 0.50,
-    "email_quality":   0.25,
-    "completeness":    0.25,
+    "draft_compliance":    0.50,
+    "email_quality":       0.25,
+    "content_requirements": 0.25,
 }
 
 

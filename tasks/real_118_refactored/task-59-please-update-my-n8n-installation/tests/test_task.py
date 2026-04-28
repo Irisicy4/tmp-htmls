@@ -31,7 +31,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Access (0.25)
+#### A. Platform Access (0.35)
 Did the agent access Hostinger or a terminal?
 
 5 — Agent accessed Hostinger hPanel or SSH terminal and authenticated successfully.
@@ -40,7 +40,7 @@ Did the agent access Hostinger or a terminal?
 2 — Agent gave generic N8N update instructions without Hostinger context.
 1 — No platform access attempted.
 
-#### B. Update Execution (0.4)
+#### B. Update Execution (0.35)
 Was the N8N update command executed?
 
 5 — Update command run (e.g. npm update -g n8n, docker pull n8nio/n8n, or equivalent) with output shown.
@@ -49,7 +49,7 @@ Was the N8N update command executed?
 2 — Wrong update method attempted.
 1 — No update attempt.
 
-#### C. Version Verification (0.25)
+#### C. Version Verification (0.22)
 Was the updated version verified?
 
 5 — New N8N version confirmed (e.g. n8n --version output shown after update).
@@ -58,7 +58,7 @@ Was the updated version verified?
 2 — No version verification.
 1 — Update failed or not attempted.
 
-#### D. Error Handling (0.1)
+#### D. Error Handling (0.08)
 Did the agent handle any errors gracefully?
 
 5 — Any errors encountered were addressed and resolved.
@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_access": <1-5>,
-  "update_execution": <1-5>,
-  "version_verification": <1-5>,
-  "error_handling": <1-5>,
   "dimension_reasoning": {{
     "platform_access": "<one sentence citing specific evidence>",
     "update_execution": "<one sentence citing specific evidence>",
     "version_verification": "<one sentence citing specific evidence>",
     "error_handling": "<one sentence citing specific evidence>",
   }},
+  "platform_access": <1-5>,
+  "update_execution": <1-5>,
+  "version_verification": <1-5>,
+  "error_handling": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -90,10 +90,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_access": 0.25,
-    "update_execution": 0.4,
-    "version_verification": 0.25,
-    "error_handling": 0.1,
+    "platform_access": 0.35,
+    "update_execution": 0.35,
+    "version_verification": 0.22,
+    "error_handling": 0.08,
 }
 
 

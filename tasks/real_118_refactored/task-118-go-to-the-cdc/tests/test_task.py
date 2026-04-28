@@ -84,16 +84,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "cdc_wonder_navigation": <1-5>,
-  "state_selection_accuracy": <1-5>,
-  "commonwealth_fund_data": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "cdc_wonder_navigation": "<one sentence citing specific evidence>",
     "state_selection_accuracy": "<one sentence citing specific evidence>",
     "commonwealth_fund_data": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "cdc_wonder_navigation": <1-5>,
+  "state_selection_accuracy": <1-5>,
+  "commonwealth_fund_data": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -101,10 +101,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "cdc_wonder_navigation":   0.30,
-    "state_selection_accuracy": 0.25,
-    "commonwealth_fund_data":  0.25,
-    "output_table":            0.20,
+    "cdc_wonder_navigation": 0.35,
+    "state_selection_accuracy": 0.23,
+    "commonwealth_fund_data": 0.23,
+    "output_table": 0.19,
 }
 
 

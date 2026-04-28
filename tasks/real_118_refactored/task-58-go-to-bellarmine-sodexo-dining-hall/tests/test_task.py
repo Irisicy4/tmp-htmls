@@ -31,7 +31,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Navigation (0.25)
+#### A. Platform Navigation (0.35)
 Did the agent navigate to the correct website?
 
 5 — Agent navigated to bellarmine.sodexomyway.com and accessed today's menu.
@@ -40,7 +40,7 @@ Did the agent navigate to the correct website?
 2 — Agent described what the menu site looks like without navigating.
 1 — No navigation attempted.
 
-#### B. Menu Currency (0.3)
+#### B. Menu Currency (0.26)
 Is the menu for today specifically?
 
 5 — Menu clearly identified as today's date with specific items.
@@ -49,7 +49,7 @@ Is the menu for today specifically?
 2 — Generic dining hall info without today's specific items.
 1 — No menu retrieved.
 
-#### C. Meal Coverage (0.25)
+#### C. Meal Coverage (0.22)
 Are all three meal periods covered?
 
 5 — Breakfast, lunch, and dinner all listed with specific items.
@@ -58,7 +58,7 @@ Are all three meal periods covered?
 2 — Meal periods mentioned but no specific items.
 1 — No meal coverage.
 
-#### D. Item Specificity (0.2)
+#### D. Item Specificity (0.17)
 Are specific food items listed?
 
 5 — Specific named dishes listed for each meal (e.g. 'scrambled eggs, bacon, oatmeal').
@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_navigation": <1-5>,
-  "menu_currency": <1-5>,
-  "meal_coverage": <1-5>,
-  "item_specificity": <1-5>,
   "dimension_reasoning": {{
     "platform_navigation": "<one sentence citing specific evidence>",
     "menu_currency": "<one sentence citing specific evidence>",
     "meal_coverage": "<one sentence citing specific evidence>",
     "item_specificity": "<one sentence citing specific evidence>",
   }},
+  "platform_navigation": <1-5>,
+  "menu_currency": <1-5>,
+  "meal_coverage": <1-5>,
+  "item_specificity": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -90,10 +90,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_navigation": 0.25,
-    "menu_currency": 0.3,
-    "meal_coverage": 0.25,
-    "item_specificity": 0.2,
+    "platform_navigation": 0.35,
+    "menu_currency": 0.26,
+    "meal_coverage": 0.22,
+    "item_specificity": 0.17,
 }
 
 

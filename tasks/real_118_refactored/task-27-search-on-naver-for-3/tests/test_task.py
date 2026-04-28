@@ -74,18 +74,23 @@ Did the agent attempt to book the selected salon?
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
+  "dimension_reasoning": {{"platform_execution": "<one sentence>", "salon_discovery": "<one sentence>", "value_assessment": "<one sentence>", "booking_attempt": "<one sentence>"}},
   "platform_execution": <1-5>,
   "salon_discovery": <1-5>,
   "value_assessment": <1-5>,
   "booking_attempt": <1-5>,
-  "dimension_reasoning": {{"platform_execution": "<one sentence>", "salon_discovery": "<one sentence>", "value_assessment": "<one sentence>", "booking_attempt": "<one sentence>"}},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}
 </Answer>
 """)
 
-DIMENSION_WEIGHTS = {"platform_execution": 0.20, "salon_discovery": 0.25, "value_assessment": 0.25, "booking_attempt": 0.30}
+DIMENSION_WEIGHTS = {
+    "platform_execution": 0.35,
+    "salon_discovery": 0.2,
+    "value_assessment": 0.2,
+    "booking_attempt": 0.25,
+}
 
 
 def test(result):

@@ -122,9 +122,10 @@ def test_get_prompt_for_category_routing():
     assert travel != software
     # Fallback cases should use the same general prompt
     assert daily == unknown
-    # All must have the 4 required placeholders
+    # All must have the 5 required placeholders
     for prompt in [shopping, finance, travel, software, media, daily]:
         assert "{task_instruction}" in prompt
         assert "{claimed_result}" in prompt
+        assert "{execution_summary}" in prompt
         assert "{browser_observations}" in prompt
         assert "{deliverable_url}" in prompt

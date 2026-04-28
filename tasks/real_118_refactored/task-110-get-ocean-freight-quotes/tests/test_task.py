@@ -85,16 +85,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "freight_quote": <1-5>,
-  "duty_tax_lookup": <1-5>,
-  "shipbob_rates": <1-5>,
-  "landed_cost_table": <1-5>,
   "dimension_reasoning": {{
     "freight_quote": "<one sentence citing specific evidence>",
     "duty_tax_lookup": "<one sentence citing specific evidence>",
     "shipbob_rates": "<one sentence citing specific evidence>",
     "landed_cost_table": "<one sentence citing specific evidence>"
   }},
+  "freight_quote": <1-5>,
+  "duty_tax_lookup": <1-5>,
+  "shipbob_rates": <1-5>,
+  "landed_cost_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

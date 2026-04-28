@@ -38,8 +38,8 @@ Carefully read the agent response and trace, then answer each question:
 ### Step 2: Dimension Scoring
 Score each dimension 1–5 using the rubrics below.
 
-#### A. Task Completion (0.40)
-Did the agent build and deploy the interactive learning webpage with all required features?
+#### A. Feature Implementation (0.40)
+Did the agent build the interactive learning webpage with all required features?
 
 5 — Webpage built with all four required features, deployed to GitHub Pages, working URL provided.
 4 — Webpage built and deployed but one required feature missing.
@@ -47,7 +47,7 @@ Did the agent build and deploy the interactive learning webpage with all require
 2 — Partial webpage built but not deployed, or major features absent.
 1 — No webpage built or task abandoned.
 
-#### B. Information Quality (0.30)
+#### B. Content Fidelity (0.30)
 Is the webpage content accurately derived from the PDF source material and correctly structured?
 
 5 — Content clearly derived from the PDF, correctly organised by topic, faithful to source material.
@@ -56,7 +56,7 @@ Is the webpage content accurately derived from the PDF source material and corre
 2 — Content appears fabricated or unrelated to source material.
 1 — No source material used.
 
-#### C. Document Saved (0.20)
+#### C. Deployment Success (0.20)
 Was the code committed to GitHub and the page live on GitHub Pages?
 
 5 — Code committed to a GitHub repository AND a live GitHub Pages URL provided and accessible.
@@ -65,7 +65,7 @@ Was the code committed to GitHub and the page live on GitHub Pages?
 2 — Code produced but not saved anywhere accessible.
 1 — No output saved.
 
-#### D. Completeness (0.10)
+#### D. Feature Completeness (0.10)
 Were all four required interactive features implemented?
 
 5 — All four features present: interactive exercises with feedback, wrong-answer book with statistics, knowledge graph, text-to-speech.
@@ -80,16 +80,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "document_saved": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
-    "task_completion": "<one sentence citing specific evidence>",
-    "information_quality": "<one sentence citing specific evidence>",
-    "document_saved": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>"
+    "feature_implementation": "<one sentence citing specific evidence>",
+    "content_fidelity": "<one sentence citing specific evidence>",
+    "deployment_success": "<one sentence citing specific evidence>",
+    "feature_completeness": "<one sentence citing specific evidence>"
   }},
+  "feature_implementation": <1-5>,
+  "content_fidelity": <1-5>,
+  "deployment_success": <1-5>,
+  "feature_completeness": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -97,10 +97,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "task_completion":    0.40,
-    "information_quality": 0.30,
-    "document_saved":     0.20,
-    "completeness":       0.10,
+    "feature_implementation": 0.40,
+    "content_fidelity":       0.30,
+    "deployment_success":     0.20,
+    "feature_completeness":   0.10,
 }
 
 

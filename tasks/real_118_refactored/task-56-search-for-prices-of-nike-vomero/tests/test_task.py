@@ -32,7 +32,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Search Execution (0.2)
+#### A. Search Execution (0.35)
 Did the agent search for Nike Vomero Plus in Brazil?
 
 5 — Agent used Google Shopping Brazil or visited Brazilian retailer sites directly.
@@ -41,7 +41,7 @@ Did the agent search for Nike Vomero Plus in Brazil?
 2 — Agent described what to search without actually searching.
 1 — No search performed.
 
-#### B. Store Coverage (0.25)
+#### B. Store Coverage (0.2)
 How many stores were compared?
 
 5 — 4 or more Brazilian stores compared with specific prices.
@@ -50,7 +50,7 @@ How many stores were compared?
 2 — Only 1 store found.
 1 — No stores compared.
 
-#### C. Price Accuracy (0.35)
+#### C. Price Accuracy (0.28)
 Are prices accurate and in BRL?
 
 5 — Prices in BRL from credible Brazilian retailers (Netshoes, Nike.com.br, Centauro, etc.) with specific amounts.
@@ -59,7 +59,7 @@ Are prices accurate and in BRL?
 2 — Prices found but in USD or without clear source.
 1 — No actual prices found.
 
-#### D. Recommendation Quality (0.2)
+#### D. Recommendation Quality (0.17)
 Did the agent identify the best deal clearly?
 
 5 — Clear winner identified with price, store name, and any relevant conditions (shipping, installments).
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "search_execution": <1-5>,
-  "store_coverage": <1-5>,
-  "price_accuracy": <1-5>,
-  "recommendation_quality": <1-5>,
   "dimension_reasoning": {{
     "search_execution": "<one sentence citing specific evidence>",
     "store_coverage": "<one sentence citing specific evidence>",
     "price_accuracy": "<one sentence citing specific evidence>",
     "recommendation_quality": "<one sentence citing specific evidence>",
   }},
+  "search_execution": <1-5>,
+  "store_coverage": <1-5>,
+  "price_accuracy": <1-5>,
+  "recommendation_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "search_execution": 0.2,
-    "store_coverage": 0.25,
-    "price_accuracy": 0.35,
-    "recommendation_quality": 0.2,
+    "search_execution": 0.35,
+    "store_coverage": 0.2,
+    "price_accuracy": 0.28,
+    "recommendation_quality": 0.17,
 }
 
 

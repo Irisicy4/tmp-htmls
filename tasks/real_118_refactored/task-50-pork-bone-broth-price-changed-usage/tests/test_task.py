@@ -78,16 +78,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "mathematical_accuracy": <1-5>,
-  "persuasive_logic": <1-5>,
-  "practical_framing": <1-5>,
-  "output_clarity": <1-5>,
   "dimension_reasoning": {{
     "mathematical_accuracy": "<one sentence citing specific evidence>",
     "persuasive_logic": "<one sentence citing specific evidence>",
     "practical_framing": "<one sentence citing specific evidence>",
     "output_clarity": "<one sentence citing specific evidence>",
   }},
+  "mathematical_accuracy": <1-5>,
+  "persuasive_logic": <1-5>,
+  "practical_framing": <1-5>,
+  "output_clarity": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

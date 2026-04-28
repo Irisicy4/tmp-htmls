@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "tech_shift_identification": <1-5>,
-  "investor_question_quality": <1-5>,
-  "recency_and_specificity": <1-5>,
-  "briefing_readability": <1-5>,
   "dimension_reasoning": {{
     "tech_shift_identification": "<one sentence citing specific evidence>",
     "investor_question_quality": "<one sentence citing specific evidence>",
     "recency_and_specificity": "<one sentence citing specific evidence>",
     "briefing_readability": "<one sentence citing specific evidence>"
   }},
+  "tech_shift_identification": <1-5>,
+  "investor_question_quality": <1-5>,
+  "recency_and_specificity": <1-5>,
+  "briefing_readability": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

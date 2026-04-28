@@ -84,16 +84,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "redfin_search": <1-5>,
-  "property_data_completeness": <1-5>,
-  "assessed_value_crossref": <1-5>,
-  "la_ratio_and_signals": <1-5>,
   "dimension_reasoning": {{
     "redfin_search": "<one sentence citing specific evidence>",
     "property_data_completeness": "<one sentence citing specific evidence>",
     "assessed_value_crossref": "<one sentence citing specific evidence>",
     "la_ratio_and_signals": "<one sentence citing specific evidence>"
   }},
+  "redfin_search": <1-5>,
+  "property_data_completeness": <1-5>,
+  "assessed_value_crossref": <1-5>,
+  "la_ratio_and_signals": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

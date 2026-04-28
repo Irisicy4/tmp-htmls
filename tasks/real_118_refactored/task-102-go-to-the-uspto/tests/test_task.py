@@ -82,16 +82,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "patent_db_navigation": <1-5>,
-  "patent_data_completeness": <1-5>,
-  "forward_citation_data": <1-5>,
-  "output_structure": <1-5>,
   "dimension_reasoning": {{
     "patent_db_navigation": "<one sentence citing specific evidence>",
     "patent_data_completeness": "<one sentence citing specific evidence>",
     "forward_citation_data": "<one sentence citing specific evidence>",
     "output_structure": "<one sentence citing specific evidence>"
   }},
+  "patent_db_navigation": <1-5>,
+  "patent_data_completeness": <1-5>,
+  "forward_citation_data": <1-5>,
+  "output_structure": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -99,10 +99,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "patent_db_navigation":     0.25,
-    "patent_data_completeness": 0.30,
-    "forward_citation_data":    0.25,
-    "output_structure":         0.20,
+    "patent_db_navigation": 0.35,
+    "patent_data_completeness": 0.26,
+    "forward_citation_data": 0.22,
+    "output_structure": 0.17,
 }
 
 

@@ -2,16 +2,16 @@ import sys
 sys.path.insert(0, "/harness")
 from evaluator import evaluate
 
-TASK_INSTRUCTION = ("help me download a song named happy birthday from youtube")
+TASK_INSTRUCTION = ("Save today's top traded ETF stocks from Naver Securities to Google Docs")
 
 USER_PROMPT_TEMPLATE = ("""## Task Instruction
 {task_instruction}
 
 ## Task-Specific Constraints
-- Platform: YouTube specifically
-- Content: a "Happy Birthday" song — any widely recognised version is acceptable
-- Action required: an actual download must be attempted or completed, not just a link provided or instructions given
-- File output: ideally an audio file (mp3, m4a, wav) or video file; the agent should confirm what was downloaded
+- Platform: Naver Securities (finance.naver.com) specifically
+- Data: today's top traded ETFs — must reflect current trading data, not historical or generic lists
+- Required fields: ETF name, ticker, current price, trading volume (or value)
+- Output: saved to a Google Docs document (not a local file or Google Sheets)
 
 ## Agent Final Response
 {agent_response}
@@ -24,49 +24,49 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 ## Evaluation Instructions
 
 ### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent navigate to YouTube? Cite evidence.
-- Did the agent identify a specific "Happy Birthday" video (title, channel, URL)?
-- Did the agent attempt or complete a download? What method was used (yt-dlp, browser download, third-party tool)?
-- Is there evidence the file was actually saved (file path, confirmation message, download completion)?
-- Did the agent only provide instructions or a link instead of executing the download?
+- Did the agent navigate Naver Securities? Cite evidence from trace.
+- Did the agent locate the top traded ETF section?
+- What ETFs are listed — are they real Korean ETF tickers (e.g. KODEX, TIGER series)?
+- Is the data clearly from today (date mentioned, current prices/volumes)?
+- Was a Google Docs document created? Evidence (URL, creation confirmation, trace)?
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Execution
-Did the agent actually navigate YouTube to find the content?
+#### A. Platform Navigation
+Did the agent navigate Naver Securities and locate today's top traded ETFs?
 
-5 — Agent navigated YouTube, identified a specific Happy Birthday video with title/URL.
-4 — Agent found a YouTube video but with limited detail (e.g. URL only, no title or channel).
-3 — Agent searched YouTube but did not access a specific video page.
-2 — Agent used a non-YouTube source or only searched generally without finding a specific video.
-1 — No search performed; response is instructions only or from prior knowledge.
+5 — Agent navigated finance.naver.com, located the ETF trading section, and retrieved today's top traded ETFs with tickers and data.
+4 — Agent reached Naver Securities but had difficulty finding the ETF section; partial data retrieved.
+3 — Agent found ETF data via a general web search referencing Naver rather than navigating directly.
+2 — Agent described how to find the data without navigating the site.
+1 — No navigation to Naver Securities; response is from prior knowledge or hallucinated.
 
-#### B. Download Execution
-Did the agent actually attempt or complete the download?
+#### B. Data Accuracy
+Is the ETF data accurate and current for today?
 
-5 — Download completed; file saved with confirmation (file path, size, or format mentioned).
-4 — Download initiated and likely completed based on trace; no explicit confirmation in response.
-3 — Download attempted but outcome uncertain (e.g. tool invoked but no success confirmation).
-2 — Agent provided a download link or instructions but did not execute the download itself.
-1 — No download attempted; agent only described how to download or refused.
+5 — Real Korean ETF tickers listed (e.g. KODEX 200, TIGER ETFs); prices and volumes plausible for current trading day; date of data stated.
+4 — Real ETF names listed with prices but trading volume missing or date not stated.
+3 — ETF names present but prices or tickers are approximate or unverified.
+2 — Generic or hallucinated ETF names; data does not appear to be from today.
+1 — No ETF data or completely fabricated.
 
-#### C. Content Match
-Is the downloaded or identified content a "Happy Birthday" song as requested?
+#### C. Google Docs Save
+Was the data saved to a Google Docs document?
 
-5 — Content is clearly a Happy Birthday song (title confirms it; well-known version).
-4 — Content is likely a Happy Birthday song but title is ambiguous or version is obscure.
-3 — Agent found Happy Birthday content but it may be a cover, instrumental, or unrelated remix.
-2 — Content is loosely related (birthday music) but not "Happy Birthday" specifically.
-1 — Content is unrelated or agent could not find any matching content.
+5 — Google Docs document created with ETF data; URL or creation confirmation in response or trace.
+4 — Document creation attempted; trace confirms Google Docs API call but no URL provided.
+3 — Agent compiled the data in the response but did not save to Google Docs.
+2 — Agent mentioned creating a document without doing so.
+1 — No document created.
 
-#### D. Response Clarity
-Does the agent clearly communicate what was found and downloaded?
+#### D. Report Completeness
+Is the report complete and well-organised?
 
-5 — Response states: video title, source URL, download method, and file format/location.
-4 — Most details present; one piece missing (e.g. no file path or no format mentioned).
-3 — Agent confirms a download but with minimal detail.
-2 — Response is vague; unclear whether anything was actually downloaded.
-1 — No useful output; response is a refusal, error, or generic instructions.
+5 — All required fields present (name, ticker, price, volume) for each ETF; clearly structured.
+4 — Most fields present; one field missing for some ETFs.
+3 — ETF names listed but key fields (price or volume) missing for most entries.
+2 — Only ETF names listed with no trading data.
+1 — No structured output.
 
 ### Step 3: Output
 Respond ONLY with valid JSON inside <Answer></Answer> tags:
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_execution": <1-5>,
-  "download_execution": <1-5>,
-  "content_match": <1-5>,
-  "response_clarity": <1-5>,
   "dimension_reasoning": {{
-    "platform_execution": "<one sentence citing specific evidence>",
-    "download_execution": "<one sentence citing specific evidence>",
-    "content_match": "<one sentence citing specific evidence>",
-    "response_clarity": "<one sentence citing specific evidence>"
+    "platform_navigation": "<one sentence citing specific evidence>",
+    "data_accuracy": "<one sentence citing specific evidence>",
+    "google_docs_save": "<one sentence citing specific evidence>",
+    "report_completeness": "<one sentence citing specific evidence>"
   }},
+  "platform_navigation": <1-5>,
+  "data_accuracy": <1-5>,
+  "google_docs_save": <1-5>,
+  "report_completeness": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_execution":  0.20,
-    "download_execution":  0.40,
-    "content_match":       0.25,
-    "response_clarity":    0.15,
+    "platform_navigation": 0.35,
+    "data_accuracy":       0.30,
+    "google_docs_save":    0.25,
+    "report_completeness": 0.10,
 }
 
 

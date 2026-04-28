@@ -75,11 +75,11 @@ Was the template saved as a file or concrete output?
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
+  "dimension_reasoning": {{"template_structure": "<one sentence>", "visual_design_quality": "<one sentence>", "format_appropriateness": "<one sentence>", "file_saved": "<one sentence>"}},
   "template_structure": <1-5>,
   "visual_design_quality": <1-5>,
   "format_appropriateness": <1-5>,
   "file_saved": <1-5>,
-  "dimension_reasoning": {{"template_structure": "<one sentence>", "visual_design_quality": "<one sentence>", "format_appropriateness": "<one sentence>", "file_saved": "<one sentence>"}},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}

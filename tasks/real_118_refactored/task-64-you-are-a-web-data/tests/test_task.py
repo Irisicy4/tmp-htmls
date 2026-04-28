@@ -32,7 +32,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Site Navigation (0.15)
+#### A. Site Navigation (0.35)
 Did the agent navigate to the correct URL?
 
 5 — Agent visited the exact URL and loaded the hotel listing page.
@@ -41,7 +41,7 @@ Did the agent navigate to the correct URL?
 2 — Agent visited wrong section of the site.
 1 — No navigation to the target URL.
 
-#### B. Extraction Completeness (0.35)
+#### B. Extraction Completeness (0.30)
 Were all hotel entries extracted?
 
 5 — All visible hotel entries extracted with both name and URL for each.
@@ -50,7 +50,7 @@ Were all hotel entries extracted?
 2 — Only a few sample entries extracted.
 1 — No extraction performed.
 
-#### C. Data Accuracy (0.3)
+#### C. Data Accuracy (0.25)
 Are hotel names and URLs accurate?
 
 5 — Names match the page content; URLs are valid and point to correct detail pages.
@@ -59,7 +59,7 @@ Are hotel names and URLs accurate?
 2 — Significant accuracy issues.
 1 — Data is fabricated or completely wrong.
 
-#### D. Csv Output (0.2)
+#### D. Csv Output (0.1)
 Was valid CSV produced with correct columns?
 
 5 — Valid CSV with hotel_name and hotel_url headers, one row per hotel, no duplicates.
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "site_navigation": <1-5>,
-  "extraction_completeness": <1-5>,
-  "data_accuracy": <1-5>,
-  "csv_output": <1-5>,
   "dimension_reasoning": {{
     "site_navigation": "<one sentence citing specific evidence>",
     "extraction_completeness": "<one sentence citing specific evidence>",
     "data_accuracy": "<one sentence citing specific evidence>",
     "csv_output": "<one sentence citing specific evidence>",
   }},
+  "site_navigation": <1-5>,
+  "extraction_completeness": <1-5>,
+  "data_accuracy": <1-5>,
+  "csv_output": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "site_navigation": 0.15,
-    "extraction_completeness": 0.35,
-    "data_accuracy": 0.3,
-    "csv_output": 0.2,
+    "site_navigation": 0.35,
+    "extraction_completeness": 0.30,
+    "data_accuracy": 0.25,
+    "csv_output": 0.10,
 }
 
 

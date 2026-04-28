@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "site_analysis": <1-5>,
-  "external_research": <1-5>,
-  "weakness_identification": <1-5>,
-  "competitive_framing": <1-5>,
   "dimension_reasoning": {{
     "site_analysis": "<one sentence citing specific evidence>",
     "external_research": "<one sentence citing specific evidence>",
     "weakness_identification": "<one sentence citing specific evidence>",
     "competitive_framing": "<one sentence citing specific evidence>",
   }},
+  "site_analysis": <1-5>,
+  "external_research": <1-5>,
+  "weakness_identification": <1-5>,
+  "competitive_framing": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

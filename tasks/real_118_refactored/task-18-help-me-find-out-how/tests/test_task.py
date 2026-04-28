@@ -45,7 +45,7 @@ Did the agent actively search for HeidelbergCement subsidiary information?
 2 — Agent described what subsidiaries HeidelbergCement might have without performing an actual search.
 1 — Agent did not perform any research; response is hallucinated or generated from prior knowledge only.
 
-#### B. Completeness
+#### B. Subsidiary Coverage
 How many subsidiaries were found and listed?
 
 5 — Agent listed a substantial number of subsidiaries (10+) with clear sourcing; acknowledged if the list may be partial.
@@ -78,16 +78,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags, exactly as shown:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "research_execution": <1-5>,
-  "completeness": <1-5>,
-  "registration_status_accuracy": <1-5>,
-  "presentation_quality": <1-5>,
   "dimension_reasoning": {{
     "research_execution": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>",
+    "subsidiary_coverage": "<one sentence citing specific evidence>",
     "registration_status_accuracy": "<one sentence citing specific evidence>",
     "presentation_quality": "<one sentence citing specific evidence>"
   }},
+  "research_execution": <1-5>,
+  "subsidiary_coverage": <1-5>,
+  "registration_status_accuracy": <1-5>,
+  "presentation_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -95,10 +95,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags, exactly as shown:
 """)
 
 DIMENSION_WEIGHTS = {
-    "research_execution":          0.25,
-    "completeness":                0.35,
-    "registration_status_accuracy": 0.25,
-    "presentation_quality":        0.15,
+    "research_execution": 0.35,
+    "subsidiary_coverage": 0.3,
+    "registration_status_accuracy": 0.22,
+    "presentation_quality": 0.13,
 }
 
 

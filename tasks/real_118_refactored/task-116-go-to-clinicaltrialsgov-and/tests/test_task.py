@@ -82,16 +82,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "clinicaltrials_navigation": <1-5>,
-  "trial_data_accuracy": <1-5>,
-  "pubmed_evidence": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "clinicaltrials_navigation": "<one sentence citing specific evidence>",
     "trial_data_accuracy": "<one sentence citing specific evidence>",
     "pubmed_evidence": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "clinicaltrials_navigation": <1-5>,
+  "trial_data_accuracy": <1-5>,
+  "pubmed_evidence": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -99,10 +99,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "clinicaltrials_navigation": 0.30,
-    "trial_data_accuracy":       0.30,
-    "pubmed_evidence":           0.20,
-    "output_table":              0.20,
+    "clinicaltrials_navigation": 0.35,
+    "trial_data_accuracy": 0.28,
+    "pubmed_evidence": 0.19,
+    "output_table": 0.18,
 }
 
 

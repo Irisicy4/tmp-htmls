@@ -82,16 +82,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "source_coverage": <1-5>,
-  "gdpr_article_accuracy": <1-5>,
-  "checklist_structure": <1-5>,
-  "source_citations": <1-5>,
   "dimension_reasoning": {{
     "source_coverage": "<one sentence citing specific evidence>",
     "gdpr_article_accuracy": "<one sentence citing specific evidence>",
     "checklist_structure": "<one sentence citing specific evidence>",
     "source_citations": "<one sentence citing specific evidence>"
   }},
+  "source_coverage": <1-5>,
+  "gdpr_article_accuracy": <1-5>,
+  "checklist_structure": <1-5>,
+  "source_citations": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

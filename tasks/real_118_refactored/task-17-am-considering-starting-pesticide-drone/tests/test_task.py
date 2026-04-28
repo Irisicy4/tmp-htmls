@@ -48,7 +48,7 @@ Carefully read the agent response and trace, then answer each question:
 ### Step 2: Dimension Scoring
 Score each dimension 1–5 using the rubrics below.
 
-#### A. Task Completion (0.40)
+#### A. Topic Coverage (0.40)
 Did the agent research all required topics and produce a comprehensive response?
 
 5 — All 7 topics addressed with specific information; personal context (age, skills) considered.
@@ -57,7 +57,7 @@ Did the agent research all required topics and produce a comprehensive response?
 2 — Fewer than 4 topics addressed.
 1 — Task abandoned or no research performed.
 
-#### B. Information Quality (0.30)
+#### B. Information Specificity (0.30)
 Is the information specific, accurate, and credible?
 
 5 — Concrete figures (startup costs, revenue ranges, payback period), named drone brands, credible sourcing or reasoning.
@@ -75,8 +75,8 @@ Was the compiled output saved to a Google Docs document?
 2 — Output returned as inline text only; no document created.
 1 — No attempt to save to a document.
 
-#### D. Completeness (0.10)
-Were all aspects of the task addressed?
+#### D. Scope Adherence (0.10)
+Were all aspects of the task addressed including personal context and drone brand recommendation?
 
 5 — All 7 topics, personal context, drone brand recommendation, and document all present.
 4 — Minor gap in one area.
@@ -90,16 +90,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "document_saved": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
-    "task_completion": "<one sentence citing specific evidence>",
-    "information_quality": "<one sentence citing specific evidence>",
+    "topic_coverage": "<one sentence citing specific evidence>",
+    "information_specificity": "<one sentence citing specific evidence>",
     "document_saved": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>"
+    "scope_adherence": "<one sentence citing specific evidence>"
   }},
+  "topic_coverage": <1-5>,
+  "information_specificity": <1-5>,
+  "document_saved": <1-5>,
+  "scope_adherence": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -107,10 +107,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "task_completion":    0.40,
-    "information_quality": 0.30,
-    "document_saved":     0.20,
-    "completeness":       0.10,
+    "topic_coverage":       0.40,
+    "information_specificity": 0.30,
+    "document_saved":       0.20,
+    "scope_adherence":      0.10,
 }
 
 

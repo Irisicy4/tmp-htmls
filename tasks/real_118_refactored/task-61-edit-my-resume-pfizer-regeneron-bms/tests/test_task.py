@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "resume_access": <1-5>,
-  "edit_quality": <1-5>,
-  "pharma_alignment": <1-5>,
-  "interview_strategy": <1-5>,
   "dimension_reasoning": {{
     "resume_access": "<one sentence citing specific evidence>",
     "edit_quality": "<one sentence citing specific evidence>",
     "pharma_alignment": "<one sentence citing specific evidence>",
     "interview_strategy": "<one sentence citing specific evidence>",
   }},
+  "resume_access": <1-5>,
+  "edit_quality": <1-5>,
+  "pharma_alignment": <1-5>,
+  "interview_strategy": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

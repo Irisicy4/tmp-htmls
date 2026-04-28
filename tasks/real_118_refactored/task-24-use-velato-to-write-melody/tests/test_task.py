@@ -76,11 +76,11 @@ Were compilation instructions included, and does the melody have a Christmas cha
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
+  "dimension_reasoning": {{"velato_understanding": "<one sentence>", "program_correctness": "<one sentence>", "file_saved": "<one sentence>", "compilation_christmas": "<one sentence>"}},
   "velato_understanding": <1-5>,
   "program_correctness": <1-5>,
   "file_saved": <1-5>,
   "compilation_christmas": <1-5>,
-  "dimension_reasoning": {{"velato_understanding": "<one sentence>", "program_correctness": "<one sentence>", "file_saved": "<one sentence>", "compilation_christmas": "<one sentence>"}},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}

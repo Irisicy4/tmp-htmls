@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "product_page_access": <1-5>,
-  "pest_coverage": <1-5>,
-  "evidence_quality": <1-5>,
-  "recommendation_clarity": <1-5>,
   "dimension_reasoning": {{
     "product_page_access": "<one sentence citing specific evidence>",
     "pest_coverage": "<one sentence citing specific evidence>",
     "evidence_quality": "<one sentence citing specific evidence>",
     "recommendation_clarity": "<one sentence citing specific evidence>",
   }},
+  "product_page_access": <1-5>,
+  "pest_coverage": <1-5>,
+  "evidence_quality": <1-5>,
+  "recommendation_clarity": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

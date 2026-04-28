@@ -76,16 +76,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "best_practices_coverage": <1-5>,
-  "content_strategy": <1-5>,
-  "growth_strategies": <1-5>,
-  "naptown_scoop_reference": <1-5>,
   "dimension_reasoning": {{
     "best_practices_coverage": "<one sentence citing specific evidence>",
     "content_strategy": "<one sentence citing specific evidence>",
     "growth_strategies": "<one sentence citing specific evidence>",
     "naptown_scoop_reference": "<one sentence citing specific evidence>"
   }},
+  "best_practices_coverage": <1-5>,
+  "content_strategy": <1-5>,
+  "growth_strategies": <1-5>,
+  "naptown_scoop_reference": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

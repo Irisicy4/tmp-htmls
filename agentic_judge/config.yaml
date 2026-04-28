@@ -1,14 +1,18 @@
 result_dirs:
   original: results/deprivacy-batch-1/20260407-190347/20260407-190347/trials
   synthetic: results/synthetic/20260407-190347/20260407-190347/trials
+  # Set real118 to: results/real118/<run-tag>/<run-tag>/trials  (fill in after Modal run)
+  real118: results/real118/PLACEHOLDER/PLACEHOLDER/trials
 
 task_dirs:
   original: tasks/batch-1
   synthetic: tasks/synthetic_382
+  real118: tasks/real_118_refactored
 
 verification_output:
   original: agentic_judge/results/original/
   synthetic: agentic_judge/results/synthetic/
+  real118: agentic_judge/results/real118/
 
 agent:
   model: gpt-4o

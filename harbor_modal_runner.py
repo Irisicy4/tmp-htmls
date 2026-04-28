@@ -9,8 +9,8 @@ Deploy once:
   modal deploy harbor_modal_runner.py
 
 Trigger and disconnect:
-  python trigger_harbor.py --agent claude-code --tasks-dir tasks/batch-1
-  python trigger_harbor.py --agent claude-code --first-n 3
+  python trigger_harbor.py --agent claude-code --tasks-dir tasks/real_118_refactored
+  python trigger_harbor.py --agent claude-code --first-n 10
 
 Collect results later (no laptop needed):
   modal run harbor_modal_runner.py --collect <run-tag>
@@ -51,6 +51,7 @@ harbor_image = (
     .add_local_file("harness/run_task.py", "/harness/run_task.py", copy=True)
     .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
+    .add_local_file("harness/evaluator.py", "/harness/evaluator.py", copy=True)
     .add_local_dir("harness/adapters", "/harness/adapters", copy=True)
     .add_local_dir("configs", "/harness/configs", copy=True)
 )
@@ -163,10 +164,15 @@ async def _read_stdout(exec_result) -> str:
 def _parse_claude_code_output(stdout: str) -> dict:
     """
     Convert claude-code stream-json stdout into our result dict format:
-      {"task_result": <last assistant text>, "conversation": [...], "execution_summary": ""}
-    test_task.py's _extract_response() checks task_result first, then conversation.
+      {"task_result": <last assistant text>, "conversation": [...], "execution_summary": <tool trace>}
+
+    Also extracts tool_use blocks into execution_summary so the static judge and
+    agentic judge can see what the agent actually did (analogous to ClawBench's
+    action trace), rather than only what it claimed in its final text response.
     """
     conversation = []
+    tool_trace_lines = []
+
     for line in stdout.splitlines():
         line = line.strip()
         if not line:
@@ -179,10 +185,32 @@ def _parse_claude_code_output(stdout: str) -> dict:
         etype = event.get("type")
         msg = event.get("message", {})
         role = msg.get("role", etype)
+
+        content = msg.get("content", "")
+
+        # Extract tool_use blocks from assistant messages into the trace
+        if role == "assistant" and isinstance(content, list):
+            for block in content:
+                if not isinstance(block, dict):
+                    continue
+                if block.get("type") == "tool_use":
+                    tool_name = block.get("name", "tool")
+                    tool_input = block.get("input", {})
+                    # Summarise the most informative input fields (keep it concise)
+                    if isinstance(tool_input, dict):
+                        summary_parts = []
+                        for key in ("command", "url", "query", "path", "selector", "text", "description"):
+                            val = tool_input.get(key)
+                            if val:
+                                summary_parts.append(f"{key}={str(val)[:150]}")
+                        detail = ", ".join(summary_parts) if summary_parts else str(tool_input)[:200]
+                    else:
+                        detail = str(tool_input)[:200]
+                    tool_trace_lines.append(f"{tool_name}({detail})")
+
         if role not in ("assistant", "user"):
             continue
 
-        content = msg.get("content", "")
         if isinstance(content, list):
             parts = [
                 b.get("text", "")
@@ -202,10 +230,12 @@ def _parse_claude_code_output(stdout: str) -> dict:
             task_result = msg["content"]
             break
 
+    execution_summary = "\n".join(tool_trace_lines[-60:]) if tool_trace_lines else ""
+
     return {
         "task_result": task_result,
         "conversation": conversation,
-        "execution_summary": "",
+        "execution_summary": execution_summary,
     }
 
 
@@ -779,7 +809,7 @@ async def _run_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
-    tasks_dir: str = "tasks/updated-deprivacy-100",
+    tasks_dir: str = "tasks/real_118_refactored",
     skill_config: dict | None = None,
 ) -> dict:
     """
@@ -1130,7 +1160,7 @@ async def run_harbor_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
-    tasks_dir: str = "tasks/updated-deprivacy-100",
+    tasks_dir: str = "tasks/real_118_refactored",
     skill_config: dict | None = None,
 ) -> dict:
     """Run a single task with a Harbor agent. Used by run_harbor_experiment via starmap."""
@@ -1166,7 +1196,7 @@ async def run_harbor_experiment(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
-    tasks_dir: str = "tasks/updated-deprivacy-100",
+    tasks_dir: str = "tasks/real_118_refactored",
     first_n: int = 0,
     task_names_csv: str = "",
     skill_config: dict | None = None,
@@ -1282,7 +1312,7 @@ async def run_harbor_skill_experiment(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
-    tasks_dir: str = "tasks/updated-deprivacy-100",
+    tasks_dir: str = "tasks/real_118_refactored",
     first_n: int = 0,
     task_names_csv: str = "",
 ) -> dict:
@@ -1471,7 +1501,7 @@ def main(collect: str = "", list_runs: bool = False):
         return
 
     if collect:
-        out_dir = Path(f"results/deprivacy-batch-1/{collect}")
+        out_dir = Path(f"results/real118/{collect}")
         out_dir.mkdir(parents=True, exist_ok=True)
         print(f"Downloading {collect} → {out_dir}")
         subprocess.run(

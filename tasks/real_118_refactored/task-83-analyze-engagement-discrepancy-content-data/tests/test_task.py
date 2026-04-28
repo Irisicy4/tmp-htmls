@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "data_analysis": <1-5>,
-  "pattern_identification": <1-5>,
-  "formula_extraction": <1-5>,
-  "actionability": <1-5>,
   "dimension_reasoning": {{
     "data_analysis": "<one sentence citing specific evidence>",
     "pattern_identification": "<one sentence citing specific evidence>",
     "formula_extraction": "<one sentence citing specific evidence>",
     "actionability": "<one sentence citing specific evidence>",
   }},
+  "data_analysis": <1-5>,
+  "pattern_identification": <1-5>,
+  "formula_extraction": <1-5>,
+  "actionability": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

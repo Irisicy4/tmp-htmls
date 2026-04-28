@@ -31,7 +31,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Site Navigation (0.25)
+#### A. Site Navigation (0.35)
 Did the agent navigate to the correct URL?
 
 5 — Agent navigated to certosa.com/Services/FastTrac/Index.aspx successfully.
@@ -40,7 +40,7 @@ Did the agent navigate to the correct URL?
 2 — Agent described the URL without navigating.
 1 — No navigation.
 
-#### B. Search Execution (0.3)
+#### B. Search Execution (0.26)
 Was the search for ID 17161 executed?
 
 5 — ID 17161 entered in the search form and search submitted.
@@ -49,7 +49,7 @@ Was the search for ID 17161 executed?
 2 — Agent described the search without executing it.
 1 — No search.
 
-#### C. Result Accuracy (0.35)
+#### C. Result Accuracy (0.3)
 Are the reported results accurate?
 
 5 — Results accurately summarized from the actual page response.
@@ -58,7 +58,7 @@ Are the reported results accurate?
 2 — Results described without accuracy confidence.
 1 — No results reported or site unavailable without noting it.
 
-#### D. Summary Quality (0.1)
+#### D. Summary Quality (0.09)
 Is the summary well-written?
 
 5 — Clear, concise summary covering key result fields.
@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "site_navigation": <1-5>,
-  "search_execution": <1-5>,
-  "result_accuracy": <1-5>,
-  "summary_quality": <1-5>,
   "dimension_reasoning": {{
     "site_navigation": "<one sentence citing specific evidence>",
     "search_execution": "<one sentence citing specific evidence>",
     "result_accuracy": "<one sentence citing specific evidence>",
     "summary_quality": "<one sentence citing specific evidence>",
   }},
+  "site_navigation": <1-5>,
+  "search_execution": <1-5>,
+  "result_accuracy": <1-5>,
+  "summary_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -90,10 +90,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "site_navigation": 0.25,
-    "search_execution": 0.3,
-    "result_accuracy": 0.35,
-    "summary_quality": 0.1,
+    "site_navigation": 0.35,
+    "search_execution": 0.26,
+    "result_accuracy": 0.3,
+    "summary_quality": 0.09,
 }
 
 

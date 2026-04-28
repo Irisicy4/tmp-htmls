@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "tier_framework": <1-5>,
-  "ingredient_knowledge": <1-5>,
-  "product_analysis": <1-5>,
-  "output_structure": <1-5>,
   "dimension_reasoning": {{
     "tier_framework": "<one sentence citing specific evidence>",
     "ingredient_knowledge": "<one sentence citing specific evidence>",
     "product_analysis": "<one sentence citing specific evidence>",
     "output_structure": "<one sentence citing specific evidence>",
   }},
+  "tier_framework": <1-5>,
+  "ingredient_knowledge": <1-5>,
+  "product_analysis": <1-5>,
+  "output_structure": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

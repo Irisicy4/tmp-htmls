@@ -95,9 +95,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run agentic judge verification")
     parser.add_argument(
         "--dataset",
-        choices=["original", "synthetic", "both"],
+        choices=["original", "synthetic", "both", "real118"],
         default="both",
         help="Which dataset to verify",
+    )
+    parser.add_argument(
+        "--result-dir",
+        default=None,
+        help="Override result dir from config (path to trials directory with task subdirs)",
+    )
+    parser.add_argument(
+        "--task-dir",
+        default=None,
+        help="Override task dir from config (path to tasks root directory)",
     )
     parser.add_argument(
         "--sample-size",
@@ -126,13 +136,23 @@ def main() -> None:
     config = load_config(args.config)
     repo_root = Path(__file__).parent.parent  # assumes run from repo root
     sample_size = args.sample_size or config["sampling"]["total_sample_size"]
-    datasets = ["original", "synthetic"] if args.dataset == "both" else [args.dataset]
+
+    if args.dataset == "both":
+        datasets = ["original", "synthetic"]
+    else:
+        datasets = [args.dataset]
 
     all_tasks: list[dict] = []
     for dataset in datasets:
-        result_dir = str(repo_root / config["result_dirs"][dataset])
+        if args.result_dir and len(datasets) == 1:
+            result_dir = args.result_dir
+        else:
+            result_dir = str(repo_root / config["result_dirs"][dataset])
         passed = load_passed_results(result_dir)
-        task_base = str(repo_root / config["task_dirs"][dataset])
+        if args.task_dir and len(datasets) == 1:
+            task_base = args.task_dir
+        else:
+            task_base = str(repo_root / config["task_dirs"][dataset])
         for r in passed:
             task_name = r["data"].get("task", r["data"].get("task_name", Path(r["path"]).parent.name))
             r["task_name"] = task_name
@@ -156,7 +176,10 @@ def main() -> None:
 
     results_summary = []
     for t in tasks_to_run:
-        task_dir = _resolve_task_dir(config, t["dataset"], t["task_name"])
+        if args.task_dir and len(datasets) == 1:
+            task_dir = str(Path(args.task_dir) / t["task_name"])
+        else:
+            task_dir = _resolve_task_dir(config, t["dataset"], t["task_name"])
         output_dir = str(repo_root / config["verification_output"][t["dataset"]])
         print(f"Verifying [{t['dataset']}] {t['task_name']} ...", end=" ", flush=True)
         t0 = time.time()

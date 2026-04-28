@@ -81,16 +81,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "search_execution": <1-5>,
-  "constraint_satisfaction": <1-5>,
-  "network_decision_quality": <1-5>,
-  "recommendation_quality": <1-5>,
   "dimension_reasoning": {{
     "search_execution": "<one sentence citing specific evidence>",
     "constraint_satisfaction": "<one sentence citing specific evidence>",
     "network_decision_quality": "<one sentence citing specific evidence>",
     "recommendation_quality": "<one sentence citing specific evidence>"
   }},
+  "search_execution": <1-5>,
+  "constraint_satisfaction": <1-5>,
+  "network_decision_quality": <1-5>,
+  "recommendation_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -98,10 +98,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "search_execution":        0.20,
-    "constraint_satisfaction": 0.35,
-    "network_decision_quality":0.20,
-    "recommendation_quality":  0.25,
+    "search_execution": 0.35,
+    "constraint_satisfaction": 0.28,
+    "network_decision_quality": 0.16,
+    "recommendation_quality": 0.21,
 }
 
 

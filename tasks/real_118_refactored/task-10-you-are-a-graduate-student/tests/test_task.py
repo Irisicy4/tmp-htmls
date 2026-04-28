@@ -80,16 +80,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "reference_case_research": <1-5>,
-  "design_sketch_output": <1-5>,
-  "site_program_responsiveness": <1-5>,
-  "lingnan_genius_loci": <1-5>,
   "dimension_reasoning": {{
     "reference_case_research": "<one sentence citing specific evidence>",
     "design_sketch_output": "<one sentence citing specific evidence>",
     "site_program_responsiveness": "<one sentence citing specific evidence>",
     "lingnan_genius_loci": "<one sentence citing specific evidence>"
   }},
+  "reference_case_research": <1-5>,
+  "design_sketch_output": <1-5>,
+  "site_program_responsiveness": <1-5>,
+  "lingnan_genius_loci": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

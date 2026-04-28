@@ -80,16 +80,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags, exactly as shown:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "constraint_satisfaction": <1-5>,
-  "result_specificity": <1-5>,
-  "comparison_quality": <1-5>,
-  "task_completeness": <1-5>,
   "dimension_reasoning": {{
     "constraint_satisfaction": "<one sentence citing specific evidence>",
     "result_specificity": "<one sentence citing specific evidence>",
     "comparison_quality": "<one sentence citing specific evidence>",
     "task_completeness": "<one sentence citing specific evidence>"
   }},
+  "constraint_satisfaction": <1-5>,
+  "result_specificity": <1-5>,
+  "comparison_quality": <1-5>,
+  "task_completeness": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

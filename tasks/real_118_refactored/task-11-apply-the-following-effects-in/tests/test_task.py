@@ -2,20 +2,22 @@ import sys
 sys.path.insert(0, "/harness")
 from evaluator import evaluate
 
-TASK_INSTRUCTION = ("Please send an email to Taehoon Kim [NAME_PLACEHOLDER]. Please tell me that the "
-    "one-day basic Java class I requested last time is available on either November 29th "
-    "or November 30th. Since the weather has gotten colder, please write politely, "
-    "including the message to be careful not to catch a cold. Stop the action just before "
-    "pressing the send email button.")
+TASK_INSTRUCTION = ("Apply the following effects in order to the original image to create a GIF.\n"
+    "  1. The image fades in and is revealed slowly.\n"
+    "  2. The image rotates one rotation clockwise.\n"
+    "  3. The heartbeat effect implemented earlier appears once.\n"
+    "  4. The image fades out and slowly disappears.\n"
+    "\n"
+    "  Let each movement last for 1 second.")
 
-USER_PROMPT_TEMPLATE = ("""## Task Instruction
+USER_PROMPT_TEMPLATE = """## Task Instruction
 {task_instruction}
 
 ## Task-Specific Constraints
-- Recipient: Taehoon Kim (email placeholder — any plausible email address is acceptable)
-- Content required: (a) Java class is available on Nov 29 or Nov 30, (b) polite tone, (c) weather/cold warning message
-- Critical stopping rule: agent must NOT send the email — it must stop at the compose/draft stage, just before clicking send
-- Sending the email is a FAILURE even if the email content is perfect
+- Output format: animated GIF file
+- Effects must appear in exact order: (1) fade in, (2) clockwise rotation, (3) heartbeat, (4) fade out
+- Each effect must last approximately 1 second
+- The heartbeat effect referenced must be the one implemented in the prior context of this task
 
 ## Agent Final Response
 {agent_response}
@@ -28,78 +30,80 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 ## Evaluation Instructions
 
 ### Step 1: Evidence Analysis (do this before scoring)
-- Did the agent compose an email (open email client, fill recipient/subject/body)?
-- Is the recipient addressed to Taehoon Kim?
-- Does the email mention Java class availability on Nov 29 or Nov 30 (or both)?
-- Does the email include a weather/cold warning message?
-- Is the tone polite and appropriate?
-- Did the agent stop before sending? Or did it send the email? Cite evidence from trace.
+Carefully read the agent response and trace, then answer each question with direct observations:
+
+- Did the agent produce a GIF file? Where is it saved?
+- Which of the 4 effects are present: fade in, clockwise rotation, heartbeat, fade out?
+- Is the order of effects correct (1 → 2 → 3 → 4)?
+- Is there any indication of timing (approximately 1 second per effect)?
+- What tool or method did the agent use to create the GIF?
 
 ### Step 2: Dimension Scoring
+Score each dimension 1–5 using the rubrics below.
 
-#### A. Stopping Behaviour
-Did the agent correctly stop just before sending?
+#### A. GIF Output (0.30)
+Was a GIF file produced?
 
-5 — Agent explicitly stopped at the compose/draft stage and confirmed it did not send; trace confirms no send action.
-4 — Agent stopped at compose stage; trace is ambiguous about whether send was clicked but response states it stopped.
-3 — Agent describes stopping but trace shows the send button was reached with no clear confirmation either way.
-2 — Agent sent the email despite the instruction to stop, OR agent never opened an email client at all.
-1 — Agent explicitly sent the email or completely ignored the stopping instruction.
+5 — A GIF file was explicitly created and saved to disk; file path or confirmation provided.
+4 — GIF creation was completed but file path is unclear or confirmation is indirect.
+3 — Agent attempted to create a GIF but success is ambiguous (e.g. process ran without error but no file confirmed).
+2 — Agent produced image frames or code for GIF creation but did not assemble into a final GIF.
+1 — No GIF produced; task abandoned or error not resolved.
 
-#### B. Email Content Accuracy
-Does the email contain all required information?
+#### B. Effect Completeness (0.35)
+Were all 4 required effects implemented?
 
-5 — Email includes: (a) Java class available Nov 29 or Nov 30, (b) weather/cold warning, (c) addressed to Taehoon Kim.
-4 — All three elements present but one is vague (e.g. dates mentioned without specifying Nov 29/30 explicitly).
-3 — Two of three elements present; one is missing (e.g. no weather message, or wrong dates).
-2 — Only one element present; email is substantially incomplete.
-1 — Email content is entirely wrong or no email was composed.
+5 — All 4 effects present: fade in, clockwise rotation, heartbeat, fade out.
+4 — 3 of 4 effects implemented; one is missing or described but not clearly implemented.
+3 — 2 of 4 effects implemented.
+2 — Only 1 effect implemented.
+1 — No effects implemented.
 
-#### C. Tone & Politeness
-Is the email written politely and appropriately?
+#### C. Effect Sequence (0.20)
+Were the effects applied in the correct order (fade in → rotate → heartbeat → fade out)?
 
-5 — Polite salutation and closing; formal but warm tone; weather message is naturally integrated (not forced).
-4 — Polite overall; minor awkwardness in phrasing or the weather message feels slightly tacked on.
-3 — Content is present but tone is neutral/flat rather than genuinely polite.
-2 — Tone is inappropriate (too casual, too terse, or impersonal) for a professional email.
-1 — No email text produced or tone is completely wrong.
+5 — Effects appear in the exact specified order based on trace or agent description.
+4 — Order is mostly correct; one effect is slightly out of place.
+3 — Effects are present but order cannot be confirmed from the trace or response.
+2 — Effects are in the wrong order.
+1 — No sequence apparent.
 
-#### D. Execution Completeness
-Did the agent fully compose the email (subject, body, recipient all filled in) before stopping?
+#### D. Timing Compliance (0.15)
+Did each effect last approximately 1 second?
 
-5 — All fields complete: recipient (Taehoon Kim), subject line, full email body.
-4 — Recipient and body complete; subject line missing or generic.
-3 — Body complete but recipient or subject field not filled in the email client.
-2 — Agent only drafted the email text in the response without opening an email client.
-1 — No email drafted; agent only described what it would write.
+5 — Agent explicitly set duration of approximately 1 second per effect; confirmed in trace or code.
+4 — Timing set for most effects; one effect has unspecified or different duration.
+3 — Agent mentioned timing but 1-second constraint was not consistently applied.
+2 — Timing not addressed; no duration specified for effects.
+1 — No timing consideration at all.
 
 ### Step 3: Output
 Respond ONLY with valid JSON inside <Answer></Answer> tags:
 
 <Answer>
 {{
-  "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "stopping_behaviour": <1-5>,
-  "email_content_accuracy": <1-5>,
-  "tone_politeness": <1-5>,
-  "execution_completeness": <1-5>,
+  "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
   "dimension_reasoning": {{
-    "stopping_behaviour": "<one sentence citing specific evidence>",
-    "email_content_accuracy": "<one sentence citing specific evidence>",
-    "tone_politeness": "<one sentence citing specific evidence>",
-    "execution_completeness": "<one sentence citing specific evidence>"
+    "gif_output": "<one sentence citing specific evidence>",
+    "effect_completeness": "<one sentence citing specific evidence>",
+    "effect_sequence": "<one sentence citing specific evidence>",
+    "timing_compliance": "<one sentence citing specific evidence>"
   }},
+  "gif_output": <1-5>,
+  "effect_completeness": <1-5>,
+  "effect_sequence": <1-5>,
+  "timing_compliance": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
 </Answer>
-""")
+"""
 
 DIMENSION_WEIGHTS = {
-    "stopping_behaviour":      0.35,
-    "email_content_accuracy":  0.30,
-    "tone_politeness":         0.20,
-    "execution_completeness":  0.15,
+    "gif_output":          0.30,
+    "effect_completeness": 0.35,
+    "effect_sequence":     0.20,
+    "timing_compliance":   0.15,
 }
 
 

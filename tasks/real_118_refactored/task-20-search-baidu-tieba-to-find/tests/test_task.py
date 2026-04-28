@@ -75,16 +75,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_execution": <1-5>,
-  "game_specificity": <1-5>,
-  "guide_depth": <1-5>,
-  "compilation_quality": <1-5>,
   "dimension_reasoning": {{
     "platform_execution": "<one sentence citing specific evidence>",
     "game_specificity": "<one sentence citing specific evidence>",
     "guide_depth": "<one sentence citing specific evidence>",
     "compilation_quality": "<one sentence citing specific evidence>"
   }},
+  "platform_execution": <1-5>,
+  "game_specificity": <1-5>,
+  "guide_depth": <1-5>,
+  "compilation_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -92,10 +92,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_execution":  0.25,
-    "game_specificity":    0.25,
-    "guide_depth":         0.30,
-    "compilation_quality": 0.20,
+    "platform_execution": 0.35,
+    "game_specificity": 0.22,
+    "guide_depth": 0.26,
+    "compilation_quality": 0.17,
 }
 
 

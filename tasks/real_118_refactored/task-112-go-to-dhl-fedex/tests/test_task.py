@@ -80,16 +80,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "rate_calculator_navigation": <1-5>,
-  "quote_data_completeness": <1-5>,
-  "service_alert_check": <1-5>,
-  "output_and_recommendation": <1-5>,
   "dimension_reasoning": {{
     "rate_calculator_navigation": "<one sentence citing specific evidence>",
     "quote_data_completeness": "<one sentence citing specific evidence>",
     "service_alert_check": "<one sentence citing specific evidence>",
     "output_and_recommendation": "<one sentence citing specific evidence>"
   }},
+  "rate_calculator_navigation": <1-5>,
+  "quote_data_completeness": <1-5>,
+  "service_alert_check": <1-5>,
+  "output_and_recommendation": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -97,10 +97,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "rate_calculator_navigation": 0.30,
-    "quote_data_completeness":    0.25,
-    "service_alert_check":        0.25,
-    "output_and_recommendation":  0.20,
+    "rate_calculator_navigation": 0.35,
+    "quote_data_completeness": 0.23,
+    "service_alert_check": 0.23,
+    "output_and_recommendation": 0.19,
 }
 
 

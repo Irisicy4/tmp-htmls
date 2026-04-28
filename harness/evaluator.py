@@ -3,15 +3,14 @@ import json
 import re
 
 PASS_THRESHOLD = 3.0
-DEFAULT_MODEL = "gpt-4o"
+DEFAULT_MODEL = os.environ.get("LLM_MODEL", "gpt-4.1-mini")
 DEFAULT_TEMPERATURE = 0.0
 
 SYSTEM_PROMPT = (
     "You are an expert evaluator for AI agent benchmarks. "
     "You will receive a task instruction, the agent's response, an execution summary, "
     "and a set of evaluation instructions. "
-    "You must follow the evaluation instructions exactly and return your assessment "
-    "as a JSON object wrapped in <Answer>...</Answer> tags."
+    "Return your assessment as a JSON object wrapped in <Answer>...</Answer> tags."
 )
 
 

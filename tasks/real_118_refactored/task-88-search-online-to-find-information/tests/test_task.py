@@ -32,7 +32,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Search Execution (0.25)
+#### A. Search Execution (0.35)
 Did the agent search for foot traffic at Jewel Changi Airport?
 
 5 — Searched multiple platforms (Google reviews, TripAdvisor, Instagram, news) for Jewel Changi visitor info.
@@ -41,7 +41,7 @@ Did the agent search for foot traffic at Jewel Changi Airport?
 2 — Described what to search without searching.
 1 — No search.
 
-#### B. Data Recency (0.3)
+#### B. Data Recency (0.26)
 Is the information current or recent?
 
 5 — Data from within the past week or clearly current (real-time crowd indicator or recent post).
@@ -50,7 +50,7 @@ Is the information current or recent?
 2 — Historical data without recency context.
 1 — No temporal context.
 
-#### C. Crowd Assessment (0.35)
+#### C. Crowd Assessment (0.3)
 Is a clear foot traffic assessment provided?
 
 5 — Specific crowd level given (e.g. 'very busy, estimated X visitors on weekends', 'peak hours are...') with evidence.
@@ -59,7 +59,7 @@ Is a clear foot traffic assessment provided?
 2 — 'It may be busy' without evidence.
 1 — No assessment.
 
-#### D. Source Quality (0.1)
+#### D. Source Quality (0.09)
 Are credible sources cited?
 
 5 — Sources named (Google reviews, TripAdvisor posts, news articles) with recency.
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "search_execution": <1-5>,
-  "data_recency": <1-5>,
-  "crowd_assessment": <1-5>,
-  "source_quality": <1-5>,
   "dimension_reasoning": {{
     "search_execution": "<one sentence citing specific evidence>",
     "data_recency": "<one sentence citing specific evidence>",
     "crowd_assessment": "<one sentence citing specific evidence>",
     "source_quality": "<one sentence citing specific evidence>",
   }},
+  "search_execution": <1-5>,
+  "data_recency": <1-5>,
+  "crowd_assessment": <1-5>,
+  "source_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "search_execution": 0.25,
-    "data_recency": 0.3,
-    "crowd_assessment": 0.35,
-    "source_quality": 0.1,
+    "search_execution": 0.35,
+    "data_recency": 0.26,
+    "crowd_assessment": 0.3,
+    "source_quality": 0.09,
 }
 
 

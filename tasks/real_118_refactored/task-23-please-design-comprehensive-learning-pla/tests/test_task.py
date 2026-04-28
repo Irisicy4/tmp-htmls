@@ -36,7 +36,7 @@ Carefully read the agent response and trace, then answer each question:
 ### Step 2: Dimension Scoring
 Score each dimension 1–5 using the rubrics below.
 
-#### A. Task Completion (0.40)
+#### A. Constraint Adherence (0.40)
 Did the agent list steps for creating a Web 3.0 learning plan without taking premature action?
 
 5 — Clear, numbered list of steps presented; no premature actions taken; steps are specific to Web 3.0.
@@ -45,7 +45,7 @@ Did the agent list steps for creating a Web 3.0 learning plan without taking pre
 2 — Agent began executing the plan instead of listing steps, or only vague steps provided.
 1 — No steps listed, or task misunderstood entirely.
 
-#### B. Information Quality (0.30)
+#### B. Step Specificity (0.30)
 Are the planned steps relevant, accurate, and well-conceived for a Web 3.0 learning plan?
 
 5 — Steps reflect genuine Web 3.0 curriculum design, covering key topic areas (blockchain, DeFi, smart contracts, NFTs, dApps) with a logical pedagogical structure.
@@ -54,16 +54,16 @@ Are the planned steps relevant, accurate, and well-conceived for a Web 3.0 learn
 2 — Steps show limited understanding of Web 3.0 or learning plan design.
 1 — Steps are irrelevant or inaccurate.
 
-#### C. Document Saved (0.20)
-Were the steps presented in a clear, structured, and retrievable format?
+#### C. Step Structure (0.20)
+Were the steps presented in a clear, structured, and easy-to-follow format?
 
-5 — Steps clearly written in a structured format (numbered list, outline, or document).
+5 — Steps clearly written in a structured format (numbered list, outline); each step has a clear title and brief description.
 4 — Steps present but formatting is inconsistent or hard to follow.
 3 — Steps mentioned but not clearly laid out.
 2 — Steps implied but not explicitly listed.
 1 — No discernible step list presented.
 
-#### D. Completeness (0.10)
+#### D. Plan Comprehensiveness (0.10)
 Did the agent address the full scope of what was asked?
 
 5 — Comprehensive set of steps covering the full lifecycle of creating a Web 3.0 learning plan (scoping, research, structuring, resource curation, assessment design).
@@ -78,16 +78,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "document_saved": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
-    "task_completion": "<one sentence citing specific evidence>",
-    "information_quality": "<one sentence citing specific evidence>",
-    "document_saved": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>"
+    "constraint_adherence": "<one sentence citing specific evidence>",
+    "step_specificity": "<one sentence citing specific evidence>",
+    "step_structure": "<one sentence citing specific evidence>",
+    "plan_comprehensiveness": "<one sentence citing specific evidence>"
   }},
+  "constraint_adherence": <1-5>,
+  "step_specificity": <1-5>,
+  "step_structure": <1-5>,
+  "plan_comprehensiveness": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -95,10 +95,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "task_completion":    0.40,
-    "information_quality": 0.30,
-    "document_saved":     0.20,
-    "completeness":       0.10,
+    "constraint_adherence":  0.40,
+    "step_specificity":      0.30,
+    "step_structure":        0.20,
+    "plan_comprehensiveness": 0.10,
 }
 
 

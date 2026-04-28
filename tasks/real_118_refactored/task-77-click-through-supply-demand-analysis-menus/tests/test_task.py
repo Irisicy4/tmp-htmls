@@ -31,7 +31,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Menu Navigation (0.25)
+#### A. Menu Navigation (0.35)
 Did the agent navigate the supply-demand analysis menus?
 
 5 — Agent navigated to supply-demand analysis and accessed both institutional and foreign investor sections.
@@ -40,7 +40,7 @@ Did the agent navigate the supply-demand analysis menus?
 2 — Described the menu structure without navigating.
 1 — No navigation.
 
-#### B. Data Extraction (0.3)
+#### B. Data Extraction (0.26)
 Was relevant trading data extracted?
 
 5 — Specific stocks with institutional/foreign net buying amounts and dates extracted.
@@ -49,7 +49,7 @@ Was relevant trading data extracted?
 2 — Data described without being extracted.
 1 — No data extracted.
 
-#### C. Analysis Quality (0.3)
+#### C. Analysis Quality (0.26)
 Was the data properly analyzed?
 
 5 — Clear analysis: which stocks show consistent institutional accumulation vs distribution; foreign investor trends.
@@ -58,7 +58,7 @@ Was the data properly analyzed?
 2 — Data presented without analysis.
 1 — No analysis.
 
-#### D. Recommendation Quality (0.15)
+#### D. Recommendation Quality (0.13)
 Were stock recommendations grounded in the data?
 
 5 — Specific stock recommendations with ticker, reasoning from supply-demand data, and risk note.
@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "menu_navigation": <1-5>,
-  "data_extraction": <1-5>,
-  "analysis_quality": <1-5>,
-  "recommendation_quality": <1-5>,
   "dimension_reasoning": {{
     "menu_navigation": "<one sentence citing specific evidence>",
     "data_extraction": "<one sentence citing specific evidence>",
     "analysis_quality": "<one sentence citing specific evidence>",
     "recommendation_quality": "<one sentence citing specific evidence>",
   }},
+  "menu_navigation": <1-5>,
+  "data_extraction": <1-5>,
+  "analysis_quality": <1-5>,
+  "recommendation_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -90,10 +90,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "menu_navigation": 0.25,
-    "data_extraction": 0.3,
-    "analysis_quality": 0.3,
-    "recommendation_quality": 0.15,
+    "menu_navigation": 0.35,
+    "data_extraction": 0.26,
+    "analysis_quality": 0.26,
+    "recommendation_quality": 0.13,
 }
 
 

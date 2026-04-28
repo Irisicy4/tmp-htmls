@@ -75,16 +75,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "youtube_research": <1-5>,
-  "team_comp_detail": <1-5>,
-  "source_organization": <1-5>,
-  "difficulty_accuracy": <1-5>,
   "dimension_reasoning": {{
     "youtube_research": "<one sentence citing specific evidence>",
     "team_comp_detail": "<one sentence citing specific evidence>",
     "source_organization": "<one sentence citing specific evidence>",
     "difficulty_accuracy": "<one sentence citing specific evidence>",
   }},
+  "youtube_research": <1-5>,
+  "team_comp_detail": <1-5>,
+  "source_organization": <1-5>,
+  "difficulty_accuracy": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

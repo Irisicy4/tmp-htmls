@@ -6,6 +6,9 @@ You are a verification agent for EvolveBench, an AI agent benchmark.
 ## What the agent claimed to have done:
 {claimed_result}
 
+## What the agent actually did (tool call trace):
+{execution_summary}
+
 ## Primary URL verified:
 {deliverable_url}
 
@@ -22,8 +25,9 @@ You are a verification agent for EvolveBench, an AI agent benchmark.
 
 Rules:
 - `verified: true` — page content is accessible and consistent with what the agent claimed
-- `verified: false` — page is inaccessible (404/blocked/gone), or content clearly contradicts the agent's claim
+- `verified: false` — page is inaccessible (404/blocked/gone), content clearly contradicts the agent's claim, or the tool trace shows the agent never attempted the required action
 - `verified: null` — page loaded but evidence is too ambiguous to fairly determine correctness
 - `confidence` must be one of: "high", "medium", "low"
 - `finding` must be one sentence, max 30 words
+- The tool call trace (if present) is ground truth for what the agent did — weight it heavily when it contradicts the claimed result
 - The JSON inside <Answer> tags must be valid JSON with exactly these three keys: verified, finding, confidence

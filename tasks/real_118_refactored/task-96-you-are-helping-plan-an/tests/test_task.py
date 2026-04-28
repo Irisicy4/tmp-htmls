@@ -76,16 +76,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "research_quality": <1-5>,
-  "google_doc_creation": <1-5>,
-  "summary_completeness": <1-5>,
-  "proposal_concreteness": <1-5>,
   "dimension_reasoning": {{
     "research_quality": "<one sentence citing specific evidence>",
     "google_doc_creation": "<one sentence citing specific evidence>",
     "summary_completeness": "<one sentence citing specific evidence>",
     "proposal_concreteness": "<one sentence citing specific evidence>"
   }},
+  "research_quality": <1-5>,
+  "google_doc_creation": <1-5>,
+  "summary_completeness": <1-5>,
+  "proposal_concreteness": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

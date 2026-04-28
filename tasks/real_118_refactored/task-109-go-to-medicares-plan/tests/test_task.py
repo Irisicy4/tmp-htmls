@@ -83,16 +83,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "plan_finder_navigation": <1-5>,
-  "plan_cost_data": <1-5>,
-  "formulary_verification": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "plan_finder_navigation": "<one sentence citing specific evidence>",
     "plan_cost_data": "<one sentence citing specific evidence>",
     "formulary_verification": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "plan_finder_navigation": <1-5>,
+  "plan_cost_data": <1-5>,
+  "formulary_verification": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -100,10 +100,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "plan_finder_navigation": 0.30,
-    "plan_cost_data":         0.25,
-    "formulary_verification": 0.25,
-    "output_table":           0.20,
+    "plan_finder_navigation": 0.35,
+    "plan_cost_data": 0.23,
+    "formulary_verification": 0.23,
+    "output_table": 0.19,
 }
 
 

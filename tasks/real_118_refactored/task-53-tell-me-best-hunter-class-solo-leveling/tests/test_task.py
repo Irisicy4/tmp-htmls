@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "research_quality": <1-5>,
-  "recommendation_specificity": <1-5>,
-  "meta_accuracy": <1-5>,
-  "explanation_depth": <1-5>,
   "dimension_reasoning": {{
     "research_quality": "<one sentence citing specific evidence>",
     "recommendation_specificity": "<one sentence citing specific evidence>",
     "meta_accuracy": "<one sentence citing specific evidence>",
     "explanation_depth": "<one sentence citing specific evidence>",
   }},
+  "research_quality": <1-5>,
+  "recommendation_specificity": <1-5>,
+  "meta_accuracy": <1-5>,
+  "explanation_depth": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

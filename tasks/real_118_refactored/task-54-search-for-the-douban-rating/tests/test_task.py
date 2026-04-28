@@ -31,7 +31,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Navigation (0.25)
+#### A. Platform Navigation (0.35)
 Did the agent navigate to Douban and find the book?
 
 5 — Agent navigated to douban.com, searched for 《智人之上》, and reached the correct book page.
@@ -40,7 +40,7 @@ Did the agent navigate to Douban and find the book?
 2 — Agent found rating from a non-Douban source.
 1 — No navigation to Douban.
 
-#### B. Rating Accuracy (0.4)
+#### B. Rating Accuracy (0.35)
 Is the reported rating accurate and from Douban?
 
 5 — Rating score (e.g. 8.x/10) and number of raters clearly reported from Douban.
@@ -49,7 +49,7 @@ Is the reported rating accurate and from Douban?
 2 — Rating reported but from wrong source or clearly incorrect.
 1 — No rating provided.
 
-#### C. Book Identification (0.25)
+#### C. Book Identification (0.22)
 Did the agent identify the correct book?
 
 5 — Confirmed correct book with author (Yuval Noah Harari) and edition details.
@@ -58,7 +58,7 @@ Did the agent identify the correct book?
 2 — Wrong edition or potential confusion with similar title.
 1 — Wrong book identified.
 
-#### D. Response Clarity (0.1)
+#### D. Response Clarity (0.08)
 Is the response clear and concise?
 
 5 — Rating presented clearly with book title, score, and rater count.
@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_navigation": <1-5>,
-  "rating_accuracy": <1-5>,
-  "book_identification": <1-5>,
-  "response_clarity": <1-5>,
   "dimension_reasoning": {{
     "platform_navigation": "<one sentence citing specific evidence>",
     "rating_accuracy": "<one sentence citing specific evidence>",
     "book_identification": "<one sentence citing specific evidence>",
     "response_clarity": "<one sentence citing specific evidence>",
   }},
+  "platform_navigation": <1-5>,
+  "rating_accuracy": <1-5>,
+  "book_identification": <1-5>,
+  "response_clarity": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -90,10 +90,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_navigation": 0.25,
-    "rating_accuracy": 0.4,
-    "book_identification": 0.25,
-    "response_clarity": 0.1,
+    "platform_navigation": 0.35,
+    "rating_accuracy": 0.35,
+    "book_identification": 0.22,
+    "response_clarity": 0.08,
 }
 
 

@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_execution": <1-5>,
-  "download_execution": <1-5>,
-  "content_match": <1-5>,
-  "response_clarity": <1-5>,
   "dimension_reasoning": {{
     "platform_execution": "<one sentence citing specific evidence>",
     "download_execution": "<one sentence citing specific evidence>",
     "content_match": "<one sentence citing specific evidence>",
     "response_clarity": "<one sentence citing specific evidence>"
   }},
+  "platform_execution": <1-5>,
+  "download_execution": <1-5>,
+  "content_match": <1-5>,
+  "response_clarity": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_execution":  0.20,
-    "download_execution":  0.40,
-    "content_match":       0.25,
-    "response_clarity":    0.15,
+    "platform_execution": 0.35,
+    "download_execution": 0.33,
+    "content_match": 0.2,
+    "response_clarity": 0.12,
 }
 
 

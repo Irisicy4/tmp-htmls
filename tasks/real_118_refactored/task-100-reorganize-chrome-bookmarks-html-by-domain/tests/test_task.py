@@ -59,7 +59,7 @@ Is the output a valid Chrome-importable bookmarks file?
 2 — HTML produced but not importable.
 1 — No output file.
 
-#### D. Completeness (0.15)
+#### D. Bookmark Preservation (0.15)
 Were all bookmarks preserved in the output?
 
 5 — All input bookmarks present in output with no loss.
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "file_parsing": <1-5>,
-  "domain_categorization": <1-5>,
-  "output_validity": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
     "file_parsing": "<one sentence citing specific evidence>",
     "domain_categorization": "<one sentence citing specific evidence>",
     "output_validity": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>",
+    "bookmark_preservation": "<one sentence citing specific evidence>"
   }},
+  "file_parsing": <1-5>,
+  "domain_categorization": <1-5>,
+  "output_validity": <1-5>,
+  "bookmark_preservation": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "file_parsing": 0.2,
-    "domain_categorization": 0.3,
-    "output_validity": 0.35,
-    "completeness": 0.15,
+    "file_parsing":         0.20,
+    "domain_categorization": 0.30,
+    "output_validity":      0.35,
+    "bookmark_preservation": 0.15,
 }
 
 

@@ -80,16 +80,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "quote_retrieval": <1-5>,
-  "quote_parameters": <1-5>,
-  "naic_lookup": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "quote_retrieval": "<one sentence citing specific evidence>",
     "quote_parameters": "<one sentence citing specific evidence>",
     "naic_lookup": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "quote_retrieval": <1-5>,
+  "quote_parameters": <1-5>,
+  "naic_lookup": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -97,10 +97,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "quote_retrieval":   0.30,
-    "quote_parameters":  0.20,
-    "naic_lookup":       0.30,
-    "output_table":      0.20,
+    "quote_retrieval": 0.35,
+    "quote_parameters": 0.19,
+    "naic_lookup": 0.28,
+    "output_table": 0.18,
 }
 
 

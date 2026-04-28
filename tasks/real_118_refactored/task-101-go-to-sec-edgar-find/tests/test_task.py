@@ -82,16 +82,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "source_navigation": <1-5>,
-  "data_accuracy": <1-5>,
-  "courtlistener_search": <1-5>,
-  "output_structure": <1-5>,
   "dimension_reasoning": {{
     "source_navigation": "<one sentence citing specific evidence>",
     "data_accuracy": "<one sentence citing specific evidence>",
     "courtlistener_search": "<one sentence citing specific evidence>",
     "output_structure": "<one sentence citing specific evidence>"
   }},
+  "source_navigation": <1-5>,
+  "data_accuracy": <1-5>,
+  "courtlistener_search": <1-5>,
+  "output_structure": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -99,10 +99,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "source_navigation": 0.30,
-    "data_accuracy":     0.30,
-    "courtlistener_search": 0.20,
-    "output_structure":  0.20,
+    "source_navigation": 0.35,
+    "data_accuracy": 0.28,
+    "courtlistener_search": 0.19,
+    "output_structure": 0.18,
 }
 
 

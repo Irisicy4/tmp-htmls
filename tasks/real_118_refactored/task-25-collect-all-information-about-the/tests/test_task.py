@@ -76,11 +76,11 @@ Does the response demonstrate genuine analytical thinking beyond surface-level s
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
+  "dimension_reasoning": {{"data_collection": "<one sentence>", "explanation_quality": "<one sentence>", "prediction_reasoning": "<one sentence>", "analytical_depth": "<one sentence>"}},
   "data_collection": <1-5>,
   "explanation_quality": <1-5>,
   "prediction_reasoning": <1-5>,
   "analytical_depth": <1-5>,
-  "dimension_reasoning": {{"data_collection": "<one sentence>", "explanation_quality": "<one sentence>", "prediction_reasoning": "<one sentence>", "analytical_depth": "<one sentence>"}},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}

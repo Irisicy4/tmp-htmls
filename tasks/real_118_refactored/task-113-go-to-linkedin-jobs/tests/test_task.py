@@ -83,16 +83,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "linkedin_search": <1-5>,
-  "glassdoor_data": <1-5>,
-  "crunchbase_data": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "linkedin_search": "<one sentence citing specific evidence>",
     "glassdoor_data": "<one sentence citing specific evidence>",
     "crunchbase_data": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "linkedin_search": <1-5>,
+  "glassdoor_data": <1-5>,
+  "crunchbase_data": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

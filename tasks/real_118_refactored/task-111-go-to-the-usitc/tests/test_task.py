@@ -82,16 +82,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "hts_navigation": <1-5>,
-  "tariff_rate_data": <1-5>,
-  "cross_ruling_retrieval": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "hts_navigation": "<one sentence citing specific evidence>",
     "tariff_rate_data": "<one sentence citing specific evidence>",
     "cross_ruling_retrieval": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "hts_navigation": <1-5>,
+  "tariff_rate_data": <1-5>,
+  "cross_ruling_retrieval": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -99,10 +99,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "hts_navigation":        0.25,
-    "tariff_rate_data":      0.30,
-    "cross_ruling_retrieval": 0.25,
-    "output_table":          0.20,
+    "hts_navigation": 0.35,
+    "tariff_rate_data": 0.26,
+    "cross_ruling_retrieval": 0.22,
+    "output_table": 0.17,
 }
 
 

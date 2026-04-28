@@ -208,8 +208,8 @@ def main():
     )
     parser.add_argument(
         "--tasks-dir",
-        default="tasks/updated-deprivacy-100",
-        help="Task directory relative to repo root (default: tasks/updated-deprivacy-100)",
+        default="tasks/real_118_refactored",
+        help="Task directory relative to repo root (default: tasks/real_118_refactored)",
     )
     parser.add_argument(
         "--first-n",

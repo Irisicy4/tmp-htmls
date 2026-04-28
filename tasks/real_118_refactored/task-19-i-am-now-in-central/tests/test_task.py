@@ -36,8 +36,8 @@ Carefully read the agent response and trace, then answer each question:
 ### Step 2: Dimension Scoring
 Score each dimension 1–5 using the rubrics below.
 
-#### A. Task Completion (0.36)
-Did the agent find and present 10 locations with Big Ben views, each with all four required details?
+#### A. Location Quantity (0.36)
+Did the agent present 10 or more locations with Big Ben views?
 
 5 — 10 or more locations listed, all plausible Big Ben viewpoints, all four sub-details present for each.
 4 — 8–9 locations, or 10 locations with one sub-detail missing for a few.
@@ -45,7 +45,7 @@ Did the agent find and present 10 locations with Big Ben views, each with all fo
 2 — Fewer than 5 locations, or most sub-details absent.
 1 — Fewer than 3 locations or task not attempted.
 
-#### B. Information Quality (0.27)
+#### B. Location Accuracy (0.27)
 Is the location and logistical information accurate?
 
 5 — Correct London addresses, plausible directions, real nearby attractions and restaurants, genuine viewpoints.
@@ -54,7 +54,7 @@ Is the location and logistical information accurate?
 2 — Information appears hallucinated or geographically inaccurate.
 1 — No real London information provided.
 
-#### C. Response Quality (0.18)
+#### C. Response Organisation (0.18)
 Is the response well-structured and easy for a visitor to use?
 
 5 — Clearly structured per location with all four elements visually distinct; immediately actionable.
@@ -63,7 +63,7 @@ Is the response well-structured and easy for a visitor to use?
 2 — Disorganised or requires significant effort to extract details.
 1 — Not usable.
 
-#### D. Completeness (0.18)
+#### D. Detail Completeness (0.18)
 Were all four required elements provided for all 10 locations?
 
 5 — All four elements (address, directions, attractions, restaurants) present for all 10 locations.
@@ -78,16 +78,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "task_completion": <1-5>,
-  "information_quality": <1-5>,
-  "response_quality": <1-5>,
-  "completeness": <1-5>,
   "dimension_reasoning": {{
-    "task_completion": "<one sentence citing specific evidence>",
-    "information_quality": "<one sentence citing specific evidence>",
-    "response_quality": "<one sentence citing specific evidence>",
-    "completeness": "<one sentence citing specific evidence>"
+    "location_quantity": "<one sentence citing specific evidence>",
+    "location_accuracy": "<one sentence citing specific evidence>",
+    "response_organisation": "<one sentence citing specific evidence>",
+    "detail_completeness": "<one sentence citing specific evidence>"
   }},
+  "location_quantity": <1-5>,
+  "location_accuracy": <1-5>,
+  "response_organisation": <1-5>,
+  "detail_completeness": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -95,10 +95,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """
 
 DIMENSION_WEIGHTS = {
-    "task_completion":    0.36,
-    "information_quality": 0.27,
-    "response_quality":   0.18,
-    "completeness":       0.18,
+    "location_quantity":    0.36,
+    "location_accuracy":    0.27,
+    "response_organisation": 0.18,
+    "detail_completeness":  0.18,
 }
 
 

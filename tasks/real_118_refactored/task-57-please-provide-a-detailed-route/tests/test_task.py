@@ -75,16 +75,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "route_specificity": <1-5>,
-  "technical_detail": <1-5>,
-  "waypoint_coverage": <1-5>,
-  "practical_information": <1-5>,
   "dimension_reasoning": {{
     "route_specificity": "<one sentence citing specific evidence>",
     "technical_detail": "<one sentence citing specific evidence>",
     "waypoint_coverage": "<one sentence citing specific evidence>",
     "practical_information": "<one sentence citing specific evidence>"
   }},
+  "route_specificity": <1-5>,
+  "technical_detail": <1-5>,
+  "waypoint_coverage": <1-5>,
+  "practical_information": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

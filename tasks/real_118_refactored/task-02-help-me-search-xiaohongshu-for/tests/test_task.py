@@ -79,16 +79,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags, exactly as shown:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising your Step 1 findings>",
-  "platform_execution": <1-5>,
-  "source_coverage": <1-5>,
-  "content_relevance": <1-5>,
-  "synthesis_quality": <1-5>,
   "dimension_reasoning": {{
     "platform_execution": "<one sentence citing specific evidence>",
     "source_coverage": "<one sentence citing specific evidence>",
     "content_relevance": "<one sentence citing specific evidence>",
     "synthesis_quality": "<one sentence citing specific evidence>"
   }},
+  "platform_execution": <1-5>,
+  "source_coverage": <1-5>,
+  "content_relevance": <1-5>,
+  "synthesis_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

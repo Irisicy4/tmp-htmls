@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
-  "country_coverage": <1-5>,
-  "comparative_analysis": <1-5>,
-  "information_accuracy": <1-5>,
-  "response_organisation": <1-5>,
   "dimension_reasoning": {{
     "country_coverage": "<one sentence>",
     "comparative_analysis": "<one sentence>",
     "information_accuracy": "<one sentence>",
     "response_organisation": "<one sentence>"
   }},
+  "country_coverage": <1-5>,
+  "comparative_analysis": <1-5>,
+  "information_accuracy": <1-5>,
+  "response_organisation": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}

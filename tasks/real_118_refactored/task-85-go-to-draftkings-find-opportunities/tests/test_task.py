@@ -32,7 +32,7 @@ USER_PROMPT_TEMPLATE = ("""## Task Instruction
 
 ### Step 2: Dimension Scoring
 
-#### A. Platform Navigation (0.2)
+#### A. Platform Navigation (0.35)
 Did the agent navigate to DraftKings?
 
 5 — Agent navigated to draftkings.com and accessed current odds/events.
@@ -41,7 +41,7 @@ Did the agent navigate to DraftKings?
 2 — Agent described DraftKings without navigating.
 1 — No DraftKings navigation.
 
-#### B. Opportunity Identification (0.35)
+#### B. Opportunity Identification (0.30)
 Were specific betting opportunities identified?
 
 5 — 3+ specific opportunities: sport, event, bet type, odds, and reasoning for value.
@@ -50,7 +50,7 @@ Were specific betting opportunities identified?
 2 — General categories of bets without specific events.
 1 — No specific opportunities.
 
-#### C. Data Currency (0.25)
+#### C. Data Currency (0.20)
 Are opportunities based on current data?
 
 5 — Odds and events are clearly current (today's games, live lines).
@@ -59,7 +59,7 @@ Are opportunities based on current data?
 2 — Historical or generic odds used.
 1 — No current data.
 
-#### D. Reasoning Quality (0.2)
+#### D. Reasoning Quality (0.15)
 Is reasoning for each opportunity provided?
 
 5 — Clear reasoning: why this bet has value (edge, line movement, promo, injury news).
@@ -74,16 +74,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "platform_navigation": <1-5>,
-  "opportunity_identification": <1-5>,
-  "data_currency": <1-5>,
-  "reasoning_quality": <1-5>,
   "dimension_reasoning": {{
     "platform_navigation": "<one sentence citing specific evidence>",
     "opportunity_identification": "<one sentence citing specific evidence>",
     "data_currency": "<one sentence citing specific evidence>",
     "reasoning_quality": "<one sentence citing specific evidence>",
   }},
+  "platform_navigation": <1-5>,
+  "opportunity_identification": <1-5>,
+  "data_currency": <1-5>,
+  "reasoning_quality": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -91,10 +91,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "platform_navigation": 0.2,
-    "opportunity_identification": 0.35,
-    "data_currency": 0.25,
-    "reasoning_quality": 0.2,
+    "platform_navigation": 0.35,
+    "opportunity_identification": 0.30,
+    "data_currency": 0.20,
+    "reasoning_quality": 0.15,
 }
 
 

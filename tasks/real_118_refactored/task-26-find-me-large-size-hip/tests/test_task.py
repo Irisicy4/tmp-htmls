@@ -73,18 +73,23 @@ Are the recommendations specific, actionable, and suitable for the user's contex
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
+  "dimension_reasoning": {{"amazon_search_execution": "<one sentence>", "size_appropriateness": "<one sentence>", "product_coverage": "<one sentence>", "recommendation_quality": "<one sentence>"}},
   "amazon_search_execution": <1-5>,
   "size_appropriateness": <1-5>,
   "product_coverage": <1-5>,
   "recommendation_quality": <1-5>,
-  "dimension_reasoning": {{"amazon_search_execution": "<one sentence>", "size_appropriateness": "<one sentence>", "product_coverage": "<one sentence>", "recommendation_quality": "<one sentence>"}},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}
 </Answer>
 """)
 
-DIMENSION_WEIGHTS = {"amazon_search_execution": 0.25, "size_appropriateness": 0.35, "product_coverage": 0.20, "recommendation_quality": 0.20}
+DIMENSION_WEIGHTS = {
+    "amazon_search_execution": 0.35,
+    "size_appropriateness": 0.3,
+    "product_coverage": 0.17,
+    "recommendation_quality": 0.18,
+}
 
 
 def test(result):

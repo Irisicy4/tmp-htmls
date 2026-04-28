@@ -83,16 +83,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "fda_navigation": <1-5>,
-  "fda_data_accuracy": <1-5>,
-  "drugscom_faers_data": <1-5>,
-  "output_table": <1-5>,
   "dimension_reasoning": {{
     "fda_navigation": "<one sentence citing specific evidence>",
     "fda_data_accuracy": "<one sentence citing specific evidence>",
     "drugscom_faers_data": "<one sentence citing specific evidence>",
     "output_table": "<one sentence citing specific evidence>"
   }},
+  "fda_navigation": <1-5>,
+  "fda_data_accuracy": <1-5>,
+  "drugscom_faers_data": <1-5>,
+  "output_table": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}
@@ -100,10 +100,10 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 """)
 
 DIMENSION_WEIGHTS = {
-    "fda_navigation":     0.25,
-    "fda_data_accuracy":  0.30,
-    "drugscom_faers_data": 0.25,
-    "output_table":       0.20,
+    "fda_navigation": 0.35,
+    "fda_data_accuracy": 0.26,
+    "drugscom_faers_data": 0.22,
+    "output_table": 0.17,
 }
 
 

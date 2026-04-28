@@ -73,16 +73,16 @@ Respond ONLY with valid JSON inside <Answer></Answer> tags:
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences summarising Step 1 findings>",
-  "store_analysis": <1-5>,
-  "b2b_identification": <1-5>,
-  "reasoning_quality": <1-5>,
-  "actionability": <1-5>,
   "dimension_reasoning": {{
     "store_analysis": "<one sentence citing specific evidence>",
     "b2b_identification": "<one sentence citing specific evidence>",
     "reasoning_quality": "<one sentence citing specific evidence>",
     "actionability": "<one sentence citing specific evidence>",
   }},
+  "store_analysis": <1-5>,
+  "b2b_identification": <1-5>,
+  "reasoning_quality": <1-5>,
+  "actionability": <1-5>,
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false based on overall_score >= 3.0>
 }}

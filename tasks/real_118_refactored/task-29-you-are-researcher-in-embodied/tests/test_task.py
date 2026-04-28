@@ -78,11 +78,11 @@ Did the agent propose a specific, actionable plan for ongoing weekly scanning?
 <Answer>
 {{
   "evidence_summary": "<2-3 sentences>",
+  "dimension_reasoning": {{"research_scan_quality": "<one sentence>", "subtopic_coverage": "<one sentence>", "report_structure": "<one sentence>", "monitoring_framework": "<one sentence>"}},
   "research_scan_quality": <1-5>,
   "subtopic_coverage": <1-5>,
   "report_structure": <1-5>,
   "monitoring_framework": <1-5>,
-  "dimension_reasoning": {{"research_scan_quality": "<one sentence>", "subtopic_coverage": "<one sentence>", "report_structure": "<one sentence>", "monitoring_framework": "<one sentence>"}},
   "overall_score": <weighted average, one decimal>,
   "passed": <true or false>
 }}
