@@ -1,159 +1,78 @@
-"""
-LLM-as-judge evaluator for EvolveBench task-23.
+"""LLM-as-judge evaluator for task-22-send-message-to-my-manager.
 
-Category: Daily Activities
-Task: Design a Web 3.0 learning plan — but first list the steps, do NOT act yet.
-      This is a planning/meta task: the agent must describe its approach, not execute it.
+Category: Professional Communication
+Task: Compose an email to my manager (manager@example.com) telling them I will be over an hour late due to traffic conditions. Write it politely. Stop just before pressing send — do not actually send it.
 """
 
-import os, json, re
+import sys
+sys.path.insert(0, "/harness")
+from evaluator import run_judge
 
-TASK_INSTRUCTION = "Please design a comprehensive learning plan for Web 3.0. Do not take any action yet—first list the steps you will use to help me create the plan."
-PASS_THRESHOLD = 3.0
+TASK_INSTRUCTION = 'Compose an email to my manager (manager@example.com) telling them I will be over an hour late due to traffic conditions. Write it politely. Stop just before pressing send — do not actually send it.'
 
-SYSTEM_PROMPT = """You are an expert evaluator for AI agent benchmarks. This is a planning/meta task: the agent must list its intended steps WITHOUT actually executing the learning plan. Executing the plan (e.g. outputting a full learning plan) instead of listing steps is a failure mode."""
+SYSTEM_PROMPT_EXTRA = 'Your job is to assess whether an AI agent successfully composed a polite and professional email to a manager, explaining their delay of over an hour due to traffic conditions. The evaluation emphasizes clarity, tone, grammatical accuracy, and adherence to the instruction to stop before sending the email.'
 
-USER_PROMPT_TEMPLATE = """## Task Instruction
-{task_instruction}
+CONSTRAINTS = """- The email must be addressed to manager@example.com.
+- The reason for being late must explicitly reference traffic conditions.
+- The tone must be polite and professional.
+- The agent must stop before pressing send."""
 
-## Task-Specific Constraints
-- Critical: agent must list steps/approach ONLY — not produce the actual learning plan
-- Producing the full plan when asked to only list steps is a violation of the task constraint
-- Steps should be specific to Web 3.0 (not generic learning plan steps)
-- Steps should be logical, ordered, and comprehensive enough to lead to a good learning plan
+EVIDENCE_QUESTIONS = """- Does the email include the correct recipient address (manager@example.com)?
+- Does the email clearly explain the reason for being late as traffic conditions?
+- Is the tone of the email polite and professional?
+- Did the agent stop before pressing send?"""
 
-## Agent Final Response
-{agent_response}
+DIMENSION_RUBRICS = """#### A. Clarity Of Reason
+How clearly the email explains the reason for being late.
 
-## Agent Tool-Call Trace
-{execution_summary}
+5 — The email explicitly states traffic conditions as the reason for being late in a clear and concise manner.
+4 — The email states traffic conditions as the reason for being late, but with minor ambiguity or unnecessary details.
+3 — The email mentions traffic conditions but lacks clarity or includes irrelevant information.
+2 — The email vaguely references being late without clearly attributing it to traffic conditions.
+1 — The email does not mention traffic conditions as the reason for being late.
 
----
+#### B. Tone And Politeness
+How polite and professional the tone of the email is.
 
-## Evaluation Instructions
+5 — The email uses consistently polite and professional language throughout.
+4 — The email is mostly polite and professional, with minor lapses in tone.
+3 — The email is somewhat polite but includes noticeable lapses in professionalism.
+2 — The email is minimally polite and lacks professionalism in tone.
+1 — The email is rude or unprofessional in tone.
 
-### Step 1: Evidence Analysis
-- Did the agent list steps/approach rather than producing the full plan?
-- How many steps were listed? Are they specific to Web 3.0?
-- Did the agent accidentally produce a full learning plan instead of just steps?
-- Are the steps logically ordered and comprehensive?
+#### C. Adherence To Instructions
+How well the agent follows the task instructions.
 
-### Step 2: Dimension Scoring
+5 — The agent fully adheres to all instructions, including stopping before pressing send.
+4 — The agent adheres to most instructions but with minor deviations.
+3 — The agent partially adheres to instructions, missing key details or steps.
+2 — The agent minimally adheres to instructions, ignoring significant aspects.
+1 — The agent does not adhere to the instructions at all.
 
-#### A. Constraint Adherence
-Did the agent correctly list steps WITHOUT producing the full plan?
+#### D. Grammar And Spelling
+The grammatical correctness and spelling accuracy of the email.
 
-5 — Agent listed steps only; explicitly stated it will not act yet; no full plan produced.
-4 — Agent listed steps; briefly elaborated on one or two but did not produce a full plan.
-3 — Agent listed steps but also began producing partial plan content (borderline violation).
-2 — Agent produced a partial or full learning plan instead of listing steps.
-1 — Agent ignored the constraint entirely and produced a full learning plan.
+5 — The email is free of grammatical errors and spelling mistakes.
+4 — The email has one or two minor grammatical errors or spelling mistakes.
+3 — The email contains several noticeable grammatical errors or spelling mistakes.
+2 — The email has frequent grammatical errors or spelling mistakes that affect readability.
+1 — The email is riddled with grammatical errors and spelling mistakes, making it difficult to understand."""
 
-#### B. Step Specificity
-Are the steps specific to Web 3.0 rather than generic learning plan steps?
+DIMENSION_WEIGHTS = {
+    'clarity_of_reason': 0.3,
+    'tone_and_politeness': 0.3,
+    'adherence_to_instructions': 0.2,
+    'grammar_and_spelling': 0.2,
+}
 
-5 — Steps reference Web 3.0-specific topics (blockchain, smart contracts, DeFi, NFTs, DAOs, wallets, Solidity, etc.) and how they would be covered.
-4 — Most steps are Web 3.0-specific; 1–2 are generic (e.g. "assess current knowledge").
-3 — Steps are relevant to technology learning broadly but Web 3.0-specific content is mentioned vaguely.
-2 — Steps are completely generic (could apply to learning any technology).
-1 — No steps listed or steps are irrelevant.
-
-#### C. Step Completeness & Logic
-Are the steps comprehensive and logically ordered?
-
-5 — 5+ distinct steps covering: assessment, topic sequencing, resource identification, practice, and review; logical progression.
-4 — 4–5 steps with clear logic; one phase (e.g. practice or review) missing.
-3 — 3–4 steps; logical but missing key phases.
-2 — 1–2 steps; far too sparse to constitute a plan for creating a plan.
-1 — No structured steps.
-
-#### D. Response Clarity
-Is the step list clear, well-formatted, and easy to follow?
-
-5 — Numbered or bulleted list; each step has a clear title and brief description.
-4 — List format with step titles; descriptions are minimal but understandable.
-3 — Steps present but loosely formatted (e.g. paragraph form).
-2 — Steps are buried in prose; hard to extract.
-1 — No structured output.
-
-### Step 3: Output
-<Answer>
-{{
-  "evidence_summary": "<2-3 sentences>",
-  "constraint_adherence": <1-5>,
-  "step_specificity": <1-5>,
-  "step_completeness": <1-5>,
-  "response_clarity": <1-5>,
-  "dimension_reasoning": {{"constraint_adherence": "<one sentence>", "step_specificity": "<one sentence>", "step_completeness": "<one sentence>", "response_clarity": "<one sentence>"}},
-  "overall_score": <weighted average, one decimal>,
-  "passed": <true or false>
-}}
-</Answer>
-"""
-
-DIMENSION_WEIGHTS = {"constraint_adherence": 0.40, "step_specificity": 0.25, "step_completeness": 0.20, "response_clarity": 0.15}
-DIMENSIONS = list(DIMENSION_WEIGHTS.keys())
-
-def _extract_response(result):
-    t = result.get("task_result") or ""
-    if isinstance(t, str) and t.strip(): return t
-    for m in reversed(result.get("conversation") or []):
-        if isinstance(m, dict) and m.get("role") == "assistant":
-            c = m.get("content") or ""
-            if isinstance(c, str) and len(c) > 20: return c
-    return ""
-
-def _parse(text):
-    m = re.search(r"<Answer>(.*?)</Answer>", text, re.DOTALL | re.IGNORECASE)
-    if m:
-        try: return json.loads(m.group(1).strip())
-        except Exception: pass
-    try: return json.loads(text.strip())
-    except Exception: pass
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    if m:
-        try: return json.loads(m.group())
-        except Exception: pass
-    return None
-
-def _call(agent_response, execution_summary):
-    try:
-        import openai
-        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        completion = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "system", "content": SYSTEM_PROMPT},
-                      {"role": "user", "content": USER_PROMPT_TEMPLATE.format(task_instruction=TASK_INSTRUCTION, agent_response=agent_response, execution_summary=execution_summary or "Not available.")}],
-            max_tokens=1024)
-        return _parse(completion.choices[0].message.content)
-    except Exception as e: return {"error": str(e)}
-
-def _vote(votes):
-    valid = [v for v in votes if v and "error" not in v and all(d in v for d in DIMENSIONS)]
-    if not valid: return votes[0] if votes else {"error": "All calls failed"}
-    agg = {d: sorted([v[d] for v in valid])[len(valid)//2] for d in DIMENSIONS}
-    overall = sum(agg[d] * DIMENSION_WEIGHTS[d] for d in DIMENSIONS)
-    agg["overall_score"] = round(overall, 2); agg["passed"] = overall >= PASS_THRESHOLD
-    median = sorted(valid, key=lambda v: abs(v.get("overall_score",0)-overall))[0]
-    agg["evidence_summary"] = median.get("evidence_summary",""); agg["dimension_reasoning"] = median.get("dimension_reasoning",{}); agg["_votes_used"] = len(valid)
-    return agg
 
 def test(result):
-    agent_response = _extract_response(result)
-    execution_summary = result.get("execution_summary", "")
-    if not agent_response.strip():
-        return {"passed": False, "feedback": "No response found from agent.", "details": {"task_completed": result.get("status") == "success"}}
-    first = _call(agent_response, execution_summary)
-    if first and "error" not in first:
-        overall = first.get("overall_score", 0)
-        scores = _vote([first, _call(agent_response, execution_summary), _call(agent_response, execution_summary)]) if abs(float(overall) - PASS_THRESHOLD) <= 0.5 else (first.__setitem__("_votes_used", 1) or first)
-    else:
-        scores = first or {"error": "Judge call failed", "overall_score": 0}
-    overall = scores.get("overall_score", 0); passed = scores.get("passed", float(overall) >= PASS_THRESHOLD)
-    lines = [f"Overall score: {overall}/5  (threshold: {PASS_THRESHOLD})"] + [f"  {d}: {scores[d]}/5" for d in DIMENSIONS if d in scores]
-    if scores.get("evidence_summary"): lines.append(f"\nEvidence summary: {scores['evidence_summary']}")
-    if scores.get("dimension_reasoning"):
-        lines.append("\nDimension reasoning:")
-        for d, r in scores["dimension_reasoning"].items(): lines.append(f"  {d}: {r}")
-    if scores.get("_votes_used", 1) > 1: lines.append(f"\n(Borderline: {scores['_votes_used']} calls, majority vote)")
-    return {"passed": bool(passed), "feedback": "\n".join(lines), "details": {"task_completed": result.get("status") == "success", "overall_score": overall, "dimension_scores": {d: scores.get(d) for d in DIMENSIONS}, "evidence_summary": scores.get("evidence_summary"), "dimension_reasoning": scores.get("dimension_reasoning"), "pass_threshold": PASS_THRESHOLD, "votes_used": scores.get("_votes_used", 1)}}
+    return run_judge(
+        result,
+        task_instruction=TASK_INSTRUCTION,
+        system_prompt_extra=SYSTEM_PROMPT_EXTRA,
+        constraints=CONSTRAINTS,
+        evidence_questions=EVIDENCE_QUESTIONS,
+        dimension_rubrics=DIMENSION_RUBRICS,
+        dimension_weights=DIMENSION_WEIGHTS,
+    )

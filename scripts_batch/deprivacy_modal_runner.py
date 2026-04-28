@@ -63,6 +63,7 @@ harbor_image = (
     # Harness modules for skill extraction/injection (agent-agnostic)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
     .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
+    .add_local_file("harness/evaluator.py", "/harness/evaluator.py", copy=True)
     # History module for trace injection
     .add_local_file("scripts_batch/history.py", "/harness/history.py", copy=True)
     # Pre-harvested skills for evolve experiments
@@ -140,6 +141,19 @@ def _get_tasks_base(tasks_dir: str = "") -> Path:
     return TASKS_ROOT / name
 
 
+def _load_task_instruction(task_dir: Path) -> str:
+    """Read TASK_INSTRUCTION from tests/test_task.py (single source of truth)."""
+    import ast
+    src = (task_dir / "tests" / "test_task.py").read_text()
+    tree = ast.parse(src)
+    for node in tree.body:
+        if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == "TASK_INSTRUCTION"):
+            return ast.literal_eval(node.value)
+    raise RuntimeError(f"TASK_INSTRUCTION not found in {task_dir}")
+
+
 def _discover_tasks(first_n: int = 0, task_names_csv: str = "", tasks_dir: str = "") -> list[dict]:
     """Discover tasks and attach metadata."""
     base = _get_tasks_base(tasks_dir)
@@ -148,7 +162,7 @@ def _discover_tasks(first_n: int = 0, task_names_csv: str = "", tasks_dir: str =
     else:
         names = sorted(
             d.name for d in base.iterdir()
-            if d.is_dir() and (d / "instruction.md").exists()
+            if d.is_dir() and (d / "tests" / "test_task.py").exists()
         )
         if first_n > 0:
             names = names[:first_n]
@@ -493,7 +507,7 @@ async def _run_task(
     started_at = datetime.now(timezone.utc).isoformat()
 
     task_dir = _get_tasks_base(tasks_dir) / task_name
-    instruction = (task_dir / "instruction.md").read_text().strip()
+    instruction = _load_task_instruction(task_dir).strip()
     instruction += OUTPUT_DIR_INSTRUCTION
 
     # --- Learning injection: history trace ---

@@ -49,6 +49,7 @@ harbor_image = (
     )
     .add_local_dir("tasks", "/harbor-bench/tasks", copy=True)
     .add_local_file("harness/run_task.py", "/harness/run_task.py", copy=True)
+    .add_local_file("harness/seed_browser.py", "/harness/seed_browser.py", copy=True)
     .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
     .add_local_file("harness/evaluator.py", "/harness/evaluator.py", copy=True)
@@ -132,6 +133,19 @@ def _tasks_base(tasks_dir: str) -> Path:
     return TASKS_ROOT / Path(tasks_dir).name
 
 
+def _load_task_instruction(task_dir: Path) -> str:
+    """Read TASK_INSTRUCTION from tests/test_task.py (single source of truth)."""
+    import ast
+    src = (task_dir / "tests" / "test_task.py").read_text()
+    tree = ast.parse(src)
+    for node in tree.body:
+        if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == "TASK_INSTRUCTION"):
+            return ast.literal_eval(node.value)
+    raise RuntimeError(f"TASK_INSTRUCTION not found in {task_dir}")
+
+
 def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[dict]:
     """Return ordered task dicts (name + metadata) from the given tasks_dir."""
     base = _tasks_base(tasks_dir)
@@ -141,7 +155,7 @@ def _discover_tasks(tasks_dir: str, first_n: int, task_names_csv: str) -> list[d
         names = sorted(
             d.name
             for d in base.iterdir()
-            if d.is_dir() and (d / "instruction.md").exists()
+            if d.is_dir() and (d / "tests" / "test_task.py").exists()
         )
         if first_n > 0:
             names = names[:first_n]
@@ -401,6 +415,29 @@ AGENT_OUTPUT_PARSERS = {
 
 # ── Cocoa-agent sandbox runner ────────────────────────────────────────────────
 
+async def _seed_task_data(harbor_env, task_dir: Path):
+    """If the task has an environment/data/ directory with seed files, copy them
+    into the sandbox at /app/data/ (the convention used in task instructions).
+    Handles binary files via base64.
+    """
+    data_dir = task_dir / "environment" / "data"
+    if not data_dir.is_dir():
+        return
+    import base64
+    files = [p for p in data_dir.rglob("*") if p.is_file()]
+    if not files:
+        return
+    sandbox = harbor_env._sandbox
+    for src in files:
+        rel = src.relative_to(data_dir)
+        dst = f"/app/data/{rel}"
+        b64 = base64.b64encode(src.read_bytes()).decode()
+        cmd = f"mkdir -p $(dirname {dst}) && echo '{b64}' | base64 -d > {dst}"
+        result = await sandbox.exec.aio("bash", "-c", cmd)
+        await result.wait.aio()
+    print(f"  [seed-data] Copied {len(files)} file(s) from environment/data/ into /app/data/")
+
+
 async def _copy_harness_to_sandbox(sandbox):
     """Copy harness files from the orchestrator container into a cocoa sandbox.
 
@@ -410,6 +447,7 @@ async def _copy_harness_to_sandbox(sandbox):
     # Files in the orchestrator → destination in the sandbox
     files_to_copy = [
         "/harness/run_task.py",
+        "/harness/seed_browser.py",
         "/harness/skill_store.py",
         "/harness/skill_extractor.py",
         "/harness/adapters/__init__.py",
@@ -574,47 +612,68 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env):
             }
         }, indent=2)
 
+        # Harbor's create_run_agent_commands() merges AUTH_TOKEN into API_KEY
+        # and strips empty values, which breaks UniAPI / OpenRouter proxies that
+        # require API_KEY="" (explicitly empty) and AUTH_TOKEN set separately.
+        # The wrapper below overrides both unconditionally.
         wrapper_script = f"""#!/bin/bash
-# Proxy wrapper — overrides Harbor's env vars for Claude Code CLI
-export ANTHROPIC_API_KEY="{anthropic_key}"
+export ANTHROPIC_API_KEY=""
+export ANTHROPIC_AUTH_TOKEN="{anthropic_key}"
 export ANTHROPIC_BASE_URL="{anthropic_base}"
 export ANTHROPIC_MODEL="{model}"
 export ANTHROPIC_DEFAULT_SONNET_MODEL="{model}"
 export ANTHROPIC_DEFAULT_OPUS_MODEL="{model}"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="{model}"
 export CLAUDE_CODE_SUBAGENT_MODEL="{model}"
+# Disable features Bedrock-routed proxies don't support
+export DISABLE_PROMPT_CACHING="1"
+export MAX_THINKING_TOKENS="0"
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
 MCP_ARGS=()
 if [ -f /root/claude-code-mcp.json ]; then
   MCP_ARGS+=(--mcp-config /root/claude-code-mcp.json --strict-mcp-config)
 fi
 exec /root/.local/bin/claude.real "${{MCP_ARGS[@]}}" "$@"
 """
+        # Pin Claude Code to a known-working version. Harbor's install.sh fetches
+        # the latest via curl, which in 2.1.101+ sends beta flags that Bedrock-
+        # routed proxies like UniAPI reject. 2.1.92 is known to work.
+        pin_version = "2.1.92"
         setup_cmd = (
             # 1. Write the Playwright MCP server config.
             "cat > /root/claude-code-mcp.json << 'MCPEOF'\n"
             f"{mcp_config_json}\n"
             "MCPEOF\n"
-            # 2. Ensure Node.js + npx are present (needed to launch Playwright MCP).
-            "if ! command -v npx >/dev/null 2>&1; then "
-            "  echo '[proxy] Installing nodejs for Playwright MCP...'; "
+            # 2. Ensure Node.js + npm are present (needed for both Playwright
+            #    MCP and the pinned claude install).
+            "if ! command -v npm >/dev/null 2>&1; then "
+            "  echo '[proxy] Installing nodejs for Playwright MCP + claude pin...'; "
             "  apt-get update -qq >/dev/null 2>&1 && "
             "  apt-get install -y -qq --no-install-recommends nodejs npm >/dev/null 2>&1 || "
-            "  echo '[proxy] WARN: nodejs install failed — browser MCP will not work'; "
+            "  echo '[proxy] WARN: nodejs install failed'; "
             "fi && "
-            # 3. Pre-cache @playwright/mcp and its Chromium so the first task call
-            #    doesn't eat a 30–60s download inside the measured run.
+            # 3. Pre-cache @playwright/mcp and its Chromium so the first task
+            #    call doesn't eat a 30–60s download inside the measured run.
             "if command -v npx >/dev/null 2>&1; then "
             "  echo '[proxy] Pre-caching @playwright/mcp + Chromium...'; "
             "  npx -y @playwright/mcp@latest --help >/dev/null 2>&1 || true; "
             "fi && "
-            # 4. Install the claude-code wrapper (rename real binary, drop shim).
+            # 4. Replace Harbor's latest claude with the pinned version and
+            #    install the proxy wrapper.
             "if [ -f /root/.local/bin/claude ] && [ ! -f /root/.local/bin/claude.real ]; then "
-            "  mv /root/.local/bin/claude /root/.local/bin/claude.real && "
+            "  rm -f /root/.local/bin/claude && "
+            f"  npm install -g @anthropic-ai/claude-code@{pin_version} >/dev/null 2>&1 && "
+            "  NPM_CLAUDE=$(which claude) && "
+            "  cat > /root/.local/bin/claude.real << REALEOF\n"
+            "#!/bin/bash\n"
+            "exec \"$NPM_CLAUDE\" \"\\$@\"\n"
+            "REALEOF\n"
+            "  chmod +x /root/.local/bin/claude.real && "
             "  cat > /root/.local/bin/claude << 'WRAPEOF'\n"
             f"{wrapper_script}"
             "WRAPEOF\n"
             "  chmod +x /root/.local/bin/claude && "
-            "  echo '[proxy] Claude wrapper installed'; "
+            f"  echo '[proxy] Claude {pin_version} + wrapper installed'; "
             "fi"
         )
 
@@ -731,8 +790,9 @@ def _make_harbor_env(session_id: str, trial_paths, agent_name: str = ""):
     Returns a ModalEnvironment subclass instance that:
     1. Uses ghcr.io/agent-infra/sandbox:latest instead of a per-task Dockerfile.
        For cocoa-agent, uses cocoa_sandbox_image (which includes cocoa + Playwright).
-    2. Uses session_id as the Modal app name to avoid the "__harbor__" locking bug.
-    3. Cleans up the ephemeral app on stop to avoid hitting the 200 app limit.
+    2. Calls Sandbox.create directly — no per-task App.lookup, so there is no
+       ephemeral deployed app to clean up (avoids the 200-app limit entirely
+       and sandboxes attach to the parent evolve-bench-harbor app).
     """
     import modal as _modal
     from harbor.environments.modal import ModalEnvironment
@@ -750,15 +810,11 @@ def _make_harbor_env(session_id: str, trial_paths, agent_name: str = ""):
                 self._image = cocoa_sandbox_image
             else:
                 self._image = _modal.Image.from_registry(SANDBOX_BASE_IMAGE)
-            # Each task uses a unique Modal app name → avoids __harbor__ locking
-            self._app = await _modal.App.lookup.aio(
-                name=self.session_id,
-                create_if_missing=True,
-            )
-            self._sandbox = await self._create_sandbox(
-                gpu_config=None,
-                secrets_config=[],
-                volumes_config={},
+            self._sandbox = await _modal.Sandbox.create.aio(
+                image=self._image,
+                cpu=1.0,
+                memory=1024,
+                timeout=1800,
             )
             await self._sandbox.mkdir.aio(
                 str(EnvironmentPaths.agent_dir), parents=True
@@ -768,29 +824,10 @@ def _make_harbor_env(session_id: str, trial_paths, agent_name: str = ""):
             )
 
         async def stop(self, delete: bool = True) -> None:
-            """Stop sandbox and delete the ephemeral app to avoid hitting the 200 app limit."""
             try:
-                await super().stop(delete=delete)
-            except Exception as e:
-                print(f"[{self.session_id}] sandbox stop error (non-fatal): {e}")
-            # App.stop() doesn't exist in the SDK — use the gRPC API directly
-            try:
-                from modal.client import _Client
-                from modal_proto import api_pb2
-                client = await _Client.from_env.aio()
-                req = api_pb2.AppGetByDeploymentNameRequest(
-                    name=self.session_id, environment_name=""
-                )
-                resp = await client.stub.AppGetByDeploymentName(req)
-                if resp.app_id:
-                    stop_req = api_pb2.AppStopRequest(
-                        app_id=resp.app_id,
-                        source=api_pb2.APP_STOP_SOURCE_CLI,
-                    )
-                    await client.stub.AppStop(stop_req)
-                    print(f"[{self.session_id}] ephemeral app stopped")
-            except Exception as e:
-                print(f"[{self.session_id}] app cleanup failed: {e}")
+                await self._sandbox.terminate.aio()
+            except Exception:
+                pass
 
     return _PatchedEnv(
         environment_dir=Path("/tmp"),   # unused — start() is overridden
@@ -828,7 +865,7 @@ async def _run_task(
     started_at = datetime.now(timezone.utc).isoformat()
 
     task_dir = _tasks_base(tasks_dir) / task_name
-    instruction = (task_dir / "instruction.md").read_text().strip()
+    instruction = _load_task_instruction(task_dir).strip()
 
     # Tell agents to save output files to /output/
     instruction += OUTPUT_DIR_INSTRUCTION
@@ -880,7 +917,7 @@ async def _run_task(
             "Task:\n" + instruction
         )
 
-    trial_dir = RESULTS_BASE / run_tag / "trials" / task_name
+    trial_dir = RESULTS_BASE / run_tag / task_name
     trial_dir.mkdir(parents=True, exist_ok=True)
 
     trial_paths = TrialPaths(trial_dir=trial_dir)
@@ -928,6 +965,12 @@ async def _run_task(
 
     collected_artifacts: list[str] = []
     try:
+        # Seed any task-specific data files (e.g. images) into /app/data/
+        try:
+            await _seed_task_data(env, _tasks_base(tasks_dir) / task_name)
+        except Exception as exc:
+            print(f"[{task_name}] Seed-data failed (non-fatal): {exc}")
+
         if is_cocoa:
             print(f"[{task_name}] Running cocoa-agent …")
             await _run_cocoa_in_sandbox(env, task_name, instruction, agent_kwargs)
@@ -944,9 +987,11 @@ async def _run_task(
     except Exception as exc:
         print(f"[{task_name}] Agent error: {exc}")
     finally:
-        # Collect artifacts from /output/
-        artifacts_dir = RESULTS_BASE / run_tag / "artifacts" / task_name
+        # Collect artifacts into <trial>/artifacts/ (Harbor canonical layout),
+        # writing a manifest.json alongside.
+        artifacts_dir = trial_paths.artifacts_dir
         artifacts_dir.mkdir(parents=True, exist_ok=True)
+        artifact_manifest: list[dict] = []
 
         # For cocoa-agent: pull result.json from the sandbox before stopping
         if is_cocoa:
@@ -960,10 +1005,16 @@ async def _run_task(
             except Exception as e:
                 print(f"[{task_name}] Failed to pull cocoa result.json: {e}")
 
+        # Cocoa runs with skip_docker=True, executing code directly in this
+        # sandbox but defaulting its workdir to /home/gem/output/. Scan both.
+        scan_dirs = [AGENT_OUTPUT_DIR]
+        if is_cocoa:
+            scan_dirs.append("/home/gem/output")
+
         try:
             result_obj = await env._sandbox.exec.aio(
                 "bash", "-c",
-                f"find {AGENT_OUTPUT_DIR} -type f 2>/dev/null | head -50"
+                f"find {' '.join(scan_dirs)} -type f 2>/dev/null | head -50"
             )
             await result_obj.wait.aio()
             output_files = await _read_stdout(result_obj)
@@ -972,25 +1023,40 @@ async def _run_task(
             if output_files:
                 all_files.update(output_files.splitlines())
 
+            BINARY_EXTS = {".gif",".png",".jpg",".jpeg",".webp",".mp4",".mp3",".wav",".pdf",".zip",".tar",".gz",".xlsx",".docx",".pptx",".ico",".bmp",".mov",".avi"}
             for fpath in sorted(all_files):
                 fpath = fpath.strip()
                 if not fpath:
                     continue
+                fname = fpath.split("/")[-1]
+                is_binary = any(fname.lower().endswith(ext) for ext in BINARY_EXTS)
                 try:
-                    cat_obj = await env._sandbox.exec.aio("cat", fpath)
-                    await cat_obj.wait.aio()
-                    content = await _read_stdout(cat_obj)
-                    fname = fpath.split("/")[-1]
-
-                    (artifacts_dir / fname).write_text(content)
-                    (trial_paths.agent_dir / f"artifact_{fname}").write_text(content)
-                    collected_artifacts.append(fname)
-                    print(f"[{task_name}] Collected: {fpath} ({len(content)} chars)")
-                except Exception:
-                    pass
+                    if is_binary:
+                        cat_obj = await env._sandbox.exec.aio("bash", "-c", f"base64 -w0 {fpath}")
+                        await cat_obj.wait.aio()
+                        b64 = (await _read_stdout(cat_obj)).strip()
+                        import base64 as _b64
+                        data = _b64.b64decode(b64)
+                        (artifacts_dir / fname).write_bytes(data)
+                        collected_artifacts.append(fname)
+                        artifact_manifest.append({"source": fpath, "destination": fname, "bytes": len(data)})
+                        print(f"[{task_name}] Collected (binary): {fpath} ({len(data)} bytes)")
+                    else:
+                        cat_obj = await env._sandbox.exec.aio("cat", fpath)
+                        await cat_obj.wait.aio()
+                        content = await _read_stdout(cat_obj)
+                        (artifacts_dir / fname).write_text(content)
+                        collected_artifacts.append(fname)
+                        artifact_manifest.append({"source": fpath, "destination": fname, "chars": len(content)})
+                        print(f"[{task_name}] Collected: {fpath} ({len(content)} chars)")
+                except Exception as e:
+                    print(f"[{task_name}] Collect failed {fpath}: {e}")
 
         except Exception as collect_exc:
             print(f"[{task_name}] Artifact collection skipped: {collect_exc}")
+
+        if artifact_manifest:
+            (artifacts_dir / "manifest.json").write_text(json.dumps(artifact_manifest, indent=2))
 
         try:
             await env.stop(delete=True)
@@ -1045,11 +1111,12 @@ async def _run_task(
 
     # Append collected artifact contents to task_result so the judge can evaluate them
     artifact_texts = []
-    for artifact_file in sorted(trial_paths.agent_dir.glob("artifact_*")):
+    for artifact_file in sorted(trial_paths.artifacts_dir.glob("*")):
+        if artifact_file.name == "manifest.json" or not artifact_file.is_file():
+            continue
         try:
             content = artifact_file.read_text()
-            fname = artifact_file.name[len("artifact_"):]
-            artifact_texts.append(f"\n\n=== FILE: {fname} ===\n{content}\n=== END FILE ===")
+            artifact_texts.append(f"\n\n=== FILE: {artifact_file.name} ===\n{content}\n=== END FILE ===")
         except Exception:
             pass
     if artifact_texts:
@@ -1178,7 +1245,7 @@ async def run_harbor_task(
         )
         # Persist error result so it's visible in downloaded results
         try:
-            trial_dir = RESULTS_BASE / run_tag / "trials" / task_name
+            trial_dir = RESULTS_BASE / run_tag / task_name
             trial_dir.mkdir(parents=True, exist_ok=True)
             (trial_dir / "result.json").write_text(json.dumps(result, indent=2))
             await results_volume.commit.aio()
@@ -1280,9 +1347,33 @@ async def run_harbor_experiment(
         "results": results,
     }
 
-    out_path = RESULTS_BASE / run_tag / "summary.json"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(summary, indent=2))
+    run_dir = RESULTS_BASE / run_tag
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "result.json").write_text(json.dumps(summary, indent=2))
+
+    config = {
+        "run_tag": run_tag,
+        "agent": agent_name,
+        "model": model_name,
+        "tasks_dir": tasks_dir,
+        "agent_kwargs": {k: v for k, v in agent_kwargs.items() if k not in ("extra_env", "judge_env")},
+        "n_tasks": len(tasks),
+        "task_names": [t["task_name"] for t in tasks],
+        "skill_config": skill_config,
+    }
+    (run_dir / "config.json").write_text(json.dumps(config, indent=2))
+
+    log_lines = [f"=== Harbor Experiment: {run_tag} ==="]
+    log_lines.append(f"agent={agent_name} model={model_name} tasks_dir={tasks_dir} n_tasks={len(tasks)}")
+    for r in results:
+        log_lines.append(
+            f"{r.get('task'):50s}  score={r.get('score', '?'):.2f}  passed={r.get('passed')}"
+        )
+    log_lines.append(
+        f"mean_score={summary['mean_score']:.3f} pass={summary['n_passed']}/{summary['n_tasks']} errors={summary['n_errors']}"
+    )
+    (run_dir / "job.log").write_text("\n".join(log_lines) + "\n")
+
     await results_volume.commit.aio()
 
     print(f"\n=== Experiment Complete ===")
@@ -1501,11 +1592,14 @@ def main(collect: str = "", list_runs: bool = False):
         return
 
     if collect:
-        out_dir = Path(f"results/real118/{collect}")
-        out_dir.mkdir(parents=True, exist_ok=True)
+        # `modal volume get <vol> <src> <dest>` writes into <dest>/<basename(src)>,
+        # so download into the parent and let modal create the run-tag subdir.
+        parent_dir = Path("results/real118")
+        parent_dir.mkdir(parents=True, exist_ok=True)
+        out_dir = parent_dir / collect
         print(f"Downloading {collect} → {out_dir}")
         subprocess.run(
-            [modal_bin, "volume", "get", "evolve-bench-results", collect, str(out_dir), "--force"],
+            [modal_bin, "volume", "get", "evolve-bench-results", collect, str(parent_dir), "--force"],
             check=True,
         )
         print(f"Done. Results in {out_dir}")
