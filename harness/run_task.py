@@ -299,6 +299,12 @@ def main():
             _write_result(args.output, result)
             sys.exit(1)
         print("Sandbox ready.")
+        try:
+            from seed_browser import seed_sandbox_browser
+            seed_res = seed_sandbox_browser(sandbox_url)
+            print(f"[seed_browser] {seed_res}")
+        except Exception as e:
+            print(f"[seed_browser] skipped: {type(e).__name__}: {e}")
     else:
         print(f"Agent type '{agent_type}' does not use the sandbox — skipping wait.")
 

@@ -20,6 +20,7 @@ import asyncio
 import importlib.util
 import json
 import os
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -53,6 +54,8 @@ harbor_image = (
     .add_local_file("harness/skill_store.py", "/harness/skill_store.py", copy=True)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
     .add_local_file("harness/evaluator.py", "/harness/evaluator.py", copy=True)
+    .add_local_file("harness/run_judge.py", "/harness/run_judge.py", copy=True)
+    .add_local_file("harness/test.sh", "/harness/test.sh", copy=True)
     .add_local_dir("harness/adapters", "/harness/adapters", copy=True)
     .add_local_dir("configs", "/harness/configs", copy=True)
 )
@@ -711,6 +714,149 @@ def _evaluate(task_name: str, result: dict, tasks_dir: str) -> dict:
     return eval_result
 
 
+# ── In-env verifier (canonical Harbor test.sh model) ─────────────────────────
+
+async def _b64_write_to_env(sandbox, dest: str, data: bytes) -> None:
+    """Write bytes into the env at dest. Chunks the base64 payload so each
+    exec stays under the 64KB ARG_MAX limit."""
+    import base64
+    dest_q = shlex.quote(dest)
+    # Truncate / create the file.
+    proc = await sandbox.exec.aio("bash", "-c", f"mkdir -p $(dirname {dest_q}) && : > {dest_q}")
+    await proc.wait.aio()
+    # Write in chunks; raw chunk size aligned to 3 bytes so base64 chunks are
+    # standalone-decodable. 30KB raw → 40KB base64 (well under ARG_MAX).
+    CHUNK_RAW = 30 * 1024
+    for i in range(0, max(1, len(data)), CHUNK_RAW):
+        chunk = data[i:i + CHUNK_RAW]
+        b64 = base64.b64encode(chunk).decode()
+        proc = await sandbox.exec.aio("bash", "-c", f"echo '{b64}' | base64 -d >> {dest_q}")
+        await proc.wait.aio()
+
+
+async def _read_text_from_env(sandbox, src: str) -> str | None:
+    """Read a text file from the env. Returns None if missing/unreadable."""
+    res = await sandbox.exec.aio("bash", "-c", f"cat {shlex.quote(src)} 2>/dev/null")
+    await res.wait.aio()
+    text = await _read_stdout(res)
+    return text if text else None
+
+
+async def _run_in_env_verifier(
+    harbor_env,
+    task_name: str,
+    tasks_dir: str,
+    result_dict: dict,
+    trial_paths,
+    n_judge_runs: int = 1,
+) -> dict | None:
+    """Run the LLM judge inside the sandbox via tests/test.sh.
+
+    Steps:
+      1. Stage verifier harness (run_judge.py, test.sh, evaluator.py) into /harness/.
+      2. Upload the task's tests/ dir into /tests/.
+      3. Write the parsed agent result into /logs/agent/agent_result.json.
+      4. Exec test.sh; it writes /logs/verifier/{reward.json,judge_runs.json,feedback.txt}.
+      5. Pull /logs/verifier/* back to trial_paths.verifier_dir.
+
+    Returns an eval_result-shaped dict, or None if the verifier path can't run
+    (caller falls back to in-process _evaluate).
+    """
+    test_sh_local = Path("/harness/test.sh")
+    run_judge_local = Path("/harness/run_judge.py")
+    evaluator_local = Path("/harness/evaluator.py")
+    if not test_sh_local.is_file() or not run_judge_local.is_file():
+        return None
+
+    task_tests_dir = _tasks_base(tasks_dir) / task_name / "tests"
+    test_task_py = task_tests_dir / "test_task.py"
+    if not test_task_py.is_file():
+        return None
+
+    sandbox = harbor_env._sandbox
+    try:
+        # 1. Stage harness files into env at /harness/.
+        for src_path in (run_judge_local, evaluator_local, test_sh_local):
+            if src_path.is_file():
+                await _b64_write_to_env(sandbox, f"/harness/{src_path.name}", src_path.read_bytes())
+        await (await sandbox.exec.aio("bash", "-c", "chmod +x /harness/test.sh")).wait.aio()
+
+        # 2. Upload the task's tests/ dir into /tests/.
+        await (await sandbox.exec.aio("bash", "-c", "rm -rf /tests && mkdir -p /tests")).wait.aio()
+        for f in task_tests_dir.iterdir():
+            if f.is_file():
+                await _b64_write_to_env(sandbox, f"/tests/{f.name}", f.read_bytes())
+        # Also drop in the same canonical test.sh under /tests/ so the
+        # task's tests/ folder looks Harbor-canonical inside the env.
+        await _b64_write_to_env(sandbox, "/tests/test.sh", test_sh_local.read_bytes())
+        await (await sandbox.exec.aio("bash", "-c", "chmod +x /tests/test.sh")).wait.aio()
+
+        # 3. Write parsed agent result into env.
+        agent_json = json.dumps(result_dict, default=str)
+        await _b64_write_to_env(sandbox, "/logs/agent/agent_result.json", agent_json.encode())
+
+        # 4. Run the verifier.
+        run_cmd = (
+            f"export JUDGE_RUNS={int(n_judge_runs)}; "
+            f"mkdir -p /logs/verifier && "
+            f"/tests/test.sh > /logs/verifier/test-stdout.txt 2> /logs/verifier/test-stderr.txt; "
+            f"echo $? > /logs/verifier/test-exitcode.txt"
+        )
+        # Forward judge env (OPENAI_API_KEY, OPENAI_BASE_URL) — set by orchestrator already.
+        env_exports = ""
+        for k in ("OPENAI_API_KEY", "OPENAI_BASE_URL"):
+            v = os.environ.get(k)
+            if v:
+                env_exports += f"export {k}={shlex.quote(v)}; "
+        res = await sandbox.exec.aio("bash", "-c", env_exports + run_cmd)
+        await res.wait.aio()
+
+        # 5. Pull /logs/verifier/ back into the local verifier dir.
+        verifier_dir = trial_paths.verifier_dir
+        verifier_dir.mkdir(parents=True, exist_ok=True)
+        listing = await sandbox.exec.aio("bash", "-c", "ls /logs/verifier/ 2>/dev/null")
+        await listing.wait.aio()
+        names = [n.strip() for n in (await _read_stdout(listing)).splitlines() if n.strip()]
+        for fname in names:
+            text = await _read_text_from_env(sandbox, f"/logs/verifier/{fname}")
+            if text is not None:
+                (verifier_dir / fname).write_text(text)
+
+        # Build eval_result from the verifier output.
+        reward_text = (verifier_dir / "reward.json").read_text() if (verifier_dir / "reward.json").is_file() else None
+        judge_runs_text = (verifier_dir / "judge_runs.json").read_text() if (verifier_dir / "judge_runs.json").is_file() else None
+        feedback_text = (verifier_dir / "feedback.txt").read_text() if (verifier_dir / "feedback.txt").is_file() else ""
+        if not reward_text:
+            print(f"[{task_name}] Verifier produced no reward.json — falling back to in-process eval")
+            return None
+
+        reward = json.loads(reward_text)
+        runs = json.loads(judge_runs_text) if judge_runs_text else []
+
+        # Use the first run's full structure as the base for downstream consumers
+        # (skill_extractor reads details.dimension_scores etc.), then overlay the
+        # aggregate score so variance averaging is honored.
+        if runs and isinstance(runs[0], dict):
+            eval_result = dict(runs[0])
+            details = dict(eval_result.get("details") or {})
+        else:
+            eval_result = {"passed": False, "feedback": feedback_text or "judge crashed"}
+            details = {}
+
+        details["overall_score"] = float(reward.get("overall_score", 0.0))
+        details["n_judge_runs"] = int(reward.get("n_judge_runs", len(runs) or 1))
+        if "overall_score_std" in reward:
+            details["overall_score_std"] = float(reward["overall_score_std"])
+        eval_result["details"] = details
+        eval_result["passed"] = bool(reward.get("passed", 0.0) >= 1.0) if isinstance(reward.get("passed"), (int, float)) else bool(eval_result.get("passed"))
+        eval_result["feedback"] = feedback_text or eval_result.get("feedback", "")
+        eval_result["overall_score"] = details["overall_score"]
+        return eval_result
+    except Exception as exc:
+        print(f"[{task_name}] In-env verifier error: {exc} — falling back to in-process eval")
+        return None
+
+
 # ── Enriched result builder ──────────────────────────────────────────────────
 
 def _build_result(
@@ -964,6 +1110,7 @@ async def _run_task(
         return result
 
     collected_artifacts: list[str] = []
+    eval_result_from_env: dict | None = None
     try:
         # Seed any task-specific data files (e.g. images) into /app/data/
         try:
@@ -1058,11 +1205,6 @@ async def _run_task(
         if artifact_manifest:
             (artifacts_dir / "manifest.json").write_text(json.dumps(artifact_manifest, indent=2))
 
-        try:
-            await env.stop(delete=True)
-        except Exception:
-            pass
-
     # ── Parse agent output ─────────────────────────────────────────────────────
     agent_files = list(trial_paths.agent_dir.rglob("*")) if trial_paths.agent_dir.exists() else []
     print(f"[{task_name}] Agent dir files: {[str(f.relative_to(trial_paths.agent_dir)) for f in agent_files if f.is_file()]}")
@@ -1130,6 +1272,24 @@ async def _run_task(
     except Exception as exc:
         print(f"[{task_name}] Failed to write agent_result.json: {exc}")
 
+    # ── In-env verifier (Harbor canonical: tests/test.sh writes reward.json) ──
+    # The env must still be alive here. Run before env.stop().
+    n_judge_runs = int(os.environ.get("JUDGE_RUNS", "1") or "1")
+    try:
+        if env._sandbox is not None:
+            eval_result_from_env = await _run_in_env_verifier(
+                env, task_name, tasks_dir, result_dict, trial_paths, n_judge_runs=n_judge_runs
+            )
+    except Exception as exc:
+        print(f"[{task_name}] In-env verifier raised: {exc}")
+        eval_result_from_env = None
+
+    # Now we can tear down the env.
+    try:
+        await env.stop(delete=True)
+    except Exception:
+        pass
+
     # ── Evaluate + skill extraction (wrapped so result.json is always written) ──
     eval_result = {}
     score = 0.0
@@ -1138,7 +1298,13 @@ async def _run_task(
     quality_gate_result = None
 
     try:
-        eval_result = _evaluate(task_name, result_dict, tasks_dir)
+        # Prefer the in-env verifier output (canonical Harbor path); fall back
+        # to the in-process evaluator if it failed or wasn't available.
+        if eval_result_from_env is not None:
+            eval_result = eval_result_from_env
+            print(f"[{task_name}] Using in-env verifier result (n_judge_runs={eval_result.get('details', {}).get('n_judge_runs', 1)})")
+        else:
+            eval_result = _evaluate(task_name, result_dict, tasks_dir)
         score = float(eval_result.get("details", {}).get("overall_score", 0)
                       or eval_result.get("overall_score", 0))
         passed = bool(eval_result.get("passed", False))
