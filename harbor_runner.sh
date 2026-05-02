@@ -14,6 +14,12 @@ if [ -f .env ]; then
     set -a; . .env; set +a
 fi
 
+# Sync harness/, configs/, skills/ into every task's environment/ so the
+# Docker build context is complete (Modal drops empty dirs).
+if [ -x scripts/sync-harness.sh ]; then
+    ./scripts/sync-harness.sh
+fi
+
 # OpenAI-compatible endpoint for codex / OpenAI-shaped agents.
 if [ -z "${OPENAI_API_KEY:-}" ] && [ -n "${UNIAPI_KEY:-}" ]; then
     export OPENAI_API_KEY="$UNIAPI_KEY"
