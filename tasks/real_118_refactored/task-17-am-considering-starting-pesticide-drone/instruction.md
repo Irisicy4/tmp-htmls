@@ -11,3 +11,6 @@ I am considering starting a pesticide drone business.
   I like using computers and have some photography skills – please see if this helps with the work.
   
   Compile everything and create a Google Docs document.
+
+
+If you produce any output files (images, plots, GIFs, downloads, exports), save them under `/logs/artifacts/` so they can be collected after the run.

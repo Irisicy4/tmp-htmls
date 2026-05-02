@@ -1,1 +1,4 @@
 Go to the USPTO Patent Full-Text and Image Database (https://patents.google.com/ or https://ppubs.uspto.gov/pubwebapp/) and search for patents filed in the last three years by Apple, Samsung, and Google related to "on-device large language model inference." For each company, identify the two most relevant patents and record: patent number, title, filing date, key independent claim (claim 1), and cited prior art. Then cross-reference each patent on Google Patents (https://patents.google.com/) to check forward citations and any patent family members. Produce a competitive IP landscape table with columns: Company, Patent Number, Title, Filing Date, Key Claim Summary, Forward Citations, Family Size.
+
+
+If you produce any output files (images, plots, GIFs, downloads, exports), save them under `/logs/artifacts/` so they can be collected after the run.

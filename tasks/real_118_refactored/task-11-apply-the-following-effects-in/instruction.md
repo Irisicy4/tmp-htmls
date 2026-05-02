@@ -7,3 +7,6 @@ Apply the following effects in order to use the original image to create a GIF.
   Let each movement last for 1 second.
 
   original image path: /app/data/image.png
+
+
+If you produce any output files (images, plots, GIFs, downloads, exports), save them under `/logs/artifacts/` so they can be collected after the run.

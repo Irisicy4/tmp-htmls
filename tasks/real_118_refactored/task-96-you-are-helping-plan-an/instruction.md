@@ -1,1 +1,4 @@
 You are helping plan an upcoming school art festival. Research the Tokyo University of the Arts high school art festival and identify one featured or alumni artist from their recent exhibitions. Create a Google Document summarizing the festival and the artist. In a separate tab, draft a proposal for inviting that artist to host a workshop, including a proposed schedule and content outline.
+
+
+If you produce any output files (images, plots, GIFs, downloads, exports), save them under `/logs/artifacts/` so they can be collected after the run.

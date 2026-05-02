@@ -1,1 +1,4 @@
 This is a set of junior high school English review materials. I want to create an interactive learning webpage based on these materials so students can quickly and enjoyably review and master each knowledge point. Please help me design and deploy this webpage. Treat each page or every 2 pages of the PDF as one topic and organize by topic. For each topic, add interactive exercises with instant feedback and a wrong-answer book with statistics. Also generate a knowledge graph for each topic and integrate text-to-speech. Deploy the code to GitHub and host the webpage using GitHub Pages.
+
+
+If you produce any output files (images, plots, GIFs, downloads, exports), save them under `/logs/artifacts/` so they can be collected after the run.
