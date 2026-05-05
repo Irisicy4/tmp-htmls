@@ -130,6 +130,8 @@ def _build_observations_text(observations: list[dict]) -> str:
             lines.append(f"Page title: {obs['title']}")
         if obs.get("error"):
             lines.append(f"Error: {obs['error']}")
+        if obs.get("page_text"):
+            lines.append(f"Page content:\n{obs['page_text']}")
         if obs.get("screenshot_b64"):
             lines.append("[Screenshot attached]")
         lines.append("")
@@ -197,7 +199,7 @@ def _call_gpt4o(
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": content}],
-        max_tokens=512,
+        max_tokens=1024,
     )
     return _parse_gpt_response(response.choices[0].message.content)
 
@@ -207,12 +209,18 @@ async def _navigate_single_url(page, url: str, timeout_ms: int = 15000) -> dict:
     try:
         await page.goto(url, timeout=timeout_ms, wait_until="networkidle")
         title = await page.title()
+        try:
+            page_text = await page.inner_text("body")
+            page_text = page_text[:8000]  # trim — important content is near the top
+        except Exception:
+            page_text = ""
         screenshot_bytes = await page.screenshot()
         screenshot_b64 = base64.b64encode(screenshot_bytes).decode()
         return {
             "url": url,
             "status": "loaded",
             "title": title,
+            "page_text": page_text,
             "screenshot_b64": screenshot_b64,
             "error": None,
         }
@@ -221,6 +229,7 @@ async def _navigate_single_url(page, url: str, timeout_ms: int = 15000) -> dict:
             "url": url,
             "status": "error",
             "title": None,
+            "page_text": "",
             "screenshot_b64": None,
             "error": str(exc),
         }
