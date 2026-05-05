@@ -1,1 +1,4 @@
 Choose a bag suitable for a 20-year-old. From these four brands (OUTDOOR, GREGORY, COLEMAN, MARIMEKKO) find backpacks under 15,000 yen. Search on Amazon, pay attention to price, and after searching report the product names.
+
+
+If you produce any output files (images, plots, GIFs, downloads, exports), save them under `/logs/artifacts/` so they can be collected after the run.

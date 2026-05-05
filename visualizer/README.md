@@ -24,20 +24,27 @@ A web-based visualization tool for viewing agent execution traces, similar to UI
 
 ## Usage
 
-1. **Start the visualization server**:
+1. **(Optional) Download a run from the Modal volume** if it isn't local yet:
    ```bash
-   python visualizer/server.py --data-dir results/modal/ --port 8085
+   modal volume ls  evolve-bench-results /                 # list all runs
+   modal volume get evolve-bench-results /<run-name> results/ --force
    ```
 
-2. **Open your browser** and navigate to:
+2. **Start the visualization server**, pointing it at a run folder:
+   ```bash
+   python visualizer/server.py --data-dir results/<run-name> --port 8081
    ```
-   http://localhost:8085
+   Useful flags:
+   - `--compare-dir results/<other-run>` — side-by-side comparison of two runs
+   - `--host 0.0.0.0` — bind on all interfaces (default is `localhost`)
+
+3. **Open your browser** and navigate to:
+   ```
+   http://localhost:8081
    ```
 
-3. **Select a result file** from the dropdown in the header
-
-4. **Navigate through the trace**:
-   - Click on any action/think block in the left panel to view details
+4. **Select a trial** from the left-panel dropdown and **navigate the trace**:
+   - Click any think / action / observation block to inspect it on the right
    - Use playback controls to step through the execution
    - Drag the progress bar to jump to any step
 
