@@ -4,11 +4,10 @@ CocoaAgent is pre-installed in the Docker image — no install step needed.
 Harness files live in /harness/ inside the container.
 """
 import json
-import shlex
 import os
-from pathlib import Path
+import shlex
 
-from harbor.agents.installed.base import BaseInstalledAgent, ExecInput
+from harbor.agents.installed.base import BaseInstalledAgent, with_prompt_template
 from harbor.environments.base import BaseEnvironment
 from harbor.models.agent.context import AgentContext
 
@@ -21,21 +20,27 @@ DEFAULT_CONFIG = "/harness/configs/harbor-config.json"
 class CocoaHarborAgent(BaseInstalledAgent):
     """Wraps CocoaAgent as a Harbor InstalledAgent."""
 
+    # run_task.py writes /logs/agent/trajectory.json (ATIF-shaped) + cocoa-agent.txt
+    SUPPORTS_ATIF: bool = True
+
     @staticmethod
     def name() -> str:
         return "cocoa-agent"
 
-    @property
-    def _install_agent_template_path(self) -> Path:
-        # Required by BaseInstalledAgent but unused — we override setup() to skip install
-        return Path(__file__).resolve()
+    async def install(self, environment: BaseEnvironment) -> None:
+        """Cocoa harness and runtime are baked into the task image."""
+        pass
 
-    async def setup(self, environment: BaseEnvironment) -> None:
-        """Skip install — CocoaAgent is pre-installed in the Docker image."""
-        await environment.exec(command="mkdir -p /installed-agent")
-
-    def create_run_agent_commands(self, instruction: str) -> list[ExecInput]:
-        config_path = getattr(self, "COCOA_CONFIG", None) or os.environ.get("COCOA_CONFIG", DEFAULT_CONFIG)
+    @with_prompt_template
+    async def run(
+        self,
+        instruction: str,
+        environment: BaseEnvironment,
+        context: AgentContext,
+    ) -> None:
+        config_path = getattr(self, "COCOA_CONFIG", None) or os.environ.get(
+            "COCOA_CONFIG", DEFAULT_CONFIG
+        )
         task_name = os.environ.get("HARBOR_TASK_NAME", "harbor-task")
 
         cmd = (
@@ -47,12 +52,25 @@ class CocoaHarborAgent(BaseInstalledAgent):
         )
 
         env: dict[str, str] = {}
-        for key in ("OPENAI_API_KEY", "OPENAI_BASE_URL", "LLM_BASE_URL", "LLM_MODEL", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "COCOA_MAX_ITERATIONS"):
+        for key in (
+            "OPENAI_API_KEY",
+            "OPENAI_BASE_URL",
+            "LLM_BASE_URL",
+            "LLM_MODEL",
+            "ANTHROPIC_API_KEY",
+            "GEMINI_API_KEY",
+            "COCOA_MAX_ITERATIONS",
+            "COCOA_LOG_LEVEL",
+            "HARBOR_COCOA_LOG_LEVEL",
+            "HARBOR_KEEP_RESULT_IMAGES",
+        ):
             val = getattr(self, key, None) or os.environ.get(key, "")
             if val:
                 env[key] = str(val)
+        if self.model_name:
+            env["LLM_MODEL"] = str(self.model_name)
 
-        return [ExecInput(command=cmd, env=env or None)]
+        await self.exec_as_agent(environment, command=cmd, env=env or None)
 
     def populate_context_post_run(self, context: AgentContext) -> None:
         result_path = self.logs_dir / "result.json"
