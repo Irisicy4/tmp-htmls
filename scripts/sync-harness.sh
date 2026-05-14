@@ -64,6 +64,12 @@ for env_dir in tasks/*/task-*/environment; do
         cp skills/*.md "$env_dir/skills/"
     fi
 
+    # Ensure environment/data/ exists with a placeholder so the Dockerfile's
+    # `COPY data/ /app/data/` succeeds even when the task has no input files.
+    # Tasks with real input data keep their files; the .keep is just a placeholder.
+    mkdir -p "$env_dir/data"
+    [ -f "$env_dir/data/.keep" ] || touch "$env_dir/data/.keep"
+
     count=$((count + 1))
 done
 

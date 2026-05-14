@@ -17,4 +17,7 @@ COPY adapters/ /harness/adapters/
 COPY configs/ /harness/configs/
 COPY skills/ /skills/
 
+# --- Task input data ---
+COPY data/ /app/data/
+
 WORKDIR /harness

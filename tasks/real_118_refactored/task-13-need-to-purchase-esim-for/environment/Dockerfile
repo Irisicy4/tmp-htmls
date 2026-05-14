@@ -17,4 +17,7 @@ COPY adapters/ /harness/adapters/
 COPY configs/ /harness/configs/
 COPY skills/ /skills/
 
+# --- Task input data (empty placeholder by default; populate environment/data/ for input files) ---
+COPY data/ /app/data/
+
 WORKDIR /harness
