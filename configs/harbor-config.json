@@ -1,6 +1,6 @@
 {
   "agent_type": "cocoa",
-  "log_level": "INFO",
+  "log_level": "DEBUG",
   "controller": {
     "type": "gpt",
     "args": {
@@ -12,7 +12,7 @@
   "sandbox": {
     "client_type": "unified",
     "docker_port": 8080,
-    "max_iterations": 50,
+    "max_iterations": 100,
     "skip_docker": true,
     "cookies_dir": "/tmp/cookies"
   }
