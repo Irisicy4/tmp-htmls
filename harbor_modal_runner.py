@@ -510,7 +510,7 @@ async def _run_cocoa_in_sandbox(harbor_env, task_name: str, instruction: str, ag
         "sandbox": {
             "client_type": "unified",
             "docker_port": 8080,
-            "max_iterations": 50,
+            "max_iterations": 100,
             "skip_docker": True,
             "cookies_dir": "/tmp/cookies",
         },

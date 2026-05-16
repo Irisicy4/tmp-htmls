@@ -13,6 +13,8 @@ import json
 import logging
 import os
 import sys
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -94,6 +96,18 @@ def apply_env_overrides(config: dict) -> dict:
         except ValueError:
             pass
 
+    return config
+
+
+def apply_log_level_env_override(config: dict) -> dict:
+    """Let host/container env override JSON `log_level` (e.g. DEBUG for per-iteration detail)."""
+    override = (
+        os.environ.get("COCOA_LOG_LEVEL")
+        or os.environ.get("HARBOR_COCOA_LOG_LEVEL")
+        or ""
+    ).strip()
+    if override:
+        config["log_level"] = override
     return config
 
 
@@ -258,7 +272,145 @@ def _strip_images(result: dict) -> dict:
 def _write_result(path: str, result: dict) -> None:
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(_strip_images(result), indent=2))
+    keep_images = os.environ.get("HARBOR_KEEP_RESULT_IMAGES", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    payload = result if keep_images else _strip_images(result)
+    out.write_text(json.dumps(payload, indent=2))
+
+
+class _TeeTextIO:
+    """Duplicate stdout/stderr to a log file (Harbor-style agent transcript)."""
+
+    def __init__(self, *files):
+        self._files = files
+
+    def write(self, data: str) -> int:
+        for f in self._files:
+            f.write(data)
+            f.flush()
+        return len(data)
+
+    def flush(self) -> None:
+        for f in self._files:
+            f.flush()
+
+
+def _utc_ts() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _trace_entry_message(entry: dict, max_feedback: int = 6000) -> str:
+    action = entry.get("action", {})
+    feedback = entry.get("feedback", {})
+    atype = action.get("action_type", "unknown")
+    lines = [f"Tool/action: {atype}"]
+    for k, v in action.items():
+        if k in ("action_type", "tool_call_id"):
+            continue
+        vs = str(v)
+        if len(vs) > 800:
+            vs = vs[:800] + "..."
+        lines.append(f"  {k}: {vs}")
+    full_msg = feedback.get("message", "") or ""
+    msg = full_msg
+    if len(msg) > max_feedback:
+        msg = msg[:max_feedback] + f"... [truncated, {len(full_msg)} chars total]"
+    lines.append(f"Result: {msg}")
+    return "\n".join(lines)
+
+
+def _build_atif_trajectory(result: dict, instruction: str, task_name: str) -> dict:
+    """Minimal ATIF-v1.6-shaped JSON for Harbor viewers + trajectory.json fallbacks."""
+    session_id = f"cocoa-{task_name}-{uuid.uuid4().hex[:12]}"
+    model = os.environ.get("LLM_MODEL") or os.environ.get("OPENAI_MODEL")
+    steps: list[dict] = []
+    sid = 1
+    steps.append(
+        {
+            "step_id": sid,
+            "source": "user",
+            "message": instruction,
+            "timestamp": _utc_ts(),
+        }
+    )
+    sid += 1
+    for entry in result.get("execution_trace") or []:
+        steps.append(
+            {
+                "step_id": sid,
+                "source": "agent",
+                "message": _trace_entry_message(entry),
+                "timestamp": _utc_ts(),
+            }
+        )
+        sid += 1
+    task_result = (result.get("task_result") or "").strip()
+    if task_result:
+        steps.append(
+            {
+                "step_id": sid,
+                "source": "agent",
+                "message": task_result,
+                "timestamp": _utc_ts(),
+            }
+        )
+        sid += 1
+    elif result.get("status") == "error":
+        err = (result.get("error") or "unknown error").strip()
+        steps.append(
+            {
+                "step_id": sid,
+                "source": "agent",
+                "message": f"Run failed: {err}",
+                "timestamp": _utc_ts(),
+            }
+        )
+        sid += 1
+    elif len(steps) == 1:
+        steps.append(
+            {
+                "step_id": sid,
+                "source": "agent",
+                "message": "No tool trace or task_result recorded.",
+                "timestamp": _utc_ts(),
+            }
+        )
+        sid += 1
+
+    cost = result.get("api_cost_stats") or {}
+    final_metrics = None
+    if cost:
+        final_metrics = {
+            "total_prompt_tokens": cost.get("total_input_tokens"),
+            "total_completion_tokens": cost.get("total_output_tokens"),
+            "total_cost_usd": cost.get("total_cost_usd"),
+            "total_steps": len(steps),
+        }
+
+    return {
+        "schema_version": "ATIF-v1.6",
+        "session_id": session_id,
+        "agent": {
+            "name": "cocoa-agent",
+            "version": "1.0.0",
+            "model_name": model,
+        },
+        "steps": steps,
+        "final_metrics": final_metrics,
+        "notes": "Synthesized by harness/run_task.py from Cocoa execution_trace + task_result.",
+    }
+
+
+def _write_trajectory(output_path: Path, result: dict, instruction: str, task_name: str) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    traj = _build_atif_trajectory(result, instruction, task_name)
+    (output_path.parent / "trajectory.json").write_text(
+        json.dumps(traj, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -273,57 +425,77 @@ def main():
     parser.add_argument("--output", default="/logs/agent/result.json")
     args = parser.parse_args()
 
-    with open(args.config) as f:
-        config = json.load(f)
+    out_path = Path(args.output)
+    log_path = out_path.parent / "cocoa-agent.txt"
+    _orig_out, _orig_err = sys.stdout, sys.stderr
+    log_f = open(log_path, "w", encoding="utf-8")
+    try:
+        sys.stdout = _TeeTextIO(_orig_out, log_f)
+        sys.stderr = _TeeTextIO(_orig_err, log_f)
 
-    config = apply_env_overrides(config)
+        with open(args.config) as f:
+            config = json.load(f)
 
-    agent_type = config.get("agent_type", "cocoa")
+        config = apply_env_overrides(config)
+        config = apply_log_level_env_override(config)
 
-    # Logging: use cocoa's setup for cocoa agent, standard logging otherwise
-    if agent_type == "cocoa":
-        from adapters.cocoa_adapter import setup_logging
-        setup_logging(config.get("log_level", "INFO"))
-    else:
-        logging.basicConfig(
-            level=getattr(logging, config.get("log_level", "INFO").upper(), logging.INFO),
-            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        )
+        agent_type = config.get("agent_type", "cocoa")
 
-    # Browser-based agents need the sandbox; pure-API agents don't
-    if agent_type in _SANDBOX_AGENTS:
-        sandbox_url = "http://localhost:8080"
-        print(f"Waiting for sandbox at {sandbox_url}...")
-        if not wait_for_sandbox(sandbox_url):
-            result = {"status": "error", "error": "Sandbox did not become ready", "task_name": args.task_name}
-            _write_result(args.output, result)
-            sys.exit(1)
-        print("Sandbox ready.")
-        try:
-            from seed_browser import seed_sandbox_browser
-            seed_res = seed_sandbox_browser(sandbox_url)
-            print(f"[seed_browser] {seed_res}")
-        except Exception as e:
-            print(f"[seed_browser] skipped: {type(e).__name__}: {e}")
-    else:
-        print(f"Agent type '{agent_type}' does not use the sandbox — skipping wait.")
+        # Logging: use cocoa's setup for cocoa agent, standard logging otherwise
+        if agent_type == "cocoa":
+            from adapters.cocoa_adapter import setup_logging
+            setup_logging(config.get("log_level", "DEBUG"))
+        else:
+            logging.basicConfig(
+                level=getattr(logging, config.get("log_level", "INFO").upper(), logging.INFO),
+                format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+            )
 
-    agent = create_agent(config)
+        # Browser-based agents need the sandbox; pure-API agents don't
+        if agent_type in _SANDBOX_AGENTS:
+            sandbox_url = "http://localhost:8080"
+            print(f"Waiting for sandbox at {sandbox_url}...")
+            if not wait_for_sandbox(sandbox_url):
+                result = {
+                    "status": "error",
+                    "error": "Sandbox did not become ready",
+                    "task_name": args.task_name,
+                }
+                _write_result(args.output, result)
+                _write_trajectory(out_path, result, args.instruction, args.task_name)
+                print(f"Result written to {args.output}")
+                sys.exit(1)
+            print("Sandbox ready.")
+            try:
+                from seed_browser import seed_sandbox_browser
+                seed_res = seed_sandbox_browser(sandbox_url)
+                print(f"[seed_browser] {seed_res}")
+            except Exception as e:
+                print(f"[seed_browser] skipped: {type(e).__name__}: {e}")
+        else:
+            print(f"Agent type '{agent_type}' does not use the sandbox — skipping wait.")
 
-    task = {
-        "task_name": args.task_name,
-        "instruction": args.instruction,
-        "description": args.instruction,
-        "task_dir": "/tmp",
-        "use_encrypted": False,
-    }
+        agent = create_agent(config)
 
-    # Phase 2: inject skills into instruction (agent-agnostic)
-    task = maybe_inject_skills(task, config)
+        task = {
+            "task_name": args.task_name,
+            "instruction": args.instruction,
+            "description": args.instruction,
+            "task_dir": "/tmp",
+            "use_encrypted": False,
+        }
 
-    result = run_agent_task(agent, task)
-    _write_result(args.output, result)
-    print(f"Result written to {args.output}")
+        # Phase 2: inject skills into instruction (agent-agnostic)
+        task = maybe_inject_skills(task, config)
+
+        result = run_agent_task(agent, task)
+        _write_result(args.output, result)
+        _write_trajectory(out_path, result, args.instruction, args.task_name)
+        print(f"Result written to {args.output}")
+    finally:
+        sys.stdout = _orig_out
+        sys.stderr = _orig_err
+        log_f.close()
 
 
 if __name__ == "__main__":
