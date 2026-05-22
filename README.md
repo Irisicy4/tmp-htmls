@@ -47,10 +47,52 @@ python visualizer/server.py --data-dir results/<run-tag> --port 8085
 # open http://localhost:8085
 ```
 
+## Running Agent Judging Separately
+
+`harness/rejudge_n_times.py` allows LLM judges to be run on already-collected agent
+traces which can be useful for reproducibility, reliability, and robustness checks. Inputs are held fixed per task; only the
+judge call varies. This implementation is stand-alone from the main pipeline. We show a default configuration below:
+
+```bash
+python harness/rejudge_n_times.py \
+  --source cocoa-deprivacy-100 \
+  --results-root results \
+  --tasks-root tasks/updated-deprivacy-100 \
+  --out-dir results/judge_variance \
+  --n-calls 5 \
+  --judge-models gpt-4o,claude-sonnet-4-20250514 \
+  --temperature 1.0 \
+  --workers 8
+```
+
+This reads agent traces from `results/<source>/trials/<task>/` with priority:
+`agent/result.json` → `agent_result.json` → `result.json`. It reads the rubric
+from `tasks/<tasks-root>/<task>/tests/test_task.py`. Requires `OPENAI_API_KEY`
+and `LLM_BASE_URL` (or `OPENAI_BASE_URL`) in `.env`.
+
+**Outputs** (`results/judge_variance/`):
+
+| File | One row per | Key fields |
+|---|---|---|
+| `<source>_runs.jsonl` | (task, judge_model, call_index) | `raw_response`, `dimension_scores`, `overall_score`, `passed`, `pass_threshold`, `dimension_weights`, `input_hash`, errors, timing |
+| `<source>_inputs.jsonl` | task | `system_prompt`, `user_content`, `input_hash`, `rubric_flavor`, dimension metadata |
+| `<source>_summary.json` | run | judges, n_calls, temperature, counts, paths |
+
+The `input_hash` is a sha256 of `(system_prompt || user_content)` to make sure judgements are matched.
+
+The script is **resumable** in the sense that `(task, judge_model, call_index)` triples already
+present in `runs.jsonl` are skipped.
+
+**Rubric flavors.** Two formats are auto-detected in `test_task.py`:
+- **A** (94 tasks in `updated-deprivacy-100`): `SYSTEM_PROMPT` + `USER_PROMPT_TEMPLATE` + `DIMENSION_WEIGHTS`; judge returns JSON inside `<Answer>...</Answer>`.
+- **B** (6 tasks): single `RUBRIC` string + `DIMENSIONS` list; weights parsed out of rubric text via regex; judge returns bare JSON.
+
+Score parsing tries `<Answer>` tags first, then `json` fences, then raw, then a `{...}` substring. `overall_score` is recomputed from `dimension_scores × dimension_weights` when all dimensions parse; otherwise the judge-reported `overall_score` is used.
+
 ## Layout
 
 - `harbor_modal_runner.py` / `trigger_harbor.py` — Modal orchestrator + trigger
-- `harness/` — code injected into task envs (`run_judge.py`, `test.sh`, `evaluator.py`, agent adapters)
+- `harness/` — code injected into task envs (`run_judge.py`, `test.sh`, `evaluator.py`, agent adapters) plus the post-hoc `rejudge_n_times.py` analysis tool
 - `tasks/` — task suites (`real_118_refactored/`, `updated-deprivacy-100/`, …); each task has `instruction.md`, `task.toml`, `environment/Dockerfile`, `tests/test_task.py`
 - `agentic_judge/` — browser-verifying judge (optional)
 - `visualizer/` — interactive trace viewer
