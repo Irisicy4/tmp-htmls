@@ -4,6 +4,7 @@
 # (plus judge_runs.json + feedback.txt) into /logs/verifier/.
 #
 # JUDGE_RUNS controls variance studies — default 1, set higher to sample.
+# JUDGE_MODEL and JUDGE_TEMPERATURE optionally override judge defaults.
 set -euo pipefail
 
 TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,8 +20,13 @@ if [ -z "${PYTHON:-}" ]; then
 fi
 
 mkdir -p /logs/verifier
-"$PYTHON" /harness/run_judge.py \
-    --tests-dir "$TESTS_DIR" \
-    --agent-result /logs/agent/agent_result.json \
-    --output-dir /logs/verifier \
+ARGS=(
+    --tests-dir "$TESTS_DIR"
+    --agent-result /logs/agent/agent_result.json
+    --output-dir /logs/verifier
     --n-runs "${JUDGE_RUNS:-1}"
+)
+[ -n "${JUDGE_MODEL:-}" ] && ARGS+=(--model "$JUDGE_MODEL")
+[ -n "${JUDGE_TEMPERATURE:-}" ] && ARGS+=(--temperature "$JUDGE_TEMPERATURE")
+
+"$PYTHON" /harness/run_judge.py "${ARGS[@]}"

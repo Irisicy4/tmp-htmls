@@ -26,6 +26,7 @@ Usage (inside the task environment):
 import argparse
 import importlib.util
 import json
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -100,7 +101,14 @@ def main():
     parser.add_argument("--agent-result", required=True, help="Path to a JSON file with the parsed agent output")
     parser.add_argument("--output-dir", required=True, help="Directory to write reward.json, judge_runs.json, feedback.txt")
     parser.add_argument("--n-runs", type=int, default=1, help="Number of judge calls (for variance studies)")
+    parser.add_argument("--model", default=None, help="Judge model. Overrides LLM_MODEL.")
+    parser.add_argument("--temperature", type=float, default=None, help="Judge temperature. Overrides LLM_TEMPERATURE.")
     args = parser.parse_args()
+
+    if args.model is not None:
+        os.environ["LLM_MODEL"] = args.model
+    if args.temperature is not None:
+        os.environ["LLM_TEMPERATURE"] = str(args.temperature)
 
     sys.path.insert(0, "/harness")
 
