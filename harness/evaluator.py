@@ -4,7 +4,7 @@ import re
 
 PASS_THRESHOLD = 3.0
 DEFAULT_MODEL = os.environ.get("LLM_MODEL", "gpt-4.1-mini")
-DEFAULT_TEMPERATURE = 0.0
+DEFAULT_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.0"))
 
 SYSTEM_PROMPT = (
     "You are an expert evaluator for AI agent benchmarks. "
@@ -56,14 +56,30 @@ def _call_judge(prompt: str, temperature: float, model: str) -> dict | None:
             max_tokens=1500,
         )
         raw = response.choices[0].message.content or ""
-        return _parse_answer_tag(raw)
+        parsed = _parse_answer_tag(raw)
+        if parsed is None:
+            return {
+                "error": "Judge returned no parseable output.",
+                "raw_response": raw,
+                "model": model,
+                "temperature": temperature,
+            }
+        parsed["raw_response"] = raw
+        parsed["model"] = model
+        parsed["temperature"] = temperature
+        return parsed
     except Exception as e:
-        return {"error": str(e)}
+        return {
+            "error": str(e),
+            "raw_response": "",
+            "model": model,
+            "temperature": temperature,
+        }
 
 
 def _failed_result(feedback: str, agent_response: str = "", model: str = DEFAULT_MODEL,
                    temperature: float = DEFAULT_TEMPERATURE, call_index: int = 1,
-                   task_completed: bool = False) -> dict:
+                   task_completed: bool = False, judge_calls: list | None = None) -> dict:
     return {
         "passed": False,
         "feedback": feedback,
@@ -78,6 +94,7 @@ def _failed_result(feedback: str, agent_response: str = "", model: str = DEFAULT
             "temperature": temperature,
             "call_index": call_index,
             "task_completed": task_completed,
+            "judge_calls": judge_calls or [],
         },
     }
 
@@ -119,6 +136,7 @@ def evaluate(
             temperature=temperature,
             call_index=call_index,
             task_completed=result.get("status") == "success",
+            judge_calls=[judge_output] if isinstance(judge_output, dict) else [],
         )
 
     dimension_scores = {dim: judge_output[dim] for dim in dimension_weights if dim in judge_output}
@@ -159,6 +177,18 @@ def evaluate(
             "temperature": temperature,
             "call_index": call_index,
             "task_completed": result.get("status") == "success",
+            "judge_calls": [
+                {
+                    "raw_response": judge_output.get("raw_response", ""),
+                    "parsed_response": {
+                        k: v for k, v in judge_output.items()
+                        if k not in {"raw_response", "model", "temperature"}
+                    },
+                    "model": judge_output.get("model", model),
+                    "temperature": judge_output.get("temperature", temperature),
+                    "call_index": call_index,
+                }
+            ],
         },
     }
 
@@ -245,9 +275,26 @@ def _judge_call(system_prompt: str, user_prompt: str, model: str, temperature: f
             temperature=temperature,
             max_tokens=1500,
         )
-        return _parse_answer_tag(resp.choices[0].message.content or "")
+        raw = resp.choices[0].message.content or ""
+        parsed = _parse_answer_tag(raw)
+        if parsed is None:
+            return {
+                "error": "Judge returned no parseable output.",
+                "raw_response": raw,
+                "model": model,
+                "temperature": temperature,
+            }
+        parsed["raw_response"] = raw
+        parsed["model"] = model
+        parsed["temperature"] = temperature
+        return parsed
     except Exception as e:
-        return {"error": str(e)}
+        return {
+            "error": str(e),
+            "raw_response": "",
+            "model": model,
+            "temperature": temperature,
+        }
 
 
 def _aggregate_votes(votes: list, dim_names: list, weights: dict) -> dict:
@@ -297,6 +344,7 @@ def run_judge(
     dim_names = list(dimension_weights.keys())
 
     first = _judge_call(system_prompt, user_prompt, model, temperature)
+    judge_calls = [first] if first else []
     if first and "error" not in first:
         overall = float(first.get("overall_score", 0))
         if abs(overall - PASS_THRESHOLD) <= 0.5:
@@ -304,6 +352,7 @@ def run_judge(
                 _judge_call(system_prompt, user_prompt, model, temperature),
                 _judge_call(system_prompt, user_prompt, model, temperature),
             ]
+            judge_calls.extend([call for call in extra_calls if call])
             scores = _aggregate_votes([first] + extra_calls, dim_names, dimension_weights)
         else:
             scores = first
@@ -339,5 +388,7 @@ def run_judge(
             "pass_threshold": PASS_THRESHOLD,
             "votes_used": scores.get("_votes_used", 1),
             "model": model,
+            "temperature": temperature,
+            "judge_calls": judge_calls,
         },
     }
