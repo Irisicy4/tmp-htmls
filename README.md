@@ -89,6 +89,43 @@ present in `runs.jsonl` are skipped.
 
 Score parsing tries `<Answer>` tags first, then `json` fences, then raw, then a `{...}` substring. `overall_score` is recomputed from `dimension_scores × dimension_weights` when all dimensions parse; otherwise the judge-reported `overall_score` is used.
 
+## Judge Reliability Analysis
+
+`analysis/rejudge_validity_analysis.py` consumes the `*_runs.jsonl` produced by
+`harness/rejudge_n_times.py` and computes pairwise TVD-MI on the binary
+verdict, pairwise TVD-MI on `overall_score` at the finest histogram available,
+Cohen's κ, and Cronbach's α. It writes three figures and a `report.md`.
+
+```bash
+# After running rejudge_n_times.py:
+python analysis/rejudge_validity_analysis.py \
+    --source cocoa-deprivacy-100 \
+    --rejudge-dir results/judge_variance \
+    --out-dir analysis/output
+
+# Smoke test (no API, synthesizes a small runs.jsonl):
+python analysis/rejudge_validity_analysis.py --smoke
+```
+
+**Interpretation.** TVD-MI(X;Y) = ½·Σ|P(X,Y) − P(X)P(Y)| equals the total
+variation distance between the joint and the product of marginals. By the
+variational characterisation of TV, ½·TVD-MI is the advantage over chance of
+an optimal classifier distinguishing same-task judgement pairs from
+independently-paired judgements. So welfare = 0.4 implies an optimal
+evaluator can distinguish same-trace from independently-paired judgements
+with accuracy 0.7.
+
+**Outputs** (`--out-dir`):
+
+| File | Contents |
+|---|---|
+| `mi_matrix.npy` | k×k pairwise TVD-MI on binary pass/fail |
+| `mi_matrix_fine.npy` | k×k pairwise TVD-MI on `overall_score` at finest histogram |
+| `figure_heatmap.png` | Heatmap of pairwise binary TVD-MI with per-model block dividers |
+| `figure_reliability.png` | Per-annotator mean off-diagonal welfare (bar chart) |
+| `figure_passdist.png` | Histogram of pass votes per task |
+| `report.md` | Numbers and figure links; per-model and cross-model blocks |
+
 ## Layout
 
 - `harbor_modal_runner.py` / `trigger_harbor.py` — Modal orchestrator + trigger
