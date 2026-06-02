@@ -31,11 +31,19 @@ MARKER = "<!-- agentic_judge.grounded addendum -->"
 
 SHIM_TEMPLATE = '''"""Grounded-judge shim — delegates to
 agentic_judge.grounded.framework.grounded_judge_test using the per-task spec
-{spec_module}."""
+{spec_module}.
+
+TASK_INSTRUCTION is a triple-quoted string copy of instruction.md (body +
+agentic_judge.grounded addendum) so that scripts_batch/deprivacy_modal_runner.py
+can extract it via AST and feed it to the agent unchanged.
+"""
 from importlib import import_module
 
 
 _SPEC_MODULE = "{spec_module}"
+
+
+TASK_INSTRUCTION = {instruction_literal}
 
 
 def test(result: dict) -> dict:
@@ -65,11 +73,21 @@ def apply(task_dir: str, spec_module: str) -> None:
     else:
         print(f"  instruction.md: marker present, skipping addendum")
 
-    # 2) Replace tests/test_task.py
+    # 2) Replace tests/test_task.py with a shim that embeds the FULL
+    # instruction.md (so the Modal runner's ast.literal_eval extraction
+    # gives the agent the addendum).  Use repr() to produce a clean
+    # python string literal regardless of quote/escape contents.
+    full_instruction = inst.read_text(encoding="utf-8")
     new_tp = tests_dir / "test_task.py"
-    new_tp.write_text(SHIM_TEMPLATE.format(spec_module=spec_module),
-                       encoding="utf-8")
-    print(f"  tests/test_task.py: replaced with grounded shim ({spec_module})")
+    new_tp.write_text(
+        SHIM_TEMPLATE.format(
+            spec_module=spec_module,
+            instruction_literal=repr(full_instruction),
+        ),
+        encoding="utf-8",
+    )
+    print(f"  tests/test_task.py: replaced with grounded shim ({spec_module}, "
+          f"{len(full_instruction)} chars of TASK_INSTRUCTION)")
 
 
 def main() -> int:
