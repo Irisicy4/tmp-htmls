@@ -414,15 +414,28 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                     'if [ ! -f "$WRAPPER_DIR/codex.real" ]; then\n'
                     '  mv "$REAL" "$WRAPPER_DIR/codex.real"\n'
                     'fi\n'
-                    'cat > "$WRAPPER_DIR/codex" << WRAPEOF\n'
+                    # Two-step: write the wrapper with WRAPPER_DIR substituted
+                    # via sed, but use single-quoted heredoc body so $@ etc.
+                    # are deferred to runtime.
+                    "cat > \"$WRAPPER_DIR/codex\" << 'WRAPEOF'\n"
                     '#!/bin/bash\n'
-                    '# chatgpt-mode wrapper: strip API-key envs so codex\n'
-                    '# falls back to $CODEX_HOME/auth.json.\n'
+                    '# chatgpt-mode wrapper for codex.\n'
+                    '# 1. Strip API-key envs so codex falls back to auth.json.\n'
+                    '# 2. Allocate a pty via script(1) — codex 0.136 in\n'
+                    '#    subscription mode fails with "stdin is not a\n'
+                    "#    terminal\" when isatty(stdin) is false, which is\n"
+                    '#    the case under harbor (`</dev/null`).\n'
                     'unset OPENAI_API_KEY\n'
                     'unset OPENAI_BASE_URL\n'
-                    f'export CODEX_HOME={codex_home}\n'
-                    'exec "$WRAPPER_DIR/codex.real" "$@"\n'
+                    'export CODEX_HOME=__CODEX_HOME__\n'
+                    'REAL_BIN="__REAL_BIN__"\n'
+                    'CMD=$(printf "%q " "$REAL_BIN" "$@")\n'
+                    'exec script -qefc "$CMD" /dev/null\n'
                     'WRAPEOF\n'
+                    # Substitute the two placeholders with real values
+                    f"sed -i \"s|__CODEX_HOME__|{codex_home}|g; "
+                    "s|__REAL_BIN__|$WRAPPER_DIR/codex.real|g\" "
+                    "\"$WRAPPER_DIR/codex\"\n"
                     'chmod +x "$WRAPPER_DIR/codex"\n'
                     'echo "[proxy] codex wrapper installed -> $WRAPPER_DIR/codex (real at $WRAPPER_DIR/codex.real)"\n'
                 )
