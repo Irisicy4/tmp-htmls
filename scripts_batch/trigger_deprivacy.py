@@ -65,6 +65,16 @@ _DEFAULT_MODELS = {
     "aider": "gpt-4.1-mini",
 }
 
+# When codex runs in ChatGPT subscription mode (--codex-auth chatgpt), the
+# API-mode default (gpt-4.1-mini) is rejected by OpenAI with
+#   "The 'gpt-4.1-mini' model is not supported when using Codex with a
+#    ChatGPT account."
+# Use a model the ChatGPT subscription routes to instead.  gpt-5-codex is
+# the current default for `codex` CLI in subscription mode.
+_DEFAULT_MODELS_CHATGPT = {
+    "codex": "gpt-5-codex",
+}
+
 
 def _build_agent_kwargs(agent_name: str, model: str) -> dict:
     extra_env: dict[str, str] = {}
@@ -124,9 +134,22 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
         if uniapi_base:
             extra_env["GEMINI_API_BASE_URL"] = f"{uniapi_base}/gemini"
 
-    # Model: use explicit --model, or env LLM_MODEL, or default for agent
+    # Model: use explicit --model, or env LLM_MODEL, or default for agent.
+    # In codex chatgpt mode, prefer the chatgpt-allowed default (gpt-5-codex)
+    # over the API-mode default (gpt-4.1-mini) which OpenAI rejects with
+    # "The '<model>' model is not supported when using Codex with a
+    # ChatGPT account."
     if not model:
-        model = os.environ.get("LLM_MODEL", "") or _DEFAULT_MODELS.get(agent_name, "")
+        chatgpt_default = (
+            _DEFAULT_MODELS_CHATGPT.get(agent_name)
+            if extra_env.get("CODEX_AUTH_MODE") == "chatgpt"
+            else None
+        )
+        model = (
+            os.environ.get("LLM_MODEL", "")
+            or chatgpt_default
+            or _DEFAULT_MODELS.get(agent_name, "")
+        )
 
     # Always pass OPENAI_API_KEY + LLM_BASE_URL for the LLM judge,
     # regardless of which agent is running — EXCEPT in codex chatgpt mode,
