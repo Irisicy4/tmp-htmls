@@ -387,6 +387,9 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                 # 2) Install codex wrapper at /usr/local/bin/codex that unsets
                 #    OPENAI_API_KEY/OPENAI_BASE_URL, sets CODEX_HOME, then
                 #    exec's the real codex binary.
+                # codex is npm-installed via nvm; the parent shell of this
+                # exec doesn't have nvm on PATH, so source it before lookup.
+                # Also try common npm-global locations as a fallback.
                 wrapper_install = (
                     "set -e\n"
                     f"mkdir -p {codex_home!r}\n"
@@ -394,10 +397,20 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                     f"{auth_blob}\n"
                     "AUTHJSONEOF\n"
                     f"chmod 600 {codex_home + '/auth.json'!r}\n"
-                    # find the codex binary and rename it once
-                    'REAL=$(command -v codex || true)\n'
-                    'if [ -z "$REAL" ]; then echo "[proxy] codex binary not found in PATH"; exit 0; fi\n'
-                    'WRAPPER_DIR=$(dirname "$REAL")\n'
+                    'export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"\n'
+                    '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" >/dev/null 2>&1 || true\n'
+                    'REAL="$(command -v codex 2>/dev/null || true)"\n'
+                    'if [ -z "$REAL" ]; then\n'
+                    '  for cand in /root/.local/bin/codex /usr/local/bin/codex /usr/bin/codex '
+                    '"$NVM_DIR"/versions/node/*/bin/codex; do\n'
+                    '    [ -x "$cand" ] && REAL="$cand" && break\n'
+                    '  done\n'
+                    'fi\n'
+                    'if [ -z "$REAL" ]; then\n'
+                    '  echo "[proxy] codex binary not found in PATH (searched nvm + /root/.local/bin + /usr/local/bin)"\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'WRAPPER_DIR="$(dirname "$REAL")"\n'
                     'if [ ! -f "$WRAPPER_DIR/codex.real" ]; then\n'
                     '  mv "$REAL" "$WRAPPER_DIR/codex.real"\n'
                     'fi\n'
