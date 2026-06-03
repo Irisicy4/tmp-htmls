@@ -371,7 +371,11 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
         codex_home = EnvironmentPaths.agent_dir.as_posix()
         auth_mode = (extra_env.get("CODEX_AUTH_MODE") or "").lower()
 
-        # --- ChatGPT-subscription mode: write auth.json from the Modal Secret ---
+        # --- ChatGPT-subscription mode: write auth.json from the Modal Secret
+        # and install a codex wrapper that ensures OPENAI_API_KEY can't leak
+        # in and shadow the auth.json (harbor's CodexAgent reads
+        # OPENAI_API_KEY from os.environ and sets it on the codex subprocess
+        # env, which would otherwise force codex into API mode).
         if auth_mode == "chatgpt":
             import os as _os
             auth_blob = _os.environ.get("CODEX_AUTH_JSON", "")
@@ -379,21 +383,47 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                 print("  [proxy] CODEX_AUTH_MODE=chatgpt but CODEX_AUTH_JSON "
                       "secret is missing — codex will likely fail to authenticate")
             else:
-                # Heredoc with a sentinel that won't appear in JSON
-                write_cmd = (
-                    f'mkdir -p "{codex_home}" && '
-                    f"cat > \"{codex_home}/auth.json\" << 'AUTHJSONEOF'\n"
+                # 1) Write auth.json to {codex_home}/auth.json
+                # 2) Install codex wrapper at /usr/local/bin/codex that unsets
+                #    OPENAI_API_KEY/OPENAI_BASE_URL, sets CODEX_HOME, then
+                #    exec's the real codex binary.
+                wrapper_install = (
+                    "set -e\n"
+                    f"mkdir -p {codex_home!r}\n"
+                    f"cat > {codex_home + '/auth.json'!r} << 'AUTHJSONEOF'\n"
                     f"{auth_blob}\n"
-                    f"AUTHJSONEOF\n"
-                    f'chmod 600 "{codex_home}/auth.json"'
+                    "AUTHJSONEOF\n"
+                    f"chmod 600 {codex_home + '/auth.json'!r}\n"
+                    # find the codex binary and rename it once
+                    'REAL=$(command -v codex || true)\n'
+                    'if [ -z "$REAL" ]; then echo "[proxy] codex binary not found in PATH"; exit 0; fi\n'
+                    'WRAPPER_DIR=$(dirname "$REAL")\n'
+                    'if [ ! -f "$WRAPPER_DIR/codex.real" ]; then\n'
+                    '  mv "$REAL" "$WRAPPER_DIR/codex.real"\n'
+                    'fi\n'
+                    'cat > "$WRAPPER_DIR/codex" << WRAPEOF\n'
+                    '#!/bin/bash\n'
+                    '# chatgpt-mode wrapper: strip API-key envs so codex\n'
+                    '# falls back to $CODEX_HOME/auth.json.\n'
+                    'unset OPENAI_API_KEY\n'
+                    'unset OPENAI_BASE_URL\n'
+                    f'export CODEX_HOME={codex_home}\n'
+                    'exec "$WRAPPER_DIR/codex.real" "$@"\n'
+                    'WRAPEOF\n'
+                    'chmod +x "$WRAPPER_DIR/codex"\n'
+                    'echo "[proxy] codex wrapper installed -> $WRAPPER_DIR/codex (real at $WRAPPER_DIR/codex.real)"\n'
                 )
                 try:
-                    res = await harbor_env._sandbox.exec.aio("bash", "-c", write_cmd)
+                    res = await harbor_env._sandbox.exec.aio("bash", "-c", wrapper_install)
                     await res.wait.aio()
+                    stdout = await _read_stdout(res)
                     print(f"  [proxy] Wrote codex auth.json -> {codex_home} "
                           f"(ChatGPT subscription mode, {len(auth_blob)} bytes)")
+                    if stdout:
+                        for line in stdout.splitlines():
+                            print(f"  {line}")
                 except Exception as e:
-                    print(f"  [proxy] Failed to write codex auth.json: {e}")
+                    print(f"  [proxy] Failed to install codex chatgpt wrapper: {e}")
 
         # --- API-key mode: write config.toml pointing at OPENAI_BASE_URL ---
         elif openai_base:
