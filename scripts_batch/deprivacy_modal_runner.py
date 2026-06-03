@@ -387,15 +387,25 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                 # 2) Install codex wrapper at /usr/local/bin/codex that unsets
                 #    OPENAI_API_KEY/OPENAI_BASE_URL, sets CODEX_HOME, then
                 #    exec's the real codex binary.
+                # Two writes:
+                #   1. /opt/codex-chatgpt-auth.json  — install-time backup the
+                #      wrapper restores from at every run.  This is needed
+                #      because Harbor's run setup writes its own API-key
+                #      auth.json into $CODEX_HOME/auth.json right before the
+                #      agent runs (the trap that rm's it on EXIT proves it).
+                #   2. $CODEX_HOME/auth.json — initial copy in case codex
+                #      gets invoked outside the wrapper.
                 # codex is npm-installed via nvm; the parent shell of this
                 # exec doesn't have nvm on PATH, so source it before lookup.
-                # Also try common npm-global locations as a fallback.
                 wrapper_install = (
                     "set -e\n"
-                    f"mkdir -p {codex_home!r}\n"
-                    f"cat > {codex_home + '/auth.json'!r} << 'AUTHJSONEOF'\n"
+                    "mkdir -p /opt\n"
+                    "cat > /opt/codex-chatgpt-auth.json << 'AUTHJSONEOF'\n"
                     f"{auth_blob}\n"
                     "AUTHJSONEOF\n"
+                    "chmod 600 /opt/codex-chatgpt-auth.json\n"
+                    f"mkdir -p {codex_home!r}\n"
+                    f"cp /opt/codex-chatgpt-auth.json {codex_home + '/auth.json'!r}\n"
                     f"chmod 600 {codex_home + '/auth.json'!r}\n"
                     'export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"\n'
                     '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" >/dev/null 2>&1 || true\n'
@@ -421,13 +431,21 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                     "cat > \"$WRAPPER_DIR/codex\" << 'WRAPEOF'\n"
                     '#!/bin/bash\n'
                     '# chatgpt-mode wrapper for codex.\n'
-                    '# 1. Strip API-key envs so codex falls back to auth.json.\n'
-                    '# 2. Allocate a pty so isatty(stdin) returns true —\n'
+                    '# 1. Restore chatgpt auth.json from backup (harbor\'s\n'
+                    "#    run-setup overwrites $CODEX_HOME/auth.json with an\n"
+                    '#    API-key version right before the agent runs).\n'
+                    '# 2. Strip API-key envs so codex falls back to auth.json.\n'
+                    '# 3. Allocate a pty so isatty(stdin) returns true —\n'
                     '#    codex 0.136 in subscription mode otherwise bails\n'
                     "#    with 'Error: stdin is not a terminal'.\n"
+                    'export CODEX_HOME=__CODEX_HOME__\n'
+                    'if [ -f /opt/codex-chatgpt-auth.json ]; then\n'
+                    '  mkdir -p "$CODEX_HOME"\n'
+                    '  cp /opt/codex-chatgpt-auth.json "$CODEX_HOME/auth.json"\n'
+                    '  chmod 600 "$CODEX_HOME/auth.json"\n'
+                    'fi\n'
                     'unset OPENAI_API_KEY\n'
                     'unset OPENAI_BASE_URL\n'
-                    'export CODEX_HOME=__CODEX_HOME__\n'
                     'exec python3 - "__REAL_BIN__" "$@" << \'PYEOF\'\n'
                     'import os, pty, sys\n'
                     'argv = sys.argv[1:]\n'

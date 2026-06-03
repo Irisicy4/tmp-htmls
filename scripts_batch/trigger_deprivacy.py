@@ -129,13 +129,23 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
         model = os.environ.get("LLM_MODEL", "") or _DEFAULT_MODELS.get(agent_name, "")
 
     # Always pass OPENAI_API_KEY + LLM_BASE_URL for the LLM judge,
-    # regardless of which agent is running
+    # regardless of which agent is running — EXCEPT in codex chatgpt mode,
+    # where any OPENAI_API_KEY in the agent env shadows the auth.json and
+    # forces codex back into API mode (causing 401s when the key isn't
+    # OpenAI-native).  The judge env in task.toml [verifier.env] reads from
+    # OPENAI_API_KEY_JUDGE in that case.
     judge_key = os.environ.get("OPENAI_API_KEY", "")
     judge_base = os.environ.get("LLM_BASE_URL", "")
-    if judge_key:
-        extra_env.setdefault("OPENAI_API_KEY", judge_key)
-    if judge_base:
-        extra_env.setdefault("OPENAI_BASE_URL", judge_base)
+    if extra_env.get("CODEX_AUTH_MODE") == "chatgpt":
+        if judge_key:
+            extra_env.setdefault("OPENAI_API_KEY_JUDGE", judge_key)
+        if judge_base:
+            extra_env.setdefault("OPENAI_BASE_URL_JUDGE", judge_base)
+    else:
+        if judge_key:
+            extra_env.setdefault("OPENAI_API_KEY", judge_key)
+        if judge_base:
+            extra_env.setdefault("OPENAI_BASE_URL", judge_base)
 
     kwargs: dict = {}
     if extra_env:
