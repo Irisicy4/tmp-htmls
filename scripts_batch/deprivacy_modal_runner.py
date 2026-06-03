@@ -414,23 +414,27 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                     'if [ ! -f "$WRAPPER_DIR/codex.real" ]; then\n'
                     '  mv "$REAL" "$WRAPPER_DIR/codex.real"\n'
                     'fi\n'
-                    # Two-step: write the wrapper with WRAPPER_DIR substituted
-                    # via sed, but use single-quoted heredoc body so $@ etc.
-                    # are deferred to runtime.
+                    # Wrapper body in a single-quoted heredoc so $@ etc.
+                    # are deferred to runtime.  argv is forwarded verbatim
+                    # via pty.spawn (no shell re-parsing — the prompt has
+                    # `(no external deps)` parens that break /bin/sh -c).
                     "cat > \"$WRAPPER_DIR/codex\" << 'WRAPEOF'\n"
                     '#!/bin/bash\n'
                     '# chatgpt-mode wrapper for codex.\n'
                     '# 1. Strip API-key envs so codex falls back to auth.json.\n'
-                    '# 2. Allocate a pty via script(1) — codex 0.136 in\n'
-                    '#    subscription mode fails with "stdin is not a\n'
-                    "#    terminal\" when isatty(stdin) is false, which is\n"
-                    '#    the case under harbor (`</dev/null`).\n'
+                    '# 2. Allocate a pty so isatty(stdin) returns true —\n'
+                    '#    codex 0.136 in subscription mode otherwise bails\n'
+                    "#    with 'Error: stdin is not a terminal'.\n"
                     'unset OPENAI_API_KEY\n'
                     'unset OPENAI_BASE_URL\n'
                     'export CODEX_HOME=__CODEX_HOME__\n'
-                    'REAL_BIN="__REAL_BIN__"\n'
-                    'CMD=$(printf "%q " "$REAL_BIN" "$@")\n'
-                    'exec script -qefc "$CMD" /dev/null\n'
+                    'exec python3 - "__REAL_BIN__" "$@" << \'PYEOF\'\n'
+                    'import os, pty, sys\n'
+                    'argv = sys.argv[1:]\n'
+                    'rc = pty.spawn(argv)\n'
+                    'os.WIFEXITED(rc) and sys.exit(os.WEXITSTATUS(rc))\n'
+                    'sys.exit(1)\n'
+                    'PYEOF\n'
                     'WRAPEOF\n'
                     # Substitute the two placeholders with real values
                     f"sed -i \"s|__CODEX_HOME__|{codex_home}|g; "
