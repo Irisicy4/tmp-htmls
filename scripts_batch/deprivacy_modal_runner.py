@@ -449,7 +449,16 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
                     'exec python3 - "__REAL_BIN__" "$@" << \'PYEOF\'\n'
                     'import os, pty, sys\n'
                     'argv = sys.argv[1:]\n'
-                    'rc = pty.spawn(argv)\n'
+                    '# ChatGPT subscription rejects every explicit --model\n'
+                    "# value tested (gpt-4.1-mini / gpt-5 / gpt-5-codex).\n"
+                    '# Strip --model X so codex falls back to the chatgpt\n'
+                    "# subscription's own routing.\n"
+                    'i, filt = 0, []\n'
+                    'while i < len(argv):\n'
+                    '    if argv[i] == "--model" and i + 1 < len(argv):\n'
+                    '        i += 2; continue\n'
+                    '    filt.append(argv[i]); i += 1\n'
+                    'rc = pty.spawn(filt)\n'
                     'os.WIFEXITED(rc) and sys.exit(os.WEXITSTATUS(rc))\n'
                     'sys.exit(1)\n'
                     'PYEOF\n'
