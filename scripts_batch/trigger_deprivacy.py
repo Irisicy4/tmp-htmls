@@ -92,17 +92,27 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
             extra_env["ANTHROPIC_API_KEY"] = key
 
     elif agent_name in ("codex", "aider"):
-        key = os.environ.get("OPENAI_API_KEY", "")
-        base_url = os.environ.get("OPENAI_BASE_URL", "") or os.environ.get("LLM_BASE_URL", "")
-        if uniapi_key and not base_url:
-            base_url = f"{uniapi_base}/v1"
-        if uniapi_key and not key:
-            key = uniapi_key
-        if key:
-            extra_env["OPENAI_API_KEY"] = key
-        if base_url:
-            extra_env["OPENAI_BASE_URL"] = base_url
-            print(f"  [proxy] {agent_name} -> {base_url}")
+        codex_auth_mode = (os.environ.get("CODEX_AUTH_MODE") or "").lower()
+        if agent_name == "codex" and codex_auth_mode == "chatgpt":
+            # ChatGPT-subscription mode — the Modal runner mounts the
+            # codex-chatgpt-auth Secret and writes auth.json into the
+            # sandbox.  Do NOT set OPENAI_API_KEY / OPENAI_BASE_URL —
+            # those force codex into API mode and shadow the chatgpt auth.
+            extra_env["CODEX_AUTH_MODE"] = "chatgpt"
+            print("  [auth] codex -> ChatGPT subscription "
+                  "(auth.json via Modal Secret codex-chatgpt-auth)")
+        else:
+            key = os.environ.get("OPENAI_API_KEY", "")
+            base_url = os.environ.get("OPENAI_BASE_URL", "") or os.environ.get("LLM_BASE_URL", "")
+            if uniapi_key and not base_url:
+                base_url = f"{uniapi_base}/v1"
+            if uniapi_key and not key:
+                key = uniapi_key
+            if key:
+                extra_env["OPENAI_API_KEY"] = key
+            if base_url:
+                extra_env["OPENAI_BASE_URL"] = base_url
+                print(f"  [proxy] {agent_name} -> {base_url}")
 
     elif agent_name == "gemini-cli":
         key = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
@@ -144,6 +154,12 @@ def main():
         choices=["claude-code", "codex", "gemini-cli", "aider", "opencode"],
     )
     parser.add_argument("--model", default="", help="Model name override")
+    parser.add_argument(
+        "--codex-auth", choices=["api", "chatgpt"], default="api",
+        help=("codex auth mode. 'api' (default) uses OPENAI_API_KEY + "
+              "OPENAI_BASE_URL via UniAPI/etc. 'chatgpt' uses the Modal "
+              "Secret 'codex-chatgpt-auth' containing your local "
+              "~/.codex/auth.json (subscription mode)."))
     parser.add_argument("--tasks-dir", default="", help="Task subfolder under tasks/ (e.g. batch-1, updated-deprivacy-100, real_118)")
     parser.add_argument("--first-n", type=int, default=0, help="Run only first N tasks (0 = all)")
     parser.add_argument("--task-names", default="", help="Comma-separated task names")
@@ -166,6 +182,10 @@ def main():
     args = parser.parse_args()
 
     _load_env()
+
+    # Propagate --codex-auth into the env so _build_agent_kwargs picks it up
+    if args.codex_auth == "chatgpt":
+        os.environ["CODEX_AUTH_MODE"] = "chatgpt"
 
     # Tag format: deprivacy/<agent>/<timestamp>
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")

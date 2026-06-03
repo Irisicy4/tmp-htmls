@@ -366,27 +366,54 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
     anthropic_token = extra_env.get("ANTHROPIC_AUTH_TOKEN", "")
     model_name = extra_env.get("_CLAUDE_MODEL", "")
 
-    if agent_name == "codex" and openai_base:
+    if agent_name == "codex":
         from harbor.models.trial.paths import EnvironmentPaths
         codex_home = EnvironmentPaths.agent_dir.as_posix()
+        auth_mode = (extra_env.get("CODEX_AUTH_MODE") or "").lower()
 
-        config_toml = (
-            f'model_provider = "uniapi"\n'
-            f'model_reasoning_effort = "high"\n'
-            f'\n'
-            f'[model_providers.uniapi]\n'
-            f'name = "uniapi"\n'
-            f'base_url = "{openai_base}"\n'
-            f'env_key = "OPENAI_API_KEY"\n'
-        )
-        write_cmd = f'cat > "{codex_home}/config.toml" << \'TOMLEOF\'\n{config_toml}TOMLEOF'
+        # --- ChatGPT-subscription mode: write auth.json from the Modal Secret ---
+        if auth_mode == "chatgpt":
+            import os as _os
+            auth_blob = _os.environ.get("CODEX_AUTH_JSON", "")
+            if not auth_blob:
+                print("  [proxy] CODEX_AUTH_MODE=chatgpt but CODEX_AUTH_JSON "
+                      "secret is missing — codex will likely fail to authenticate")
+            else:
+                # Heredoc with a sentinel that won't appear in JSON
+                write_cmd = (
+                    f'mkdir -p "{codex_home}" && '
+                    f"cat > \"{codex_home}/auth.json\" << 'AUTHJSONEOF'\n"
+                    f"{auth_blob}\n"
+                    f"AUTHJSONEOF\n"
+                    f'chmod 600 "{codex_home}/auth.json"'
+                )
+                try:
+                    res = await harbor_env._sandbox.exec.aio("bash", "-c", write_cmd)
+                    await res.wait.aio()
+                    print(f"  [proxy] Wrote codex auth.json -> {codex_home} "
+                          f"(ChatGPT subscription mode, {len(auth_blob)} bytes)")
+                except Exception as e:
+                    print(f"  [proxy] Failed to write codex auth.json: {e}")
 
-        try:
-            result = await harbor_env._sandbox.exec.aio("bash", "-c", write_cmd)
-            await result.wait.aio()
-            print(f"  [proxy] Wrote codex config.toml -> {openai_base}")
-        except Exception as e:
-            print(f"  [proxy] Failed to write codex config.toml: {e}")
+        # --- API-key mode: write config.toml pointing at OPENAI_BASE_URL ---
+        elif openai_base:
+            config_toml = (
+                f'model_provider = "uniapi"\n'
+                f'model_reasoning_effort = "high"\n'
+                f'\n'
+                f'[model_providers.uniapi]\n'
+                f'name = "uniapi"\n'
+                f'base_url = "{openai_base}"\n'
+                f'env_key = "OPENAI_API_KEY"\n'
+            )
+            write_cmd = f'cat > "{codex_home}/config.toml" << \'TOMLEOF\'\n{config_toml}TOMLEOF'
+
+            try:
+                result = await harbor_env._sandbox.exec.aio("bash", "-c", write_cmd)
+                await result.wait.aio()
+                print(f"  [proxy] Wrote codex config.toml -> {openai_base}")
+            except Exception as e:
+                print(f"  [proxy] Failed to write codex config.toml: {e}")
 
     elif agent_name == "claude-code" and anthropic_base and anthropic_token:
         # Claude Code with proxy (OpenRouter/UniAPI) requires:
@@ -825,6 +852,7 @@ def _build_result(
     timeout=3600,
     volumes={str(RESULTS_BASE): results_volume},
     max_containers=20,
+    secrets=[modal.Secret.from_name("codex-chatgpt-auth")],
 )
 async def run_task_remote(
     task_name: str,
