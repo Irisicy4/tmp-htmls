@@ -67,12 +67,11 @@ _DEFAULT_MODELS = {
 
 # When codex runs in ChatGPT subscription mode (--codex-auth chatgpt), the
 # API-mode default (gpt-4.1-mini) is rejected by OpenAI with
-#   "The 'gpt-4.1-mini' model is not supported when using Codex with a
+#   "The '<model>' model is not supported when using Codex with a
 #    ChatGPT account."
-# Use a model the ChatGPT subscription routes to instead.  gpt-5-codex is
-# the current default for `codex` CLI in subscription mode.
+# Use a model the ChatGPT subscription routes to instead.
 _DEFAULT_MODELS_CHATGPT = {
-    "codex": "gpt-5-codex",
+    "codex": "gpt-5",
 }
 
 
