@@ -150,23 +150,19 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
             or _DEFAULT_MODELS.get(agent_name, "")
         )
 
-    # Always pass OPENAI_API_KEY + LLM_BASE_URL for the LLM judge,
-    # regardless of which agent is running.
-    #
-    # In codex chatgpt mode: pass OPENAI_API_KEY (the verifier's
-    # task.toml substitutes ${OPENAI_API_KEY} so we need it in the
-    # sandbox env), but DO NOT pass OPENAI_BASE_URL.  Harbor's bundled
-    # CodexAgent injects `-c model_provider="openai-responses" ...
-    # env_key="OPENAI_API_KEY"` into the codex CLI command if
-    # self.base_url is set — that injection forces codex into API mode
-    # and survives our wrapper's --model strip, breaking chatgpt auth.
-    # The wrapper then unset()s OPENAI_API_KEY before exec'ing codex.real,
-    # so the API key in the env doesn't leak into the agent.
+    # Always pass OPENAI_API_KEY + LLM_BASE_URL for the LLM judge.
+    # The verifier is `mod.test(result)` run in-process inside the modal
+    # function and uses both via openai.OpenAI(api_key=..., base_url=...).
+    # In chatgpt mode the in-sandbox codex wrapper protects the agent by
+    # (a) `unset`ting both env vars and (b) stripping
+    # `-c model_provider="openai-responses"` / `-c model_providers.*` /
+    # `--model X` from argv so harbor's bundled CodexAgent injections
+    # can't force codex back into API mode.
     judge_key = os.environ.get("OPENAI_API_KEY", "")
     judge_base = os.environ.get("LLM_BASE_URL", "")
     if judge_key:
         extra_env.setdefault("OPENAI_API_KEY", judge_key)
-    if judge_base and extra_env.get("CODEX_AUTH_MODE") != "chatgpt":
+    if judge_base:
         extra_env.setdefault("OPENAI_BASE_URL", judge_base)
 
     kwargs: dict = {}
