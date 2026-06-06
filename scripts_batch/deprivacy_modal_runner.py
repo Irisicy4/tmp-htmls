@@ -142,16 +142,33 @@ def _get_tasks_base(tasks_dir: str = "") -> Path:
 
 
 def _load_task_instruction(task_dir: Path) -> str:
-    """Read TASK_INSTRUCTION from tests/test_task.py (single source of truth)."""
+    """Prefer instruction.md (the human-edited prompt that may carry
+    grounded-judging addenda) over test_task.TASK_INSTRUCTION.  Fall back
+    to TASK_INSTRUCTION if instruction.md is missing.
+
+    Heuristic: when instruction.md is at least as long as the AST-extracted
+    TASK_INSTRUCTION AND contains the first 40 chars of it (so we know the
+    two are about the same task), use instruction.md.  Otherwise stick
+    with TASK_INSTRUCTION to avoid surprising other pipelines.
+    """
     import ast
     src = (task_dir / "tests" / "test_task.py").read_text()
+    ti = None
     tree = ast.parse(src)
     for node in tree.body:
         if (isinstance(node, ast.Assign) and len(node.targets) == 1
                 and isinstance(node.targets[0], ast.Name)
                 and node.targets[0].id == "TASK_INSTRUCTION"):
-            return ast.literal_eval(node.value)
-    raise RuntimeError(f"TASK_INSTRUCTION not found in {task_dir}")
+            ti = ast.literal_eval(node.value)
+            break
+    inst_path = task_dir / "instruction.md"
+    if inst_path.is_file():
+        inst = inst_path.read_text(encoding="utf-8").rstrip()
+        if inst and (ti is None or (len(inst) >= len(ti) and ti.strip()[:40] in inst)):
+            return inst
+    if ti is not None:
+        return ti
+    raise RuntimeError(f"neither instruction.md nor TASK_INSTRUCTION found in {task_dir}")
 
 
 def _discover_tasks(first_n: int = 0, task_names_csv: str = "", tasks_dir: str = "") -> list[dict]:
