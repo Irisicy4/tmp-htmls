@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Agentic Judge v2 — Effectiveness-as-main with Faithfulness sub-agent</title>
+<title>Agentic Judge v2 — Effectiveness-as-main with Webpage Grounding sub-agent</title>
 <style>
   :root {
     --hard:   #1d4ed8;
@@ -330,19 +330,19 @@
     <div class="meta">Page 1 / 3</div>
   </div>
 
-  <h1>Effectiveness is the main judge — and it can call Faithfulness</h1>
-  <p class="small">The LLM-only verifier in EvolveBench v1 reads the agent's prose and assigns a 1–5 score. It cannot tell whether the cited URLs are real, whether the numbers are within the budget, or whether the structured answer actually exists. The agentic judge keeps the LLM rubric, adds a deterministic Hard layer for typed predicates, and gives the LLM judge an <strong>agentic Faithfulness sub-agent</strong> it can dispatch to verify any cited URL — including the agent's “I couldn't find X” claims.</p>
+  <h1>Effectiveness is the main judge — and it can call Webpage Grounding</h1>
+  <p class="small">The LLM-only verifier in EvolveBench v1 reads the agent's prose and assigns a 1–5 score. It cannot tell whether the cited URLs are real, whether the numbers are within the budget, or whether the structured answer actually exists. The agentic judge keeps the LLM rubric, adds a deterministic Hard layer for typed predicates, and gives the LLM judge an <strong>agentic Webpage Grounding sub-agent</strong> it can dispatch to verify any cited URL — including the agent's “I couldn't find X” claims.</p>
 
   <section class="brief">
     <h2 style="margin-top:0;">Brief design</h2>
     <div class="judge-strip">
       <div class="chip hard">
-        <h4>① Hard Constraint judge</h4>
+        <h4>① Hard Constraint Unit Tests</h4>
         <div>Typed predicates over the agent's structured JSON (price≤$75, count∈[3,5], URL pattern, schema conformance).</div>
         <div class="role">Reads <strong>only</strong> the JSON between <code>=== JSON RESULT ===</code> delimiters.</div>
       </div>
       <div class="chip faith">
-        <h4>② Faithfulness sub-agent (LLM)</h4>
+        <h4>② Webpage Grounding sub-agent</h4>
         <div>On request, fetches a URL and uses an LLM to read the rendered page and answer <em>either</em>: <strong>(a)</strong> does this page support a specific claim the agent made? or <strong>(b)</strong> a natural-language question from the main judge — including the most common one, <em>“is the agent's ‘I couldn't find X’ actually true on this source?”</em></div>
         <div class="role">Reads <strong>live page contents</strong>; returns <code>{supported, evidence_quote, answer, reasoning}</code>.</div>
       </div>
@@ -409,7 +409,7 @@
     <!-- HARD -->
     <rect x="60" y="155" width="260" height="120" rx="6" fill="url(#v2-hard)"/>
     <text x="190" y="186" text-anchor="middle" fill="#fff"
-          font-family="Charter,Georgia,serif" font-size="16" font-weight="700">① Hard Constraint</text>
+          font-family="Charter,Georgia,serif" font-size="16" font-weight="700">① Hard Constraint Unit Tests</text>
     <text x="190" y="210" text-anchor="middle" fill="#dbeafe"
           font-family="-apple-system,Arial,sans-serif" font-size="13">deterministic predicates</text>
     <text x="190" y="232" text-anchor="middle" fill="#dbeafe"
@@ -420,7 +420,7 @@
     <!-- FAITHFULNESS -->
     <rect x="680" y="155" width="260" height="120" rx="6" fill="url(#v2-faith)"/>
     <text x="810" y="186" text-anchor="middle" fill="#fff"
-          font-family="Charter,Georgia,serif" font-size="16" font-weight="700">② Faithfulness sub-agent</text>
+          font-family="Charter,Georgia,serif" font-size="16" font-weight="700">② Webpage Grounding sub-agent</text>
     <text x="810" y="210" text-anchor="middle" fill="#fef3c7"
           font-family="-apple-system,Arial,sans-serif" font-size="13">LLM reads fetched pages</text>
     <text x="810" y="232" text-anchor="middle" fill="#fef3c7"
@@ -469,7 +469,7 @@
           font-family="Charter,Georgia,serif" font-size="16" font-weight="700">final score · PASS / FAIL</text>
   </svg>
   <p class="small" style="margin:-4px 0 18px;">
-    Five nodes, one loop. ② Faithfulness is a single sub-agent — its first call produces the initial <code>faith_report</code>; subsequent calls answer <code>pending_faith_questions</code> from ③. The dashed purple arc <em>is</em> the agentic step.
+    Five nodes, one loop. ② Webpage Grounding is a single sub-agent — its first call produces the initial <code>faith_report</code>; subsequent calls answer <code>pending_faith_questions</code> from ③. The dashed purple arc <em>is</em> the agentic step.
   </p>
 
   <h2>Worked example — task-01 “backpack under $75”</h2>
@@ -539,15 +539,15 @@
 
   <p class="small">
     Legend:
-    <span class="marker hard">H</span> = Hard Constraint judge reads this;
-    <span class="marker faith">F</span> = Faithfulness judge fetches and verifies this URL/claim;
+    <span class="marker hard">H</span> = Hard Constraint Unit Tests reads this;
+    <span class="marker faith">F</span> = Webpage Grounding sub-agent fetches and verifies this URL/claim;
     <span class="marker eff">E</span> = Effectiveness judge reads <em>everything</em> (prose + JSON + the other two reports), so the whole block is implicitly in its scope.
   </p>
 
   <h4>Step 3 — what each judge does (job + its prompt)</h4>
   <div class="judges-row stack">
     <div class="judge-card hard">
-      <h3>① Hard Constraint judge</h3>
+      <h3>① Hard Constraint Unit Tests</h3>
       <p class="small"><strong>Job.</strong> Run a list of typed Python predicates against the agent's structured JSON. No LLM call. Each predicate returns <code>(passed, detail)</code>.</p>
       <h4 style="margin-top:8px;">Predicate list (task-01)</h4>
       <pre class="compact">HARD_CONSTRAINTS = [
@@ -561,7 +561,7 @@
     </div>
 
     <div class="judge-card faith">
-      <h3>② Faithfulness sub-agent</h3>
+      <h3>② Webpage Grounding sub-agent</h3>
       <p class="small"><strong>Job.</strong> Fetch each URL the agent cited, hand the rendered page to an LLM, and return a verdict on whether the page actually supports the claim — and answer any follow-up question from ③.</p>
       <h4 style="margin-top:8px;">System prompt (trimmed)</h4>
       <pre class="compact">You are a precise source-checking sub-agent.  You are given:
@@ -590,12 +590,31 @@ Return ONLY:
 
 You are also AGENTIC: when uncertain about whether a cited URL supports
 a claim — OR when the agent says "I could not find X" and you want to
-verify that — emit `pending_faith_questions`.  A Faithfulness sub-agent
+verify that — emit `pending_faith_questions`.  A Webpage Grounding sub-agent
 will fetch each URL and answer.  We will then call you a second time
 with the answers so you can revise your scores.  Cap: 3 questions/task.
 
 Score honestly.  A FAILED hard constraint or failed faithfulness check
 caps the relevant dimension below 5.</pre>
+      <h4 style="margin-top:10px;">Plus: dimensions + anchors inherited from the original task instruction</h4>
+      <p class="small" style="margin:2px 0 6px;">The runner injects the per-task soft rubric (dimension names, weights, and anchor language) straight from the v1 <code>test_task.py</code>. For task-01 the judge sees:</p>
+      <pre class="compact">## Dimensions to score (1-5 each)
+- constraint_satisfaction (weight 0.30)
+- result_specificity      (weight 0.25)
+- comparison_quality      (weight 0.25)
+- task_completeness       (weight 0.20)
+
+## Task-specific rubric (anchors)
+constraint_satisfaction:
+  1 = no budget cap respected; 3 = some items over $75;
+  5 = every option ≤ $75 AND each feature of the reference present
+result_specificity:
+  1 = generic; 3 = brand+model named; 5 = exact ASIN + price + URL per item
+comparison_quality:
+  1 = list only; 3 = side-by-side bullet of 1-2 features;
+  5 = per-option mapping back to each of the reference's features
+task_completeness:
+  1 = &lt; 3 options; 3 = 3-4 options; 5 = 3-5 options with full feature sweep</pre>
     </div>
   </div>
 </section>
@@ -616,7 +635,7 @@ caps the relevant dimension below 5.</pre>
   </div>
 
   <h1>Two more examples — which judge catches what, and where it reads</h1>
-  <p class="small">Both runs are from <code>r18</code> on Modal with codex (ChatGPT subscription) using v2 (LLM-agentic Faithfulness + pending-question loop). Each answer is shown in compact form, then the per-judge verdict.</p>
+  <p class="small">Both runs are from <code>r18</code> on Modal with codex (ChatGPT subscription) using v2 (LLM-agentic Webpage Grounding + pending-question loop). Each answer is shown in compact form, then the per-judge verdict.</p>
 
   <!-- ============= task-12 ============= -->
   <h2>task-12 — “Compose an email to David Sullivan”</h2>
@@ -696,17 +715,17 @@ caps the relevant dimension below 5.</pre>
       </div>
 
       <div style="margin-bottom:8px;">
-        <span class="judge-tag faith">Faithfulness sub-agent</span>
+        <span class="judge-tag faith">Webpage Grounding sub-agent</span>
         <p style="margin:4px 0 0; font-size:12.5px;">Fetched <code>agris.fao.org/...</code> → HTTP 200. LLM verdict: <code>supported=true</code>, evidence_quote: <em>“Isolated flowers of Nules clementine produce seedless fruit; cross-pollination by neighbouring compatible varieties is the main cause of seediness.”</em></p>
       </div>
 
       <div style="margin-bottom:8px;">
         <span class="judge-tag eff">Effectiveness (main judge)</span>
-        <p style="margin:4px 0 0; font-size:12.5px;">First pass scored 5/5, then raised one pending question to the Faithfulness sub-agent: <em>“The agent says ‘no peer-reviewed paper after 2018 disagrees’ — verify this on the FAO listing.”</em> Sub-agent replied <code>supported=true</code>. No revision needed. Overall <strong>5.0</strong>.</p>
+        <p style="margin:4px 0 0; font-size:12.5px;">First pass scored 5/5, then raised one pending question to the Webpage Grounding sub-agent: <em>“The agent says ‘no peer-reviewed paper after 2018 disagrees’ — verify this on the FAO listing.”</em> Sub-agent replied <code>supported=true</code>. No revision needed. Overall <strong>5.0</strong>.</p>
       </div>
 
       <div class="callout" style="margin-top:8px;">
-        <strong>Insight.</strong> Even when the first pass would have passed by itself, the main judge actively verified the agent's <em>negative</em> claim ("no later paper disagrees") through the Faithfulness sub-agent rather than trusting prose. The agentic loop catches false unanswerability claims that single-pass judges miss.
+        <strong>Insight.</strong> Even when the first pass would have passed by itself, the main judge actively verified the agent's <em>negative</em> claim ("no later paper disagrees") through the Webpage Grounding sub-agent rather than trusting prose. The agentic loop catches false unanswerability claims that single-pass judges miss.
       </div>
     </div>
   </div>
@@ -717,7 +736,7 @@ caps the relevant dimension below 5.</pre>
       <tr>
         <th>Task</th>
         <th>Hard reads…</th>
-        <th>Faithfulness reads…</th>
+        <th>Webpage Grounding reads…</th>
         <th>Effectiveness reads…</th>
         <th>Caught by the grounded layer</th>
       </tr>
@@ -834,7 +853,7 @@ caps the relevant dimension below 5.</pre>
       <tr>
         <td>URL verification</td>
         <td>None</td>
-        <td><strong>LLM-agentic Faithfulness sub-agent</strong>: fetches every cited URL, an LLM reads the page and decides claim-supported / answers natural-language questions from the main judge — including verifying the agent's “I couldn't find X” claims</td>
+        <td><strong>LLM-agentic Webpage Grounding sub-agent</strong>: fetches every cited URL, an LLM reads the page and decides claim-supported / answers natural-language questions from the main judge — including verifying the agent's “I couldn't find X” claims</td>
       </tr>
       <tr>
         <td>Judge feedback loop</td>
@@ -892,7 +911,7 @@ caps the relevant dimension below 5.</pre>
   </div>
 
   <h2>Net</h2>
-  <p>Arpan's implementation validates that programmatic checks alongside an LLM judge improve verdict quality and reproducibility. v2 generalises that idea further: typed Hard predicates, an <em>LLM-agentic</em> Faithfulness sub-agent that handles paraphrase and natural-language questions, and a main judge that can call it mid-judgment to verify both citations and unanswerability claims. We still adopt Arpan's flat-dict output format so v2 plugs into harbor's existing analysis pipeline rather than running parallel to it.</p>
+  <p>Arpan's implementation validates that programmatic checks alongside an LLM judge improve verdict quality and reproducibility. v2 generalises that idea further: typed Hard predicates, an <em>LLM-agentic</em> Webpage Grounding sub-agent that handles paraphrase and natural-language questions, and a main judge that can call it mid-judgment to verify both citations and unanswerability claims. We still adopt Arpan's flat-dict output format so v2 plugs into harbor's existing analysis pipeline rather than running parallel to it.</p>
 
   <h2>What changed v1 → v2</h2>
   <table>

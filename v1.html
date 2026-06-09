@@ -311,18 +311,18 @@
     <h2 style="margin-top:0;">Brief design</h2>
     <div class="judge-strip">
       <div class="chip hard">
-        <h4>① Hard Constraint judge</h4>
+        <h4>① Hard Constraint Unit Tests</h4>
         <div>Typed predicates over the agent's structured JSON (price≤$75, count∈[3,5], URL pattern, schema conformance).</div>
         <div class="role">Reads <strong>only</strong> the JSON between <code>=== JSON RESULT ===</code> delimiters.</div>
       </div>
       <div class="chip faith">
-        <h4>② Faithfulness judge (LLM agent)</h4>
+        <h4>② Webpage Grounding sub-agent</h4>
         <div>Fetches every URL the agent cited. An LLM then reads the rendered pages <em>alongside</em> the agent's answer and decides whether the claim is supported — and can take <strong>follow-up questions back from the Effectiveness judge</strong> to resolve any pending “is this actually in the source?” doubts.</div>
         <div class="role">Reads <strong>JSON + live page contents</strong>; answers <strong>pending checks from ③</strong>.</div>
       </div>
       <div class="chip eff">
         <h4>③ Effectiveness judge (LLM)</h4>
-        <div>gpt-4o scores the soft rubric (the original v1 anchors), grounded by the hard + faithfulness reports. When unsure about a citation, it can <strong>send a pending question down to ② Faithfulness</strong> and re-score once the answer comes back.</div>
+        <div>gpt-4o scores the soft rubric (the original v1 anchors), grounded by the hard + faithfulness reports. When unsure about a citation, it can <strong>send a pending question down to ② Webpage Grounding</strong> and re-score once the answer comes back.</div>
         <div class="role">Reads <strong>the full prose + the two reports</strong>; may emit <strong>pending faithfulness checks</strong>.</div>
       </div>
     </div>
@@ -404,15 +404,15 @@
 
   <p class="small">
     Legend:
-    <span class="marker hard">H</span> = Hard Constraint judge reads this;
-    <span class="marker faith">F</span> = Faithfulness judge fetches and verifies this URL/claim;
+    <span class="marker hard">H</span> = Hard Constraint Unit Tests reads this;
+    <span class="marker faith">F</span> = Webpage Grounding sub-agent fetches and verifies this URL/claim;
     <span class="marker eff">E</span> = Effectiveness judge reads <em>everything</em> (prose + JSON + the other two reports), so the whole block is implicitly in its scope.
   </p>
 
   <h4>Step 3 — what each judge concludes</h4>
   <div class="judges-row">
     <div class="judge-card hard">
-      <h3>① Hard Constraint judge</h3>
+      <h3>① Hard Constraint Unit Tests</h3>
       <p class="small">Predicates over the structured JSON only.</p>
       <ul>
         <li><span class="check">✓</span> <code>summary_schema_conforms</code> — all required fields present</li>
@@ -425,7 +425,7 @@
     </div>
 
     <div class="judge-card faith">
-      <h3>② Faithfulness judge</h3>
+      <h3>② Webpage Grounding sub-agent</h3>
       <p class="small">Fetched 4 URLs (reference + first 3 options) and looked for the agent's claim in the rendered page text.</p>
       <ul>
         <li><span class="x">✗</span> B09YRC9Y3G — claim <code>"backpack"</code> not in page</li>
@@ -573,7 +573,7 @@
       <tr>
         <th>Task</th>
         <th>Hard reads…</th>
-        <th>Faithfulness reads…</th>
+        <th>Webpage Grounding reads…</th>
         <th>Effectiveness reads…</th>
         <th>Caught by the grounded layer</th>
       </tr>
