@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agentic Judge — 3-Aspect Grounded Judging</title>
+<style>
+  :root {
+    --hard:   #1d4ed8;
+    --hard-bg:rgba(29, 78, 216, 0.10);
+    --hard-fg:#1e3a8a;
+    --faith:  #b45309;
+    --faith-bg:rgba(180, 83, 9, 0.10);
+    --faith-fg:#7c2d12;
+    --eff:    #6d28d9;
+    --eff-bg: rgba(109, 40, 217, 0.09);
+    --eff-fg: #4c1d95;
+    --ink:    #111827;
+    --muted:  #4b5563;
+    --line:   #d1d5db;
+    --panel:  #f3f4f6;
+    --good:   #15803d;
+    --bad:    #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    font-family: "Charter", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    background: #f6f6f4;
+    line-height: 1.55;
+    font-size: 16px;
+  }
+  .page {
+    background: #fff;
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 40px 56px 60px;
+    border: 1px solid #d1d5db;
+    page-break-after: always;
+  }
+  .page:last-of-type { page-break-after: auto; }
+
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: 0; font-weight: 600; }
+  h2 { font-size: 19px; margin: 28px 0 10px; letter-spacing: 0; font-weight: 600; }
+  h3 { font-size: 16px; margin: 18px 0 8px; font-weight: 600; }
+  h4 { font-size: 13px; margin: 10px 0 4px; color: var(--muted);
+       text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
+       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Arial, sans-serif; }
+  p  { margin: 8px 0; }
+  small, .small { font-size: 14px; color: var(--muted); }
+
+  /* The three judge colours, reused everywhere */
+  .judge-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+    vertical-align: middle; line-height: 1.3;
+  }
+  .judge-tag.hard  { background: var(--hard);  color: #fff; }
+  .judge-tag.faith { background: var(--faith); color: #fff; }
+  .judge-tag.eff   { background: var(--eff);   color: #fff; }
+
+  /* In-place highlights inside the agent answer — coloured underline only,
+     no background tint, so the answer stays readable as plain text */
+  .hl-hard  { border-bottom: 2px solid var(--hard);  padding-bottom: 1px; }
+  .hl-faith { border-bottom: 2px solid var(--faith); padding-bottom: 1px; }
+  .hl-eff   { border-bottom: 2px solid var(--eff);   padding-bottom: 1px; }
+  /* Overlap: stack two underlines */
+  .hl-hard.hl-faith {
+    border-bottom: 2px solid var(--faith);
+    box-shadow: inset 0 -5px 0 -3px var(--hard);
+    padding-bottom: 3px;
+  }
+  .hl-faith.hl-eff,
+  .hl-hard.hl-eff,
+  .hl-hard.hl-faith.hl-eff {
+    box-shadow: inset 0 -6px 0 -4px var(--eff);
+  }
+
+  .marker {
+    display: inline-block; padding: 0 4px; font-size: 10px;
+    font-weight: 700; color: #fff; border-radius: 3px;
+    margin: 0 2px; vertical-align: middle; line-height: 1.4;
+  }
+  .marker.hard  { background: var(--hard); }
+  .marker.faith { background: var(--faith); }
+  .marker.eff   { background: var(--eff); }
+
+  /* Code / agent output blocks */
+  pre, code {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 14px;
+  }
+  code { font-size: 14px; }
+  pre {
+    background: #fafafa;
+    border: 1px solid var(--line);
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 10px 0;
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+  pre.compact { font-size: 13px; padding: 10px 12px; }
+
+  /* Brief design strip */
+  .brief {
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--ink);
+    padding: 14px 20px 18px;
+    margin: 14px 0 22px;
+  }
+  .brief p { margin: 6px 0; }
+  .judge-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 12px 0 4px;
+  }
+  .judge-strip .chip {
+    border: 1px solid var(--line);
+    border-left-width: 3px;
+    padding: 12px 14px;
+    background: #fff;
+  }
+  .judge-strip .chip.hard  { border-left-color: var(--hard); }
+  .judge-strip .chip.faith { border-left-color: var(--faith); }
+  .judge-strip .chip.eff   { border-left-color: var(--eff); }
+  .judge-strip .chip h4 { margin: 0 0 6px; color: var(--ink); text-transform: none; letter-spacing: 0; font-size: 15px;
+    font-family: "Charter", Georgia, serif; }
+  .judge-strip .chip .role { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+  /* Two-up "prompt blocks" */
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 8px 0 20px;
+  }
+  .prompt {
+    border: 1px solid var(--line);
+    padding: 14px 16px;
+  }
+  .prompt.original { }
+  .prompt.addendum { border-left: 3px solid var(--ink); }
+  .prompt .head {
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 8px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  }
+
+  /* Judges row: three cards */
+  .judges-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .judge-card {
+    border: 1px solid var(--line);
+    border-top-width: 3px;
+    padding: 14px 16px;
+    background: #fff;
+    position: relative;
+  }
+  .judge-card.hard  { border-top-color: var(--hard); }
+  .judge-card.faith { border-top-color: var(--faith); }
+  .judge-card.eff   { border-top-color: var(--eff); }
+  .judge-card h3 {
+    margin: 0 0 8px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15.5px;
+  }
+  .judge-card h3::before {
+    content: ""; display: inline-block;
+    width: 10px; height: 10px;
+  }
+  .judge-card.hard  h3::before { background: var(--hard); }
+  .judge-card.faith h3::before { background: var(--faith); }
+  .judge-card.eff   h3::before { background: var(--eff); }
+  .judge-card ul {
+    list-style: none; padding: 0; margin: 8px 0;
+    font-size: 14px;
+  }
+  .judge-card li {
+    padding: 4px 0; line-height: 1.5;
+    border-bottom: 1px solid var(--line);
+  }
+  .judge-card li:last-child { border-bottom: 0; }
+  .judge-card .check { color: var(--good); font-weight: 700; }
+  .judge-card .x     { color: var(--bad);  font-weight: 700; }
+  .judge-card .score {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--line);
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+  .judge-card.hard  .score { color: var(--hard-fg); }
+  .judge-card.faith .score { color: var(--faith-fg); }
+  .judge-card.eff   .score { color: var(--eff-fg); }
+
+  /* Final score box */
+  .final {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ink);
+    padding: 14px 18px;
+    margin: 22px 0 0;
+  }
+  .final h3 { margin-top: 0; }
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--faith);
+    padding: 12px 16px;
+    margin: 12px 0 0;
+    font-size: 14.5px;
+  }
+  .callout strong { color: var(--faith-fg); }
+
+  /* Mini-card grid for page 2 */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    margin: 12px 0 28px;
+  }
+  .mini {
+    border: 1px solid var(--line);
+    padding: 14px 18px;
+  }
+  .mini h3 { margin-top: 0; }
+  .mini pre { background: #fafafa; }
+
+  /* Comparison table */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 14.5px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { font-weight: 600; font-size: 12.5px;
+       text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+       font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+       border-bottom: 2px solid var(--ink); }
+
+  .borrow {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ink);
+    padding: 14px 22px;
+    margin: 14px 0;
+  }
+  .borrow ol { margin: 8px 0 0 20px; padding: 0; }
+  .borrow li { margin: 12px 0; }
+
+  .header-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  }
+  .header-meta .meta { color: var(--muted); font-size: 13px; }
+  .header-meta > div:first-child { font-size: 13.5px; }
+
+  /* Diagram: how layers compose */
+  .compose-diagram {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid var(--line);
+    padding: 14px 20px;
+    margin: 12px 0 18px;
+    font-size: 14px;
+  }
+  .compose-diagram .arrow {
+    color: var(--muted); font-size: 22px; line-height: 1;
+  }
+  .compose-diagram .ops {
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  @media print {
+    body { background: #fff; font-size: 12.5px; }
+    .page { border: 0; margin: 0; max-width: none; padding: 18mm 16mm; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PAGE 1
+============================================================ -->
+<section class="page" id="page-1">
+  <div class="header-meta">
+    <div><strong>Agentic Judge</strong> — 3-aspect grounded judging</div>
+    <div class="meta">Page 1 / 3 · Brief design + worked example: task-01 backpack</div>
+  </div>
+
+  <h1>One agent answer, three independent judges</h1>
+  <p class="small">The LLM-only verifier in EvolveBench v1 reads the agent's prose and assigns a 1–5 score. It cannot tell whether the cited URLs are real, whether the numbers are within the budget, or whether the structured answer actually exists. The agentic judge keeps the LLM rubric and adds two deterministic layers that catch what prose-reading misses.</p>
+
+  <section class="brief">
+    <h2 style="margin-top:0;">Brief design</h2>
+    <div class="judge-strip">
+      <div class="chip hard">
+        <h4>① Hard Constraint judge</h4>
+        <div>Typed predicates over the agent's structured JSON (price≤$75, count∈[3,5], URL pattern, schema conformance).</div>
+        <div class="role">Reads <strong>only</strong> the JSON between <code>=== JSON RESULT ===</code> delimiters.</div>
+      </div>
+      <div class="chip faith">
+        <h4>② Faithfulness judge (LLM agent)</h4>
+        <div>Fetches every URL the agent cited. An LLM then reads the rendered pages <em>alongside</em> the agent's answer and decides whether the claim is supported — and can take <strong>follow-up questions back from the Effectiveness judge</strong> to resolve any pending “is this actually in the source?” doubts.</div>
+        <div class="role">Reads <strong>JSON + live page contents</strong>; answers <strong>pending checks from ③</strong>.</div>
+      </div>
+      <div class="chip eff">
+        <h4>③ Effectiveness judge (LLM)</h4>
+        <div>gpt-4o scores the soft rubric (the original v1 anchors), grounded by the hard + faithfulness reports. When unsure about a citation, it can <strong>send a pending question down to ② Faithfulness</strong> and re-score once the answer comes back.</div>
+        <div class="role">Reads <strong>the full prose + the two reports</strong>; may emit <strong>pending faithfulness checks</strong>.</div>
+      </div>
+    </div>
+    <div class="compose-diagram">
+      <div style="font-weight:600; font-family:-apple-system,Arial,sans-serif; font-size:13px;">FINAL COMPOSITION</div>
+      <div class="arrow">→</div>
+      <div class="ops">
+        score = clamp(0, 5, <span style="color:var(--eff-fg)">llm_overall</span> &minus; <span style="color:var(--hard-fg)">0.5·hard_fails</span> + <span style="color:var(--faith-fg)">0.5·faith_score/5</span>)<br>
+        pass &nbsp;= score ≥ 3.0 AND (no hard fails OR llm ≥ 4.0)
+      </div>
+    </div>
+    <p class="small"><strong>Anti-cheat by over-reporting:</strong> the schema asks the agent for more fields than the hard layer enforces. The agent does not know which subset is checked, so fabricating just the checked subset costs as much as doing the task — and the faithfulness layer catches URL claims either way.</p>
+  </section>
+
+  <h2>Worked example — task-01 “backpack under $75”</h2>
+
+  <h4>Step 1 — what we sent to the agent</h4>
+  <div class="prompt-grid">
+    <div class="prompt original">
+      <div class="head">Original instruction.md (unchanged)</div>
+      <p>“I'm looking for a backpack under $75 that has all the features of this one: <span class="hl-hard">https://www.amazon.com/dp/B09YRC9Y3G</span> Please do some research and find 3–5 options and summarize their key features and prices, comparing them to the original.”</p>
+    </div>
+    <div class="prompt addendum">
+      <div class="head">Addendum we appended</div>
+      <p>Output the result as a JSON block between <code>=== JSON RESULT ===</code> and <code>=== END JSON ===</code>.</p>
+      <p><strong>Required:</strong> <code>reference_product.url</code>, <code>options</code>, <code>options[].name</code>, <code>options[].url</code>, <code>options[].price</code>, <code>options[].features</code>, <code>options[].comparison_notes</code></p>
+      <p><strong>Optional but rewarded:</strong> <code>options[].asin</code>, <code>rating</code>, <code>review_count</code>, …</p>
+      <p class="small">“The grader fetches the URLs you cite and verifies the figures and quotes against the live page. Be precise.”</p>
+    </div>
+  </div>
+
+  <h4>Step 2 — what the agent emitted (excerpt; full body is 13,892 chars)</h4>
+  <pre>... prose narrative explaining what each backpack offers ...
+
+=== JSON RESULT ===
+{
+  "reference_product": {
+    "url":  "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B09YRC9Y3G</span>",
+    "name": "Taskin New | Carry-on Large Travel Backpack",
+    "features": ["expandable 20/30/40L", "convertible handles", "professional"]
+  },
+  "options": [
+    {
+      "name":  "<span class="hl-faith">Gieury Anti-Theft Laptop Backpack</span>",
+      "url":   "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B0BDLH7K67</span>",
+      "price": <span class="hl-hard">49.99</span>,
+      "features": [ "USB port", "TSA-friendly", "anti-theft pockets" ],
+      "comparison_notes": "..."
+    },
+    {
+      "name":  "<span class="hl-faith">Sirmaeed 35L Carry-on</span>",
+      "url":   "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B0FDKLS9YY</span>",
+      "price": <span class="hl-hard">38.99</span>,
+      "features": [ "expandable", "luggage strap" ],
+      "comparison_notes": "..."
+    },
+    {
+      "name":  "<span class="hl-faith">Amazon Basics Travel Backpack</span>",
+      "url":   "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B01J24H2K0</span>",
+      "price": <span class="hl-hard">59.99</span>,
+      "features": [ "40L", "convertible" ],
+      "comparison_notes": "..."
+    },
+    {
+      "name":  "MATEIN 40L Carry-on",
+      "url":   "<span class="hl-hard">https://www.amazon.com/dp/B07NV3VZ76</span>",
+      "price": <span class="hl-hard">39.99</span>,
+      …
+    },
+    {
+      "name":  "VANKEAN 17.3-inch Laptop Backpack",
+      "url":   "<span class="hl-hard">https://www.amazon.com/dp/B07XYZ</span>",
+      "price": <span class="hl-hard">44.99</span>,
+      …
+    }
+  ]
+}
+=== END JSON ===</pre>
+
+  <p class="small">
+    Legend:
+    <span class="marker hard">H</span> = Hard Constraint judge reads this;
+    <span class="marker faith">F</span> = Faithfulness judge fetches and verifies this URL/claim;
+    <span class="marker eff">E</span> = Effectiveness judge reads <em>everything</em> (prose + JSON + the other two reports), so the whole block is implicitly in its scope.
+  </p>
+
+  <h4>Step 3 — what each judge concludes</h4>
+  <div class="judges-row">
+    <div class="judge-card hard">
+      <h3>① Hard Constraint judge</h3>
+      <p class="small">Predicates over the structured JSON only.</p>
+      <ul>
+        <li><span class="check">✓</span> <code>summary_schema_conforms</code> — all required fields present</li>
+        <li><span class="check">✓</span> <code>quantity_3_to_5</code> — <code>len(options)=5</code></li>
+        <li><span class="check">✓</span> <code>all_prices_under_75_usd</code> — $49.99, $38.99, $59.99, $39.99, $44.99</li>
+        <li><span class="check">✓</span> <code>every_option_has_url</code> — all match <code>https?://</code></li>
+        <li><span class="check">✓</span> <code>reference_url_present</code> — B09YRC9Y3G</li>
+      </ul>
+      <div class="score">5 / 5 PASS · hard_penalty = 0</div>
+    </div>
+
+    <div class="judge-card faith">
+      <h3>② Faithfulness judge</h3>
+      <p class="small">Fetched 4 URLs (reference + first 3 options) and looked for the agent's claim in the rendered page text.</p>
+      <ul>
+        <li><span class="x">✗</span> B09YRC9Y3G — claim <code>"backpack"</code> not in page</li>
+        <li><span class="x">✗</span> B0BDLH7K67 — claim <code>"Gieury"</code> not in page</li>
+        <li><span class="x">✗</span> B0FDKLS9YY — claim <code>"Sirmaeed"</code> not in page</li>
+        <li><span class="check">✓</span> B01J24H2K0 — claim <code>"Amazon"</code> verified</li>
+      </ul>
+      <div class="score">1 / 4 matched · faith_bonus = +0.12</div>
+    </div>
+
+    <div class="judge-card eff">
+      <h3>③ Effectiveness judge (gpt-4o)</h3>
+      <p class="small">Scores the original v1 rubric; reads everything plus the two reports above as grounding.</p>
+      <ul>
+        <li><code>constraint_satisfaction</code> &nbsp; 5/5</li>
+        <li><code>result_specificity</code> &nbsp; 5/5</li>
+        <li><code>comparison_quality</code> &nbsp; 5/5</li>
+        <li><code>task_completeness</code> &nbsp; 5/5</li>
+      </ul>
+      <div class="score">overall 5.0 / 5</div>
+    </div>
+  </div>
+
+  <div class="final">
+    <h3>Final composition</h3>
+    <pre class="compact">final = clamp(0, 5, llm_overall − hard_penalty + faith_bonus)
+      = clamp(0, 5,    5.0       −     0.0       +    0.12     )
+      = 5.0    PASS</pre>
+    <div class="callout">
+      <strong>⚠ But the faithfulness judge surfaced a real issue the LLM judge missed.</strong>
+      Three of the four cited Amazon pages returned HTTP 200, yet the product names the agent attributed to those ASINs are not on those pages. The LLM judge graded the answer 5/5 across the board — the deterministic URL-fetch layer is the only one that flagged the "plausible URL + fabricated stat" failure mode.
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     PAGE 2
+============================================================ -->
+<section class="page" id="page-2">
+  <div class="header-meta">
+    <div><strong>Agentic Judge</strong> — which judge caught what, on more tasks</div>
+    <div class="meta">Page 2 / 3 · task-12 (email) · task-43 (clementines)</div>
+  </div>
+
+  <h1>Two more examples — which judge catches what, and where it reads</h1>
+  <p class="small">Both runs are from <code>r17</code> on Modal with codex (ChatGPT subscription). Each answer is shown in compact form, then the per-judge verdict.</p>
+
+  <!-- ============= task-12 ============= -->
+  <h2>task-12 — “Compose an email to David Sullivan”</h2>
+  <p class="small">Instruction: compose an email to <code>dgs@bu.edu</code> offering a one-day Java class on Nov 29 or Nov 30; include a cold-weather caution; <strong>do not actually send it</strong>.</p>
+
+  <div class="mini-grid">
+    <div class="mini">
+      <h3>Agent's structured answer</h3>
+      <pre class="compact">{
+  "recipient":            "<span class="hl-hard">dgs@bu.edu</span>",
+  "subject":              "<span class="hl-hard">One-day basic Java class availability</span>",
+  "body":                 "<span class="hl-hard">Dear David Sullivan, I am writing to let you
+                           know that the one-day basic Java class is
+                           available on either <strong>November 29</strong> or
+                           <strong>November 30</strong>. Please dress warmly...</span>",
+  "dates_mentioned":      <span class="hl-hard">["November 29", "November 30"]</span>,
+  "includes_cold_warning":<span class="hl-hard">true</span>,
+  "sent":                 <span class="hl-hard">false</span>
+}</pre>
+      <p class="small">No URLs ⇒ no faithfulness layer.</p>
+    </div>
+
+    <div class="mini">
+      <h3>What each judge caught</h3>
+
+      <div style="margin-bottom:10px;">
+        <span class="judge-tag hard">Hard</span>
+        <ul style="margin:6px 0 0 0; padding-left:18px; font-size:12.5px;">
+          <li><span class="check">✓</span> <code>recipient_correct</code> — equals <code>"dgs@bu.edu"</code></li>
+          <li><span class="check">✓</span> <code>subject_present</code> &nbsp; <span class="check">✓</span> <code>body_present</code></li>
+          <li><span class="check">✓</span> <code>not_actually_sent</code> — <code>sent=false</code></li>
+          <li><span class="check">✓</span> <code>both_dates_offered</code> — Nov 29 AND Nov 30</li>
+        </ul>
+        <div class="score" style="margin-top:6px; padding:6px 8px; background:var(--panel); border-radius:4px; font-weight:700; font-size:12px; color:var(--hard-fg);">6 / 6 hard PASS</div>
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <span class="judge-tag eff">Effectiveness</span>
+        <p style="margin:4px 0 0; font-size:12.5px;">gpt-4o reads the prose + JSON. Scores <code>task_completion</code> 5, <code>email_quality</code> 5, <code>completeness</code> 5 ⇒ overall <strong>5.0</strong>.</p>
+      </div>
+
+      <div class="callout" style="margin-top:8px;">
+        <strong>Insight.</strong> The LLM judge would have credited any plausibly-formatted email. The hard layer is what enforces the <em>literal facts</em>: the address, the two specific dates, and the “do not send” rule. With <em>only</em> the LLM judge, a model that addressed the wrong recipient or sent the message would still likely score ≥4.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============= task-43 ============= -->
+  <h2>task-43 — “Are Clemenules clementines normally seedless?”</h2>
+  <p class="small">A horticultural question with one verifiable correct answer (yes, they are parthenocarpic) and a known mechanism for occasional seeds (cross-pollination with nearby compatible citrus).</p>
+
+  <div class="mini-grid">
+    <div class="mini">
+      <h3>Agent's structured answer</h3>
+      <pre class="compact">{
+  "normally_seedless": <span class="hl-hard">true</span>,
+  "cross_pollination_explanation":
+       "Clemenules are parthenocarpic; bees moving pollen
+        from compatible mandarins induce seed formation.",
+  "source_url":        "<span class="hl-hard hl-faith">https://agris.fao.org/.../675983...</span>",
+  "evidence_quote":    "<span class="hl-faith">Isolated flowers of Nules clementine produce
+                        seedless fruit; cross-pollination by neighbouring
+                        compatible varieties is the main cause of seediness.</span>"
+}</pre>
+    </div>
+
+    <div class="mini">
+      <h3>What each judge caught</h3>
+
+      <div style="margin-bottom:8px;">
+        <span class="judge-tag hard">Hard</span>
+        <ul style="margin:6px 0 0 0; padding-left:18px; font-size:12.5px;">
+          <li><span class="check">✓</span> <code>normally_seedless_correct</code> — equals <code>true</code></li>
+          <li><span class="check">✓</span> <code>has_source_url</code> · <code>source_url_is_http</code></li>
+          <li><span class="check">✓</span> <code>evidence_quote_substantive</code> — 9-word quote</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <span class="judge-tag faith">Faithfulness</span>
+        <p style="margin:4px 0 0; font-size:12.5px;">Fetched <code>agris.fao.org/...</code> → HTTP 200. The first 6 words of the cited quote (<em>“Isolated flowers of Nules clementine”</em>) appear verbatim in the page text. <strong>1/1 verified.</strong></p>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <span class="judge-tag eff">Effectiveness</span>
+        <p style="margin:4px 0 0; font-size:12.5px;">⚠ <strong>The single LLM judge crashed</strong> (returned <code>dimension_scores=None</code>). The Harbor verdict would be 0/5.</p>
+      </div>
+
+      <div class="callout" style="margin-top:8px;">
+        <strong>Insight.</strong> The deterministic layers <em>recovered</em> the verdict when the LLM judge pipeline failed. The hard predicates confirmed the agent gave the right answer; the faithfulness fetch confirmed the citation is real and supports the claim. Reading the two reports together is a stronger pass signal than the LLM judge alone would have produced even if it had succeeded.
+      </div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:24px;">Quick visual summary — “which judge sees what, and what it caught”</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Task</th>
+        <th>Hard reads…</th>
+        <th>Faithfulness reads…</th>
+        <th>Effectiveness reads…</th>
+        <th>Caught by the grounded layer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>task-01 backpack</td>
+        <td>JSON fields: count, prices, URLs, schema</td>
+        <td>4 amazon URLs + name claims</td>
+        <td>All prose + JSON + two reports</td>
+        <td>3/4 product names <strong>not present on cited pages</strong> — LLM judge missed it.</td>
+      </tr>
+      <tr>
+        <td>task-12 email</td>
+        <td>recipient · dates · sent</td>
+        <td>—</td>
+        <td>All prose + JSON</td>
+        <td>Wrong-recipient / sent-anyway failure mode <strong>cannot pass</strong>.</td>
+      </tr>
+      <tr>
+        <td>task-43 clementines</td>
+        <td><code>normally_seedless==true</code> · URL valid · quote substantive</td>
+        <td>FAO source URL + 6-word quote in page text</td>
+        <td>(LLM judge crashed)</td>
+        <td>Grounded layer <strong>recovered the verdict</strong> when the LLM pipeline failed.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     PAGE 3
+============================================================ -->
+<section class="page" id="page-3">
+  <div class="header-meta">
+    <div><strong>Reference: Arpan's 11-task programmatic-check experiment</strong></div>
+    <div class="meta">Page 3 / 3 · Comparison · What we can borrow</div>
+  </div>
+
+  <h1>How Arpan's 11-task run already does this — and what we can adopt</h1>
+
+  <p class="small" style="margin-top:0;">Source: <code>gpt5-v3-11tasks/</code> — Arpan's 11-task run of codex (gpt-5) on real_118 with a programmatic-check layer wired inline into each task's <code>test_task.py</code>.</p>
+
+  <h2>Their approach (inspected from <code>verifier/judge_runs.json</code>)</h2>
+  <p>Arpan's variant wires programmatic checks <em>inside each task's</em> <code>test_task.py</code>. The judge call returns a flat dict of booleans next to the LLM scores. Example, task-01:</p>
+  <pre>"programmatic_checks": {
+    "json_present":     true,
+    "option_count":     5,
+    "option_count_ok":  true,
+    "amazon_urls_ok":   true
+}</pre>
+
+  <p>The same shape across the 3 tasks that have any checks at all:</p>
+  <table>
+    <thead><tr><th>Task</th><th>programmatic_checks</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>task-01</code> backpack</td>
+        <td><code>json_present, option_count, option_count_ok, amazon_urls_ok</code></td>
+      </tr>
+      <tr>
+        <td><code>task-12</code> email</td>
+        <td><code>json_present, recipient_correct, subject_present, body_present</code></td>
+      </tr>
+      <tr>
+        <td><code>task-43</code> clementines</td>
+        <td><code>json_present, normally_seedless_value, normally_seedless_correct, has_source_url</code></td>
+      </tr>
+      <tr>
+        <td>other 8 of 11 tasks</td>
+        <td><code>{}</code> (no programmatic checks defined)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Side-by-side comparison</h2>
+  <table>
+    <thead>
+      <tr><th>Dimension</th><th>Arpan's 11-task</th><th>Ours (<code>agentic_judge/grounded</code>)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Where the checks live</td>
+        <td>Inline inside each <code>test_task.py</code></td>
+        <td><strong>Separate</strong> <code>tests/test_grounded.py</code> next to <code>test_task.py</code></td>
+      </tr>
+      <tr>
+        <td>How checks are declared</td>
+        <td>Ad-hoc Python booleans per task</td>
+        <td>Typed primitives: <code>AllValuesLE</code>, <code>ListLengthInRange</code>, <code>EqualsValue</code>, <code>AllURLsMatch</code>, <code>JSONSchemaConforms</code>, <code>AtLeastOneOf</code>, <code>Custom</code></td>
+      </tr>
+      <tr>
+        <td>Coverage</td>
+        <td>3 of 11 tasks (29%)</td>
+        <td>12 of 12 wired tasks (100%)</td>
+      </tr>
+      <tr>
+        <td>Per-check output</td>
+        <td>Just a boolean</td>
+        <td><code>(passed, detail)</code> — the failing case explains <em>which item</em> failed and why</td>
+      </tr>
+      <tr>
+        <td>Score integration</td>
+        <td>Reported but does not change <code>overall_score</code></td>
+        <td>Explicit penalty: <code>−0.5</code> per failed hard check, capped at <code>−2.0</code></td>
+      </tr>
+      <tr>
+        <td>URL verification</td>
+        <td>None</td>
+        <td><strong>Faithfulness layer</strong>: fetches every cited URL, verifies claim substring/regex appears in rendered page text</td>
+      </tr>
+      <tr>
+        <td>Anti-cheat schema</td>
+        <td>None — agent freely structures its own JSON</td>
+        <td><code>SUMMARY_SCHEMA</code> declares required + optional fields; agent emits more than is checked</td>
+      </tr>
+      <tr>
+        <td>Harbor verifier-output compatibility</td>
+        <td><strong>Yes</strong> — the <code>programmatic_checks</code> key already flows through harbor's analysis tooling</td>
+        <td>Currently emits <code>hard_report</code> as a list in our runner's return; not indexed by harbor's dashboards</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What we can borrow from them</h2>
+  <div class="borrow">
+    <ol>
+      <li>
+        <strong>Emit a flat <code>programmatic_checks</code> dict for harbor compatibility.</strong>
+        Our <code>framework/runner.py</code> currently returns
+        <code>hard_report: [&hellip;]</code> as a list. Adding a five-line shim that also produces
+        <code>{check_name: bool}</code> next to it lets the existing harbor
+        rejudge / agreement / dashboard tooling pick our checks up without
+        any of their code knowing about our framework.
+      </li>
+      <li>
+        <strong>The “factual-answer” assertion pattern.</strong>
+        Their <code>normally_seedless_correct: true</code> is the right pattern
+        for tasks that have one objectively verifiable answer.
+        We already have <code>EqualsValue</code> as a primitive but had not
+        consistently used it for the “key factual claim” on each task. Sweep
+        the cohort for tasks with a single-fact answer and add an
+        <code>EqualsValue(&lt;answer-field&gt;, &lt;known-correct&gt;)</code> assertion.
+      </li>
+      <li>
+        <strong>For trivial tasks, an inline check inside <code>test_task.py</code> is lighter than a full <code>test_grounded.py</code>.</strong>
+        Our split makes sense when there are several predicates plus faithfulness checks. For a task with two booleans and no URLs (e.g.
+        task-43 in their version), their inline approach is simpler. We can
+        keep our split as the default and accept inline checks as a valid
+        light-touch alternative for the long tail.
+      </li>
+      <li>
+        <strong>Their judge prompt explicitly mentions the programmatic-check verdict in the LLM call.</strong>
+        We do this too (<code>effectiveness.py</code> includes the hard report
+        in the prompt), but theirs has a one-line natural-language summary
+        of which boolean failed. Adopting that one-line summary makes the
+        LLM's grounding more visible in <code>dimension_reasoning</code>.
+      </li>
+    </ol>
+  </div>
+
+  <h2>Net</h2>
+  <p>Arpan's implementation validates that programmatic checks alongside an LLM judge improve verdict quality and reproducibility. Our framework generalises that idea — typed primitives, separated spec file, URL-fetch faithfulness layer, anti-cheat schema, score integration — but we should adopt his flat-dict output format so we plug into harbor's existing analysis pipeline rather than running parallel to it.</p>
+</section>
+
+</body>
+</html>
