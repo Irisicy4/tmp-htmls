@@ -745,6 +745,28 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
     </tbody>
   </table>
 
+  <h2>False positives — v2 flags something the agent actually did right</h2>
+  <table>
+    <thead><tr><th>Failure mode (v2 wrong)</th><th>Where it shows up</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Anti-bot pages render empty for our fetcher → Faith marks legitimate citations <code>supported=false</code></td>
+        <td>r19 task-01 backpack and r20 task-32 camera: Amazon product pages came back as near-empty for <code>urllib</code>+UA-spoof, and Webpage Grounding said <code>supported=false</code> on every URL. The agent (running with the sandbox's browser tool) may have legitimately seen real products. v2 dragged task-01 5.0 → 4.4 and task-32 to 2.40 partly on this signal.</td>
+        <td>Surface <code>http_status</code> + <code>page_len</code> in each FaithfulnessFinding; have the sub-agent return <code>supported="unverifiable"</code> when the page is empty/blocked, distinct from <code>supported=false</code>. Effectiveness should disregard "unverifiable" rather than penalizing the dim.</td>
+      </tr>
+      <tr>
+        <td>Schema-strict failure tanks an answer that is correct in prose</td>
+        <td>r20 task-104 Redfin: agent produced 3705 chars of substantive prose with the answer but never wrapped it in <code>=== JSON RESULT ===</code>. Hard <code>summary_json_parseable</code> failed first → 2.30. If the prose answer is right, this verdict is too harsh — we're scoring schema compliance, not task quality.</td>
+        <td>When the JSON block is missing but stdout/prose is substantive, fall back to a prose-only Effectiveness pass and flag <code>schema_compliance=false</code> separately, instead of folding both into the same low number.</td>
+      </tr>
+      <tr>
+        <td>JS-rendered / paywalled sources read as "unsupported" by the sub-agent</td>
+        <td>r20 task-05 nba.com: <code>stat_accuracy_recency</code> = 2 because Webpage Grounding couldn't pull the live numbers (the page is JS-heavy and our fetcher gets the static shell). The agent likely retrieved fresh stats via its own browser tool. v2 read the missing match as evidence of staleness.</td>
+        <td>Same fix as above — treat empty/JS-only fetches as "unverifiable" not "unsupported"; or add an optional headless-browser path for the sub-agent's fetcher.</td>
+      </tr>
+    </tbody>
+  </table>
+
 </section>
 
 
