@@ -327,7 +327,7 @@
 <section class="page" id="page-1">
   <div class="header-meta">
     <div><strong>Agentic Judge v2</strong></div>
-    <div class="meta">Page 1 / 3</div>
+    <div class="meta">Page 1 / 4</div>
   </div>
 
   <h1>Effectiveness is the main judge — and it can call Webpage Grounding</h1>
@@ -348,8 +348,8 @@
       </div>
       <div class="chip eff">
         <h4>③ Effectiveness — the main judge (LLM)</h4>
-        <div>gpt-4o scores the soft rubric grounded by the hard report and an initial faithfulness sweep. If it is unsure whether a citation supports a claim, OR if it wants to verify the agent's unanswerability claims, it emits <strong><code>pending_faith_questions: [{url, question}]</code></strong>. The runner dispatches each through ②, then re-calls ③ with the answers so it can revise its dimension scores.</div>
-        <div class="role">Reads <strong>full prose + JSON + Hard report + initial Faith report</strong>; emits <strong>pending faith questions</strong> and re-scores.</div>
+        <div>gpt-4o scores the soft rubric grounded by the hard report and an initial Webpage Grounding sweep. Critically, it also reads <strong>the agent's full stdout</strong> — every URL the agent actually visited, every tool call, the dead-ends. From that, it <em>orchestrates</em> additional Webpage Grounding checks: <strong><code>pending_faith_questions: [{url, question}]</code></strong> for sources the agent consulted but did not put in the summary JSON, or claims that need re-verification. The runner dispatches each through ②, then re-calls ③ with the answers so it can revise its dimension scores.</div>
+        <div class="role">Reads <strong>prose + JSON + Hard report + initial Faith report + full stdout/trace</strong>; orchestrates ② via pending questions and re-scores.</div>
       </div>
     </div>
     <div class="compose-diagram">
@@ -583,16 +583,26 @@ Return ONLY:
       <h3>③ Effectiveness — main judge</h3>
       <p class="small"><strong>Job.</strong> Score each soft-rubric dimension 1–5, grounded by the Hard and Faithfulness reports. Owns the final verdict. May dispatch follow-up questions to ② and re-score once the answers come back.</p>
       <h4 style="margin-top:8px;">System prompt (trimmed)</h4>
-      <pre class="compact">You are the MAIN evaluator scoring an AI agent's work.  You are given:
+      <pre class="compact">You are the MAIN evaluator scoring an AI agent's work.  You have FOUR
+pre-computed signals:
   1. agent's structured summary JSON,
   2. a hard-constraint report,
-  3. a faithfulness report (URL fetches + claim verification).
+  3. an initial Webpage Grounding report (URLs from the summary JSON only),
+  4. the agent's full stdout / trace — tool calls, fetched-page snippets,
+     intermediate reasoning, error traces.
 
-You are also AGENTIC: when uncertain about whether a cited URL supports
-a claim — OR when the agent says "I could not find X" and you want to
-verify that — emit `pending_faith_questions`.  A Webpage Grounding sub-agent
-will fetch each URL and answer.  We will then call you a second time
-with the answers so you can revise your scores.  Cap: 3 questions/task.
+READ THE STDOUT CAREFULLY.  Agents often visit URLs that do NOT appear
+in the summary JSON — sources they consulted, pages they opened to
+verify an answer, dead ends.  These are load-bearing for the verdict.
+
+You ORCHESTRATE the Webpage Grounding sub-agent: emit
+`pending_faith_questions: [{url, question}]` for
+  - URLs visited in stdout but not in the summary JSON,
+  - "I couldn't find X" claims you want to verify,
+  - claims where the substring match missed a paraphrase.
+The sub-agent fetches each URL and replies `{supported, evidence_quote,
+answer, reasoning}`.  We call you a SECOND time with the answers so you
+can revise dim scores.  Cap: 3 questions/task.
 
 Score honestly.  A FAILED hard constraint or failed faithfulness check
 caps the relevant dimension below 5.</pre>
@@ -617,21 +627,124 @@ task_completeness:
   1 = &lt; 3 options; 3 = 3-4 options; 5 = 3-5 options with full feature sweep</pre>
     </div>
   </div>
+
+  <h4>Step 4 — verdict on this exact agent answer (r19, real Modal run)</h4>
+  <div style="border:1px solid var(--line); border-left: 3px solid var(--ink); padding:14px 20px; margin:10px 0;">
+    <pre class="compact" style="margin:0;">① Hard Constraint Unit Tests   5/5 PASS                      → hard_penalty   0.00
+② Webpage Grounding (LLM)      0/4 URLs supported the claim  → faith_bonus   +0.20
+③ Effectiveness (main judge)
+   constraint_satisfaction  5     (budget + features ok)
+   result_specificity       3     ↓ cited Amazon pages came back empty / not the product
+   comparison_quality       5     (feature-by-feature mapping present)
+   task_completeness        4     ↓ original product research hampered by empty source page
+   overall_llm              4.20  (pending_faith_questions: none raised)
+
+final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
+    <p class="small" style="margin:10px 0 0;">
+      v1 (LLM-only) on the same agent answer scored <strong>5.00</strong> — it never saw that 3 of 4 cited Amazon pages don't actually contain the brands the agent attributed to them. v2's Webpage Grounding sub-agent read each page with an LLM and reported <code>supported=false</code>; the main judge propagated that into <em>result_specificity</em> 5→3 and <em>task_completeness</em> 5→4.
+    </p>
+  </div>
 </section>
 
 
 <!-- ============================================================
-     PAGE 2  (folded by default)
+     PAGE 2  (new) — what the agentic judge does well, TP / FN
+============================================================ -->
+<section class="page" id="page-2-summary">
+  <div class="header-meta">
+    <div><strong>Agentic Judge v2</strong></div>
+    <div class="meta">Page 2 / 4 · what it does well · true positives · false negatives</div>
+  </div>
+
+  <h1>What the agentic judge does well — and where it still misses</h1>
+  <p class="small">Sample: codex (ChatGPT subscription) on real_118 wired tasks. v1 = single LLM judge; v2 = Hard predicates + Webpage Grounding sub-agent + Effectiveness reading stdout and orchestrating follow-ups.</p>
+
+  <h2>What it does well</h2>
+  <ol style="margin:8px 0 18px;">
+    <li style="margin:8px 0;"><strong>Catches the “plausible URL + fabricated fact” failure mode.</strong> A single LLM judge will reward an answer that <em>looks</em> well-cited; v2 actually fetches every URL and lets an LLM compare the claim to the page text. <em>Concrete:</em> task-01 r19 — 3 of 4 cited Amazon ASINs do not contain the brand the agent attributed; v1 scored 5.00, v2 scored 4.40.</li>
+    <li style="margin:8px 0;"><strong>Recovers when the v1 LLM judge crashes.</strong> The deterministic Hard layer and the LLM-agentic Webpage Grounding produce a verdict even when the soft-rubric judge call returns null dimension scores. <em>Concrete:</em> task-43 r17 → 0.00 (judge crashed) vs r19 → 5.00.</li>
+    <li style="margin:8px 0;"><strong>Sanity-passes the easy cases without drifting.</strong> task-12 email has no URLs to verify; v2's Hard predicates check recipient, dates, sent-flag, etc., and both v1 and v2 land on 5.00. The framework does not invent failure where there isn't one.</li>
+    <li style="margin:8px 0;"><strong>Effectiveness reads the agent's full stdout, not just the prose summary.</strong> Tool calls, fetched-page snippets, and dead-end searches are all in scope; the judge can dispatch Webpage Grounding to verify a URL the agent visited but never put in the summary JSON.</li>
+    <li style="margin:8px 0;"><strong>Auditable composition.</strong> Final = clamp(0, 5, LLM − 0.5·hard_fails + 0.5·faith_score/5). The three layers are kept separate in the result JSON; a curator can replay any layer.</li>
+  </ol>
+
+  <h2>True positives — failures only v2 catches</h2>
+  <table>
+    <thead><tr><th>Task</th><th>What v2 caught</th><th>v1 score</th><th>v2 score</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>task-01</code> backpack</td>
+        <td>3 of 4 cited Amazon pages don't contain the brand the agent attributed to that ASIN. Webpage Grounding LLM: <code>supported=false</code> for B09YRC9Y3G, B0BDLH7K67, B0FDKLS9YY.</td>
+        <td>5.00</td>
+        <td><strong>4.40</strong></td>
+      </tr>
+      <tr>
+        <td><code>task-43</code> clementines</td>
+        <td>v1 LLM judge returned <code>dimension_scores=None</code>. v2 Hard 5/5 + Webpage Grounding 1/1 (UC Riverside cite confirmed) → recovered verdict.</td>
+        <td>0.00 (judge crash)</td>
+        <td><strong>5.00</strong></td>
+      </tr>
+      <tr>
+        <td colspan="4" class="small" style="font-style: italic;">Wider sample (r20: task-05, 15, 32, 65, 101, 104) pending — fills this row on next render.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>False negatives / known gaps</h2>
+  <table>
+    <thead><tr><th>Failure mode</th><th>Why v2 currently misses it</th><th>Mitigation in roadmap</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Agent satisfies the predicates but reasons wrong</td>
+        <td>Hard predicates check shape (count, range, schema). An option priced $74.99 passes <code>all_prices_under_75</code> even if its features bear no relation to the reference.</td>
+        <td>Lean harder on Effectiveness's stdout-grounded reasoning; add per-task semantic predicates where there's a single objective truth (e.g. <code>EqualsValue("normally_seedless", True)</code>).</td>
+      </tr>
+      <tr>
+        <td>Effectiveness over-trusts the Hard 5/5 signal</td>
+        <td>When Hard passes 5/5 the LLM sometimes anchors high on every soft dim without re-reading the agent's reasoning. r19 task-01 nearly passed at 5.00 — Webpage Grounding had to drag it down.</td>
+        <td>Add an explicit <code>"Hard=5/5 does not mean dim=5"</code> sentence in the Effectiveness prompt (already drafted; pending re-run).</td>
+      </tr>
+      <tr>
+        <td>Pending-question loop didn't fire when it could have</td>
+        <td>On r19 task-01, Effectiveness saw the 0/4 faith report and simply lowered dims directly. It could have re-asked Webpage Grounding "is brand X really not on page Y?" to confirm, but with the substring-fail signal it took the easier path.</td>
+        <td>Tighten the prompt to require a pending question when the LLM disagrees with its own faith signal; or add a confidence threshold.</td>
+      </tr>
+      <tr>
+        <td>Codex/agent runtime errors masquerade as low scores</td>
+        <td>If the agent stdout is empty (auth failure, sandbox crash), v2 gracefully returns 0.00 — but so did v1. We're not distinguishing "agent broke" from "agent did badly."</td>
+        <td>Surface a separate <code>infrastructure_error</code> flag instead of collapsing into score 0.</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="small" style="font-style: italic;">More gaps surfaced by the r20 sample land here.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:24px;">Headline numbers, r17 (v1) vs r19 (v2), same 3 agent answers</h2>
+  <table>
+    <thead><tr><th>Task</th><th>r17 score (v1)</th><th>r19 score (v2)</th><th>Δ</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>task-01</code> backpack</td><td>5.00</td><td>4.40</td><td>−0.60</td><td>v2 caught the fabricated brand cites</td></tr>
+      <tr><td><code>task-12</code> email</td><td>5.00</td><td>5.00</td><td>0.00</td><td>no URLs; both judges agree</td></tr>
+      <tr><td><code>task-43</code> clementines</td><td>0.00</td><td>5.00</td><td>+5.00</td><td>v1 LLM judge crashed; v2 recovered</td></tr>
+      <tr><td><strong>Mean</strong></td><td><strong>3.33</strong></td><td><strong>4.80</strong></td><td><strong>+1.47</strong></td><td>pass-rate 1/3 → 3/3</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     PAGE 3 (was page 2) — Two more examples (folded by default)
 ============================================================ -->
 <details class="page-fold">
   <summary class="page-toggle">
-    <span>Page 2 — Two more examples: which judge catches what</span>
+    <span>Page 3 — Two more examples: which judge catches what</span>
     <span class="hint">click to expand · task-12 email · task-43 clementines</span>
   </summary>
 <section class="page" id="page-2">
   <div class="header-meta">
     <div><strong>Agentic Judge</strong> — which judge caught what, on more tasks</div>
-    <div class="meta">Page 2 / 3 · task-12 (email) · task-43 (clementines)</div>
+    <div class="meta">Page 3 / 4 · task-12 (email) · task-43 (clementines)</div>
   </div>
 
   <h1>Two more examples — which judge catches what, and where it reads</h1>
@@ -774,13 +887,13 @@ task_completeness:
 ============================================================ -->
 <details class="page-fold">
   <summary class="page-toggle">
-    <span>Page 3 — Reference comparison: Arpan's 11-task experiment</span>
+    <span>Page 4 — Reference comparison: Arpan's 11-task experiment</span>
     <span class="hint">click to expand · what we adopt</span>
   </summary>
 <section class="page" id="page-3">
   <div class="header-meta">
     <div><strong>Reference: Arpan's 11-task programmatic-check experiment</strong></div>
-    <div class="meta">Page 3 / 3 · Comparison · What we can borrow</div>
+    <div class="meta">Page 4 / 4 · Comparison · What we can borrow</div>
   </div>
 
   <h1>How Arpan's 11-task run already does this — and what we can adopt</h1>
