@@ -604,8 +604,21 @@ The sub-agent fetches each URL and replies `{supported, evidence_quote,
 answer, reasoning}`.  We call you a SECOND time with the answers so you
 can revise dim scores.  Cap: 3 questions/task.
 
-Score honestly.  A FAILED hard constraint or failed faithfulness check
-caps the relevant dimension below 5.</pre>
+REQUIRED USES (you MUST emit at least one pending question in these cases):
+  R1.  Faith report says a claim is NOT supported but you suspect the
+       substring matcher missed a paraphrase — verify, don't override.
+  R2.  Stdout shows a URL not covered by the initial faith report and
+       its support status would change a dim score.
+
+Anchoring discipline:
+  A1.  Failed hard constraint     ⇒  that dim cannot be 5.
+  A2.  Failed faithfulness check  ⇒  specificity / data-accuracy ≠ 5.
+  A3.  HARD 5/5 DOES NOT MEAN ANY SOFT DIM IS 5.  Hard predicates check
+       shape (count, range, schema) — not semantic quality.  An option
+       priced $74.99 satisfies the budget cap even if its features bear
+       no relation to the reference.  Read the agent's reasoning in
+       stdout before assigning 5; if you did not see real engagement
+       with the substance, the soft dims should be 3 or 4, not 5.</pre>
       <h4 style="margin-top:10px;">Plus: dimensions + anchors inherited from the original task instruction</h4>
       <p class="small" style="margin:2px 0 6px;">The runner injects the per-task soft rubric (dimension names, weights, and anchor language) straight from the v1 <code>test_task.py</code>. For task-01 the judge sees:</p>
       <pre class="compact">## Dimensions to score (1-5 each)
@@ -700,16 +713,6 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
         <td>Lean harder on Effectiveness's stdout-grounded reasoning; add per-task semantic predicates where there's a single objective truth (e.g. <code>EqualsValue("normally_seedless", True)</code>).</td>
       </tr>
       <tr>
-        <td>Effectiveness over-trusts the Hard 5/5 signal</td>
-        <td>When Hard passes 5/5 the LLM sometimes anchors high on every soft dim without re-reading the agent's reasoning. r19 task-01 nearly passed at 5.00 — Webpage Grounding had to drag it down.</td>
-        <td>Add an explicit <code>"Hard=5/5 does not mean dim=5"</code> sentence in the Effectiveness prompt (already drafted; pending re-run).</td>
-      </tr>
-      <tr>
-        <td>Pending-question loop didn't fire when it could have</td>
-        <td>On r19 task-01, Effectiveness saw the 0/4 faith report and simply lowered dims directly. It could have re-asked Webpage Grounding "is brand X really not on page Y?" to confirm, but with the substring-fail signal it took the easier path.</td>
-        <td>Tighten the prompt to require a pending question when the LLM disagrees with its own faith signal; or add a confidence threshold.</td>
-      </tr>
-      <tr>
         <td>Codex/agent runtime errors masquerade as low scores</td>
         <td>If the agent stdout is empty (auth failure, sandbox crash), v2 gracefully returns 0.00 — but so did v1. We're not distinguishing "agent broke" from "agent did badly."</td>
         <td>Surface a separate <code>infrastructure_error</code> flag instead of collapsing into score 0.</td>
@@ -720,16 +723,6 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
     </tbody>
   </table>
 
-  <h2 style="margin-top:24px;">Headline numbers, r17 (v1) vs r19 (v2), same 3 agent answers</h2>
-  <table>
-    <thead><tr><th>Task</th><th>r17 score (v1)</th><th>r19 score (v2)</th><th>Δ</th><th>Note</th></tr></thead>
-    <tbody>
-      <tr><td><code>task-01</code> backpack</td><td>5.00</td><td>4.40</td><td>−0.60</td><td>v2 caught the fabricated brand cites</td></tr>
-      <tr><td><code>task-12</code> email</td><td>5.00</td><td>5.00</td><td>0.00</td><td>no URLs; both judges agree</td></tr>
-      <tr><td><code>task-43</code> clementines</td><td>0.00</td><td>5.00</td><td>+5.00</td><td>v1 LLM judge crashed; v2 recovered</td></tr>
-      <tr><td><strong>Mean</strong></td><td><strong>3.33</strong></td><td><strong>4.80</strong></td><td><strong>+1.47</strong></td><td>pass-rate 1/3 → 3/3</td></tr>
-    </tbody>
-  </table>
 </section>
 
 
