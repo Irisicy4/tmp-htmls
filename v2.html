@@ -698,7 +698,22 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
         <td><strong>5.00</strong></td>
       </tr>
       <tr>
-        <td colspan="4" class="small" style="font-style: italic;">Wider sample (r20: task-05, 15, 32, 65, 101, 104) pending — fills this row on next render.</td>
+        <td><code>task-15</code> 2025 calendar</td>
+        <td>Webpage Grounding LLM verified 3/4 Douban URLs the agent cited (one came back empty). Effectiveness dimension reasoning called out the empty page → <em>source_navigation</em> capped at 3.</td>
+        <td>—</td>
+        <td><strong>3.92</strong> (faith bonus +0.42)</td>
+      </tr>
+      <tr>
+        <td><code>task-32</code> camera Amazon</td>
+        <td>Hard predicates passed 5/5 (budget cap, count, schema). Webpage Grounding fetched the cited Amazon URLs and they came back empty. Main judge correctly downgraded <em>cart_addition</em> = 1, <em>amazon_search_execution</em> = 2 — Hard 5/5 did NOT propagate to soft dims.</td>
+        <td>—</td>
+        <td><strong>2.40</strong> (fails 3.0 threshold)</td>
+      </tr>
+      <tr>
+        <td><code>task-101</code> SEC EDGAR</td>
+        <td>Summary JSON missing entirely → Hard <code>summary_json_parseable</code> failed first; agent had run SEC + CourtListener navigations but never emitted the structured block. Hard fail → −0.50 penalty.</td>
+        <td>—</td>
+        <td><strong>2.20</strong> (fail)</td>
       </tr>
     </tbody>
   </table>
@@ -718,7 +733,14 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
         <td>Surface a separate <code>infrastructure_error</code> flag instead of collapsing into score 0.</td>
       </tr>
       <tr>
-        <td colspan="3" class="small" style="font-style: italic;">More gaps surfaced by the r20 sample land here.</td>
+        <td>Over-anchor on Hard 5/5 still happening (r20, pre-fix run)</td>
+        <td>r20 task-65 dinner restaurants: Webpage Grounding 0/5 supported (TheFork URLs returned nothing match-worthy) yet the main judge gave <em>recommendation_quality</em> = 5 and <em>dinner_focus</em> = 5 because Hard 6/6 passed. Final 4.30 should probably be ~3.5.</td>
+        <td>New A3 rule (“Hard 5/5 does not mean any soft dim is 5”) and R1 (verify-don't-override the faith signal) added to the Effectiveness prompt — pending a re-run as <code>r21</code> to confirm the over-anchor disappears.</td>
+      </tr>
+      <tr>
+        <td>Schema-missing failure looks identical to wrong-answer failure</td>
+        <td>r20 task-101 SEC EDGAR and task-104 Redfin both failed because the agent never emitted the <code>=== JSON RESULT ===</code> block, so Hard <code>summary_json_parseable</code> fails first and Faithfulness has nothing to fetch. The 2.20 / 2.30 verdicts don't distinguish “agent didn't follow the schema instruction” from “agent gave wrong data.”</td>
+        <td>Split the JSON-parse failure into its own non-score flag; have Effectiveness rescue with stdout-only scoring when the prose answer is present but the JSON block isn't.</td>
       </tr>
     </tbody>
   </table>
