@@ -349,15 +349,11 @@
         <div>One model reads everything — the agent's answer, the structural and source-checking results, and the agent's full work trace including pages it visited but never wrote down. It scores the rubric, sends follow-up questions to the source helper when something looks off, then revises its scores when the answers come back.</div>
       </div>
     </div>
-    <p>The three results compose into a single score and a pass/fail. Structural failures pull the score down; verified citations nudge it up. The arithmetic is intentionally simple so the verdict is easy to audit — anyone can replay any of the three layers on its own.</p>
   </section>
 
-  <h2>Flow — five nodes, one feedback loop</h2>
+  <h2>Flow</h2>
   <img src="./flowchart.png" alt="Flow chart: the agent answer feeds into Hard Constraint Unit Tests and the Webpage Grounding sub-agent; both feed into the main judge (Effectiveness), which can also send follow-up questions back to the sub-agent; the result is a final score and pass/fail."
-       style="display:block; width:100%; max-width:920px; margin:14px auto 8px; height:auto;">
-  <p class="small" style="margin:-4px 0 18px;">
-    The structural and source-checking results feed into the main judge. When the main judge isn't sure about a citation, it sends a follow-up question back to the source helper (the dashed purple arrow), waits for the answer, then revises its scores. The verdict it ships is always the revised one.
-  </p>
+       style="display:block; width:100%; max-width:920px; margin:14px auto 18px; height:auto;">
 
   <h2>Worked example — a shopping research task</h2>
 
