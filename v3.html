@@ -608,66 +608,48 @@ Anchor language:
   <h1>What it does well, what it misses, what it gets wrong</h1>
 
   <h2>What it does well</h2>
-  <ol style="margin:8px 0 18px;">
-    <li style="margin:8px 0;"><strong>Catches plausible-but-fake citations.</strong> When an answer includes a real-looking URL but the page doesn't actually back the claim, the judge fetches the page and notices.</li>
-    <li style="margin:8px 0;"><strong>Still produces a verdict when the rubric grader breaks.</strong> The constraint tests and the page check give a score even if the rubric judge call returns nothing.</li>
-    <li style="margin:8px 0;"><strong>Doesn't invent failure on easy answers.</strong> When there are no URLs to verify, the judge just checks the structural facts and moves on.</li>
-    <li style="margin:8px 0;"><strong>Reads the agent's full trace, not just its final write-up.</strong> Tool calls, fetched pages, and dead-end searches are all in scope, so a citation the agent looked at but never wrote down can still be checked.</li>
-    <li style="margin:8px 0;"><strong>The layers are auditable.</strong> Constraint results, page checks, and rubric scores stay separate in the output, so a reviewer can replay any one of them.</li>
-  </ol>
+  <ul style="margin:8px 0 18px;">
+    <li>Catches plausible-looking citations that don't actually back the claim.</li>
+    <li>Still produces a verdict if the rubric grader fails — the other two layers carry it.</li>
+    <li>Doesn't invent failure on easy answers with no URLs to verify.</li>
+    <li>Reads the agent's full work trace, not just its final write-up.</li>
+    <li>The three layers stay separate in the output, so any one can be replayed for audit.</li>
+  </ul>
 
   <h2>Concrete cases where it caught a real problem</h2>
   <table>
     <thead><tr><th>Task</th><th>What the judge caught</th></tr></thead>
     <tbody>
-      <tr>
-        <td>Backpack search</td>
-        <td>Three of the four cited Amazon product pages don't actually contain the brand the agent attributed to that ASIN. The score dropped two soft dimensions instead of awarding a perfect rubric.</td>
-      </tr>
-      <tr>
-        <td>Clementines question</td>
-        <td>The rubric grader returned nothing. The constraint tests and the verified UC Riverside citation produced a passing verdict on their own.</td>
-      </tr>
-      <tr>
-        <td>2025 calendar</td>
-        <td>Three of four cited Douban URLs were verified by the page sub-agent; the one empty page was flagged, lowering the source-navigation score.</td>
-      </tr>
-      <tr>
-        <td>Camera shopping</td>
-        <td>Structural constraints all passed, but the cited Amazon pages came back empty. The judge correctly lowered the search-execution and cart-execution scores rather than awarding fives across the board.</td>
-      </tr>
-      <tr>
-        <td>SEC EDGAR lookup</td>
-        <td>The agent never emitted the required JSON block. The structural constraint failed first, so the verdict reflected the schema miss instead of guessing at the answer's quality.</td>
-      </tr>
+      <tr><td>Backpack search</td><td>Three of four cited Amazon pages didn't actually contain the products the agent named.</td></tr>
+      <tr><td>Clementines question</td><td>Rubric grader returned nothing; the other layers verified the cited source and produced a passing verdict on their own.</td></tr>
+      <tr><td>2025 calendar</td><td>Three of four cited pages verified; the one empty page was flagged and the source-navigation score lowered.</td></tr>
+      <tr><td>Camera shopping</td><td>Structural checks all passed, but cited Amazon pages came back empty — the judge lowered specificity instead of awarding a perfect rubric.</td></tr>
+      <tr><td>SEC EDGAR lookup</td><td>Agent skipped the required structured block; the structural check failed first, so the verdict reflected the schema miss rather than the answer's quality.</td></tr>
     </tbody>
   </table>
 
   <h2>What it still misses</h2>
   <table>
-    <thead><tr><th>Issue</th><th>What happens</th><th>What we'd add</th></tr></thead>
+    <thead><tr><th>Issue</th><th>What happens and what we'd add</th></tr></thead>
     <tbody>
       <tr>
         <td>Shape passes but the reasoning is wrong</td>
-        <td>Structural constraints check shape (count, budget cap, schema). An option priced at $74.99 satisfies the budget rule even if its features bear no relation to what the user asked for.</td>
-        <td>More semantic constraints where there's a single objective truth; lean harder on the rubric judge's reading of the agent's trace.</td>
+        <td>An option priced $74.99 satisfies the budget rule even if its features have nothing to do with what the user asked for. Fix: more semantic checks where there's a single objective truth, and lean harder on the rubric judge's reading of the agent's trace.</td>
       </tr>
       <tr>
         <td>An infrastructure error looks like a bad answer</td>
-        <td>When the agent's environment crashes or auth breaks, the verdict is just a low score with no signal of why.</td>
-        <td>A separate infrastructure-error flag, distinct from the score.</td>
+        <td>When the agent's environment crashes or auth breaks, the verdict is just a low score with no signal of why. Fix: a separate infrastructure-error flag, distinct from the score.</td>
       </tr>
     </tbody>
   </table>
 
   <h2>Where the judge is too harsh</h2>
   <table>
-    <thead><tr><th>Issue</th><th>What happens</th><th>What we'd add</th></tr></thead>
+    <thead><tr><th>Issue</th><th>What happens and what we'd add</th></tr></thead>
     <tbody>
       <tr>
         <td>Anti-bot pages render empty for our fetcher</td>
-        <td>The page sub-agent fetches the URL, gets a near-empty body, and reports the citation as unsupported — even when the agent saw a real product in its own browser tool. The verdict drops unfairly.</td>
-        <td>Distinguish "page blocked or empty" from "page renders but doesn't support the claim." Ignore the former rather than penalising it.</td>
+        <td>The source-checking helper gets a near-empty page and reports the citation as unsupported, even when the agent saw a real product in its browser. Fix: distinguish "page blocked or empty" from "page renders but doesn't support the claim," and ignore the former.</td>
       </tr>
     </tbody>
   </table>
