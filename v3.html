@@ -350,7 +350,6 @@
       </div>
     </div>
     <p>The three results compose into a single score and a pass/fail. Structural failures pull the score down; verified citations nudge it up. The arithmetic is intentionally simple so the verdict is easy to audit — anyone can replay any of the three layers on its own.</p>
-    <p>One subtle anti-cheat detail: the task instruction asks the agent for slightly more fields than the structural checks actually verify. The agent can't tell which subset will be checked, so faking just the visible subset is no cheaper than doing the real work — and the source-checking helper still catches fabricated citations either way.</p>
   </section>
 
   <h2>Flow — five nodes, one feedback loop</h2>
@@ -493,11 +492,35 @@
     <div class="judge-card hard">
       <h3>① Structural checks</h3>
       <p>A small list of programmatic checks on the agent's structured answer — the kinds of things that have one right answer per task: did the agent put a recipient in the recipient slot, are all five prices under the budget, did the schema get filled in, does the cited URL look like a URL. No language model is involved. Each check passes or fails with a short reason.</p>
+      <h4 style="margin-top:10px;">Example check list (for the shopping task above)</h4>
+      <pre class="compact">CHECKS = [
+  schema_filled_in,
+  options_count_between_3_and_5,
+  every_price_under_75,
+  every_option_has_a_url,
+  reference_product_url_present,
+]</pre>
     </div>
 
     <div class="judge-card faith">
       <h3>② Source-checking helper</h3>
       <p>For every page the agent cited, this helper fetches the page and asks a language model: does this page actually back up what the agent said about it? If yes, it returns a short quote from the page as evidence; if no, it explains why. It can also answer follow-up questions from the main judge — for example, "the agent said this source doesn't mention X; can you confirm that on the page?"</p>
+      <h4 style="margin-top:10px;">What this helper is told</h4>
+      <pre class="compact">You are a precise source-checking helper.  You are given:
+  - the rendered text of a web page the agent cited as evidence,
+  - the agent's specific claim about that page,
+  - (optional) a follow-up question from the main judge.
+
+Decide whether the page actually supports the claim, and answer
+the follow-up if there is one.  Paraphrases count; numeric values
+must be within plausible rounding; if the page is empty, blocked,
+or off-topic, mark unsupported.
+
+Reply with:
+  supported       : yes / no
+  evidence_quote  : a short verbatim snippet from the page
+  answer          : your answer to the follow-up (if any)
+  reasoning       : one short sentence</pre>
     </div>
 
     <div class="judge-card eff">
@@ -505,6 +528,63 @@
       <p>One model reads the whole picture: the agent's answer, its structured summary, the results of the structural checks, the source-checking results, and the agent's full work trace (every tool call, every page it actually visited, including dead ends and pages it never wrote down). It scores each rubric dimension and writes a short justification.</p>
       <p>When something doesn't add up — a citation that looks fishy, a "couldn't find it" claim worth double-checking, a source the agent visited but never quoted — the main judge sends a follow-up question back to the source-checking helper, waits for the answer, and then revises its scores. The verdict it ships is always the revised one.</p>
       <p>The judge inherits whatever rubric the task already came with — the same dimension names, weights, and what-counts-as-a-5 language that the original task used. That means it's not inventing standards; it's just scoring against the existing ones with more grounding to lean on.</p>
+      <h4 style="margin-top:10px;">What this judge is told</h4>
+      <pre class="compact">You are the main evaluator scoring an AI agent's work.  You have
+four pieces of evidence:
+  1. the agent's structured summary,
+  2. the structural-check results,
+  3. the source-checking results for the URLs in the summary,
+  4. the agent's full work trace — every tool call, every page it
+     opened to verify something, every dead end.
+
+Read the trace carefully.  Agents often visit pages they never put
+in their final summary; those pages are still load-bearing for
+your verdict.
+
+If you are uncertain about whether a cited page supports a claim,
+or if the agent says "I couldn't find X" and you want to verify
+that, send a follow-up question to the source-checking helper.
+The helper will fetch the page and reply; you will then re-score
+with the new evidence.  Cap: 3 follow-ups per task.
+
+You must send a follow-up in these cases:
+  - The source-checking helper says a claim is unsupported but you
+    suspect a paraphrase was missed.
+  - The agent's trace shows a URL that the helper has not yet
+    verified and the answer would change a score.
+
+Score honestly.  Structural checks check shape — not semantic
+quality.  An option priced $74.99 satisfies the budget cap even
+if its features have nothing to do with what the user asked for.
+A perfect structural pass does not automatically mean a perfect
+soft-rubric score; read the agent's reasoning before assigning a
+five.</pre>
+      <h4 style="margin-top:10px;">Plus: the rubric from the original task</h4>
+      <p class="small" style="margin:2px 0 6px;">The judge inherits the task's existing rubric — the dimension names, weights, and what-counts-as-a-5 anchor language — directly from the task definition. For the shopping example, the judge is given:</p>
+      <pre class="compact">Dimensions to score (1 to 5):
+  - constraint_satisfaction (weight 0.30)
+  - result_specificity      (weight 0.25)
+  - comparison_quality      (weight 0.25)
+  - task_completeness       (weight 0.20)
+
+Anchor language:
+  constraint_satisfaction
+    1 = budget cap ignored
+    3 = some items over budget
+    5 = every option within budget AND every feature of the
+        reference covered
+  result_specificity
+    1 = generic suggestions
+    3 = brand and model named
+    5 = exact product code, price, and URL per item
+  comparison_quality
+    1 = list only, no comparison
+    3 = a couple of features compared
+    5 = each option mapped back to each of the reference's features
+  task_completeness
+    1 = fewer than 3 options returned
+    3 = 3 or 4 options
+    5 = 3 to 5 options with a full feature sweep</pre>
     </div>
   </div>
 
