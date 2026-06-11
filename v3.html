@@ -460,16 +460,8 @@
   <h2>Worked example — a shopping research task</h2>
 
   <h4>Step 1 — what we sent to the agent</h4>
-  <div class="prompt-grid">
-    <div class="prompt original">
-      <div class="head">Original task</div>
-      <p>"I'm looking for a backpack under $75 that has all the features of <span class="hl-hard">this product</span>. Please do some research and find three to five options and summarize their key features and prices, comparing them to the original."</p>
-    </div>
-    <div class="prompt addendum">
-      <div class="head">What we added to the task</div>
-      <p>We asked the agent to also produce a structured summary at the end — one block listing each option with its name, URL, price, features, and a short note comparing it to the original.</p>
-      <p class="small">We told the agent that the grader would fetch each URL and verify the figures and quotes against the live page, so it should be precise.</p>
-    </div>
+  <div class="prompt original" style="margin: 8px 0 20px;">
+    <p>"I'm looking for a backpack under $75 that has all the features of <span class="hl-hard">this product</span>. Please do some research and find three to five options and summarize their key features and prices, comparing them to the original. At the end, also produce a structured summary — one block listing each option with its name, URL, price, features, and a short note comparing it to the original. The grader will fetch each URL and verify the figures and quotes against the live page, so be precise."</p>
   </div>
 
   <h4>Step 2 — what the agent wrote (short excerpt)</h4>
