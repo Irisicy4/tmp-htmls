@@ -733,11 +733,6 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
         <td>Surface a separate <code>infrastructure_error</code> flag instead of collapsing into score 0.</td>
       </tr>
       <tr>
-        <td>Over-anchor on Hard 5/5 still happening (r20, pre-fix run)</td>
-        <td>r20 task-65 dinner restaurants: Webpage Grounding 0/5 supported (TheFork URLs returned nothing match-worthy) yet the main judge gave <em>recommendation_quality</em> = 5 and <em>dinner_focus</em> = 5 because Hard 6/6 passed. Final 4.30 should probably be ~3.5.</td>
-        <td>New A3 rule (“Hard 5/5 does not mean any soft dim is 5”) and R1 (verify-don't-override the faith signal) added to the Effectiveness prompt — pending a re-run as <code>r21</code> to confirm the over-anchor disappears.</td>
-      </tr>
-      <tr>
         <td>Schema-missing failure looks identical to wrong-answer failure</td>
         <td>r20 task-101 SEC EDGAR and task-104 Redfin both failed because the agent never emitted the <code>=== JSON RESULT ===</code> block, so Hard <code>summary_json_parseable</code> fails first and Faithfulness has nothing to fetch. The 2.20 / 2.30 verdicts don't distinguish “agent didn't follow the schema instruction” from “agent gave wrong data.”</td>
         <td>Split the JSON-parse failure into its own non-score flag; have Effectiveness rescue with stdout-only scoring when the prose answer is present but the JSON block isn't.</td>
