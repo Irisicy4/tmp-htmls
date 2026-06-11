@@ -53,17 +53,21 @@
 <body>
 <main>
   <h1>Agentic Judge — presentation decks</h1>
-  <p>Two iterations of the grounded-judging design for the EvolveBench cohort.</p>
+  <p>Iterations of the grounded-judging design.</p>
 
   <h2>Decks</h2>
   <ul class="deck-list">
     <li>
-      <a href="./v2.html">v2 · Effectiveness as main judge with Faithfulness sub-agent</a>
-      <div class="meta">Latest. LLM-agentic Faithfulness. Main judge can dispatch <code>pending_faith_questions</code> mid-judgment. Page 2 / 3 folded by default.</div>
+      <a href="./v3.html">v3 · Plain-language deck (latest)</a>
+      <div class="meta">Streamlined for a non-engineering audience. The same architecture, written as continuous prose without code snippets or version labels.</div>
     </li>
     <li>
-      <a href="./v1.html">v1 · Three independent judges, single pass</a>
-      <div class="meta">Original. Hard predicates + substring-match Faithfulness + LLM Effectiveness.</div>
+      <a href="./v2.html">v2 · Technical deck with system prompts</a>
+      <div class="meta">Shows the actual judge prompts, predicate lists, and follow-up loop rules. Page 2 has the true-positive / false-negative / false-positive analysis.</div>
+    </li>
+    <li>
+      <a href="./v1.html">v1 · Original three-judge design</a>
+      <div class="meta">Single-pass version with structural checks, substring-match source checking, and LLM rubric scoring.</div>
     </li>
   </ul>
 
