@@ -360,18 +360,58 @@
   <h4>Step 1 — what we sent to the agent</h4>
   <div class="prompt original" style="margin: 8px 0 20px;">
     <p>"I'm looking for a backpack under $75 that has all the features of <span class="hl-hard">this product</span>. Please do some research and find three to five options and summarize their key features and prices, comparing them to the original. At the end, also produce a structured summary — one block listing each option with its name, URL, price, features, and a short note comparing it to the original. The grader will fetch each URL and verify the figures and quotes against the live page, so be precise."</p>
+    <p style="margin-top:10px;">"Output your structured summary as a JSON block between <code>=== JSON RESULT ===</code> and <code>=== END JSON ===</code>."</p>
+    <p><strong>Required fields:</strong> <code>reference_product.url</code>, <code>options</code>, and for each option: <code>name</code>, <code>url</code>, <code>price</code>, <code>features</code>, <code>comparison_notes</code>.</p>
+    <p><strong>Optional but rewarded:</strong> <code>options[].asin</code>, <code>rating</code>, <code>review_count</code>, …</p>
   </div>
 
   <h4>Step 2 — what the agent wrote (short excerpt)</h4>
-  <p>The agent produced a few paragraphs of reasoning and then a structured summary listing five backpacks:</p>
-  <ul style="margin:6px 0 14px;">
-    <li><span class="hl-faith">Gieury Anti-Theft Laptop Backpack</span> · <span class="hl-hard">$49.99</span> · USB port, TSA-friendly</li>
-    <li><span class="hl-faith">Sirmaeed 35L Carry-on</span> · <span class="hl-hard">$38.99</span> · expandable, luggage strap</li>
-    <li><span class="hl-faith">Amazon Basics Travel Backpack</span> · <span class="hl-hard">$59.99</span> · 40L, convertible</li>
-    <li>MATEIN 40L Carry-on · <span class="hl-hard">$39.99</span></li>
-    <li>VANKEAN 17.3-inch Laptop Backpack · <span class="hl-hard">$44.99</span></li>
-  </ul>
-  <p class="small">Each option carries a real Amazon product URL the agent cited as its source.</p>
+  <pre class="compact">… prose narrative explaining what each backpack offers …
+
+=== JSON RESULT ===
+{
+  "reference_product": {
+    "url":  "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B09YRC9Y3G</span>",
+    "name": "Taskin New | Carry-on Large Travel Backpack",
+    "features": ["expandable 20/30/40L", "convertible handles", "professional"]
+  },
+  "options": [
+    {
+      "name":  "<span class="hl-faith">Gieury Anti-Theft Laptop Backpack</span>",
+      "url":   "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B0BDLH7K67</span>",
+      "price": <span class="hl-hard">49.99</span>,
+      "features": ["USB port", "TSA-friendly", "anti-theft pockets"],
+      "comparison_notes": "…"
+    },
+    {
+      "name":  "<span class="hl-faith">Sirmaeed 35L Carry-on</span>",
+      "url":   "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B0FDKLS9YY</span>",
+      "price": <span class="hl-hard">38.99</span>,
+      "features": ["expandable", "luggage strap"],
+      "comparison_notes": "…"
+    },
+    {
+      "name":  "<span class="hl-faith">Amazon Basics Travel Backpack</span>",
+      "url":   "<span class="hl-hard hl-faith">https://www.amazon.com/dp/B01J24H2K0</span>",
+      "price": <span class="hl-hard">59.99</span>,
+      "features": ["40L", "convertible"],
+      "comparison_notes": "…"
+    },
+    {
+      "name":  "MATEIN 40L Carry-on",
+      "url":   "<span class="hl-hard">https://www.amazon.com/dp/B07NV3VZ76</span>",
+      "price": <span class="hl-hard">39.99</span>,
+      …
+    },
+    {
+      "name":  "VANKEAN 17.3-inch Laptop Backpack",
+      "url":   "<span class="hl-hard">https://www.amazon.com/dp/B07XYZ</span>",
+      "price": <span class="hl-hard">44.99</span>,
+      …
+    }
+  ]
+}
+=== END JSON ===</pre>
 
   <p class="small">
     Coloured underlines mark where each judge looks. Blue is for the structural checks, amber for the source-checking helper (the URLs it fetched), and the main judge reads everything in scope.
