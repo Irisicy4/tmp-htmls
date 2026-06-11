@@ -665,99 +665,88 @@ final = clamp(0, 5,  4.20  −  0.00  +  0.20 )  =  4.40 / 5   PASS</pre>
 ============================================================ -->
 <section class="page" id="page-2-summary">
   <div class="header-meta">
-    <div><strong>Agentic Judge v2</strong></div>
-    <div class="meta">Page 2 / 3 · what it does well · true positives · false negatives</div>
+    <div><strong>Agentic Judge</strong></div>
+    <div class="meta">Page 2 / 3</div>
   </div>
 
-  <h1>What the agentic judge does well — and where it still misses</h1>
-  <p class="small">Sample: codex (ChatGPT subscription) on real_118 wired tasks. v1 = single LLM judge; v2 = Hard predicates + Webpage Grounding sub-agent + Effectiveness reading stdout and orchestrating follow-ups.</p>
+  <h1>What it does well, what it misses, what it gets wrong</h1>
 
   <h2>What it does well</h2>
   <ol style="margin:8px 0 18px;">
-    <li style="margin:8px 0;"><strong>Catches the “plausible URL + fabricated fact” failure mode.</strong> A single LLM judge will reward an answer that <em>looks</em> well-cited; v2 actually fetches every URL and lets an LLM compare the claim to the page text. <em>Concrete:</em> task-01 r19 — 3 of 4 cited Amazon ASINs do not contain the brand the agent attributed; v1 scored 5.00, v2 scored 4.40.</li>
-    <li style="margin:8px 0;"><strong>Recovers when the v1 LLM judge crashes.</strong> The deterministic Hard layer and the LLM-agentic Webpage Grounding produce a verdict even when the soft-rubric judge call returns null dimension scores. <em>Concrete:</em> task-43 r17 → 0.00 (judge crashed) vs r19 → 5.00.</li>
-    <li style="margin:8px 0;"><strong>Sanity-passes the easy cases without drifting.</strong> task-12 email has no URLs to verify; v2's Hard predicates check recipient, dates, sent-flag, etc., and both v1 and v2 land on 5.00. The framework does not invent failure where there isn't one.</li>
-    <li style="margin:8px 0;"><strong>Effectiveness reads the agent's full stdout, not just the prose summary.</strong> Tool calls, fetched-page snippets, and dead-end searches are all in scope; the judge can dispatch Webpage Grounding to verify a URL the agent visited but never put in the summary JSON.</li>
-    <li style="margin:8px 0;"><strong>Auditable composition.</strong> Final = clamp(0, 5, LLM − 0.5·hard_fails + 0.5·faith_score/5). The three layers are kept separate in the result JSON; a curator can replay any layer.</li>
+    <li style="margin:8px 0;"><strong>Catches plausible-but-fake citations.</strong> When an answer includes a real-looking URL but the page doesn't actually back the claim, the judge fetches the page and notices.</li>
+    <li style="margin:8px 0;"><strong>Still produces a verdict when the rubric grader breaks.</strong> The constraint tests and the page check give a score even if the rubric judge call returns nothing.</li>
+    <li style="margin:8px 0;"><strong>Doesn't invent failure on easy answers.</strong> When there are no URLs to verify, the judge just checks the structural facts and moves on.</li>
+    <li style="margin:8px 0;"><strong>Reads the agent's full trace, not just its final write-up.</strong> Tool calls, fetched pages, and dead-end searches are all in scope, so a citation the agent looked at but never wrote down can still be checked.</li>
+    <li style="margin:8px 0;"><strong>The layers are auditable.</strong> Constraint results, page checks, and rubric scores stay separate in the output, so a reviewer can replay any one of them.</li>
   </ol>
 
-  <h2>True positives — failures only v2 catches</h2>
+  <h2>Concrete cases where it caught a real problem</h2>
   <table>
-    <thead><tr><th>Task</th><th>What v2 caught</th><th>v1 score</th><th>v2 score</th></tr></thead>
+    <thead><tr><th>Task</th><th>What the judge caught</th></tr></thead>
     <tbody>
       <tr>
-        <td><code>task-01</code> backpack</td>
-        <td>3 of 4 cited Amazon pages don't contain the brand the agent attributed to that ASIN. Webpage Grounding LLM: <code>supported=false</code> for B09YRC9Y3G, B0BDLH7K67, B0FDKLS9YY.</td>
-        <td>5.00</td>
-        <td><strong>4.40</strong></td>
+        <td>Backpack search</td>
+        <td>Three of the four cited Amazon product pages don't actually contain the brand the agent attributed to that ASIN. The score dropped two soft dimensions instead of awarding a perfect rubric.</td>
       </tr>
       <tr>
-        <td><code>task-43</code> clementines</td>
-        <td>v1 LLM judge returned <code>dimension_scores=None</code>. v2 Hard 5/5 + Webpage Grounding 1/1 (UC Riverside cite confirmed) → recovered verdict.</td>
-        <td>0.00 (judge crash)</td>
-        <td><strong>5.00</strong></td>
+        <td>Clementines question</td>
+        <td>The rubric grader returned nothing. The constraint tests and the verified UC Riverside citation produced a passing verdict on their own.</td>
       </tr>
       <tr>
-        <td><code>task-15</code> 2025 calendar</td>
-        <td>Webpage Grounding LLM verified 3/4 Douban URLs the agent cited (one came back empty). Effectiveness dimension reasoning called out the empty page → <em>source_navigation</em> capped at 3.</td>
-        <td>—</td>
-        <td><strong>3.92</strong> (faith bonus +0.42)</td>
+        <td>2025 calendar</td>
+        <td>Three of four cited Douban URLs were verified by the page sub-agent; the one empty page was flagged, lowering the source-navigation score.</td>
       </tr>
       <tr>
-        <td><code>task-32</code> camera Amazon</td>
-        <td>Hard predicates passed 5/5 (budget cap, count, schema). Webpage Grounding fetched the cited Amazon URLs and they came back empty. Main judge correctly downgraded <em>cart_addition</em> = 1, <em>amazon_search_execution</em> = 2 — Hard 5/5 did NOT propagate to soft dims.</td>
-        <td>—</td>
-        <td><strong>2.40</strong> (fails 3.0 threshold)</td>
+        <td>Camera shopping</td>
+        <td>Structural constraints all passed, but the cited Amazon pages came back empty. The judge correctly lowered the search-execution and cart-execution scores rather than awarding fives across the board.</td>
       </tr>
       <tr>
-        <td><code>task-101</code> SEC EDGAR</td>
-        <td>Summary JSON missing entirely → Hard <code>summary_json_parseable</code> failed first; agent had run SEC + CourtListener navigations but never emitted the structured block. Hard fail → −0.50 penalty.</td>
-        <td>—</td>
-        <td><strong>2.20</strong> (fail)</td>
+        <td>SEC EDGAR lookup</td>
+        <td>The agent never emitted the required JSON block. The structural constraint failed first, so the verdict reflected the schema miss instead of guessing at the answer's quality.</td>
       </tr>
     </tbody>
   </table>
 
-  <h2>False negatives / known gaps</h2>
+  <h2>What it still misses</h2>
   <table>
-    <thead><tr><th>Failure mode</th><th>Why v2 currently misses it</th><th>Mitigation in roadmap</th></tr></thead>
+    <thead><tr><th>Issue</th><th>What happens</th><th>What we'd add</th></tr></thead>
     <tbody>
       <tr>
-        <td>Agent satisfies the predicates but reasons wrong</td>
-        <td>Hard predicates check shape (count, range, schema). An option priced $74.99 passes <code>all_prices_under_75</code> even if its features bear no relation to the reference.</td>
-        <td>Lean harder on Effectiveness's stdout-grounded reasoning; add per-task semantic predicates where there's a single objective truth (e.g. <code>EqualsValue("normally_seedless", True)</code>).</td>
+        <td>Shape passes but the reasoning is wrong</td>
+        <td>Structural constraints check shape (count, budget cap, schema). An option priced at $74.99 satisfies the budget rule even if its features bear no relation to what the user asked for.</td>
+        <td>More semantic constraints where there's a single objective truth; lean harder on the rubric judge's reading of the agent's trace.</td>
       </tr>
       <tr>
-        <td>Codex/agent runtime errors masquerade as low scores</td>
-        <td>If the agent stdout is empty (auth failure, sandbox crash), v2 gracefully returns 0.00 — but so did v1. We're not distinguishing "agent broke" from "agent did badly."</td>
-        <td>Surface a separate <code>infrastructure_error</code> flag instead of collapsing into score 0.</td>
+        <td>An infrastructure error looks like a bad answer</td>
+        <td>When the agent's environment crashes or auth breaks, the verdict is just a low score with no signal of why.</td>
+        <td>A separate infrastructure-error flag, distinct from the score.</td>
       </tr>
       <tr>
-        <td>Schema-missing failure looks identical to wrong-answer failure</td>
-        <td>r20 task-101 SEC EDGAR and task-104 Redfin both failed because the agent never emitted the <code>=== JSON RESULT ===</code> block, so Hard <code>summary_json_parseable</code> fails first and Faithfulness has nothing to fetch. The 2.20 / 2.30 verdicts don't distinguish “agent didn't follow the schema instruction” from “agent gave wrong data.”</td>
-        <td>Split the JSON-parse failure into its own non-score flag; have Effectiveness rescue with stdout-only scoring when the prose answer is present but the JSON block isn't.</td>
+        <td>Missing JSON block looks the same as a wrong answer</td>
+        <td>When the agent writes a substantive prose answer but forgets the JSON block, the structural constraint fails first and the verdict reads as "agent gave wrong data" instead of "agent missed the schema."</td>
+        <td>Score the prose when the JSON block is absent; raise the schema miss as a separate flag.</td>
       </tr>
     </tbody>
   </table>
 
-  <h2>False positives — v2 flags something the agent actually did right</h2>
+  <h2>Where the judge is too harsh</h2>
   <table>
-    <thead><tr><th>Failure mode (v2 wrong)</th><th>Where it shows up</th><th>Mitigation</th></tr></thead>
+    <thead><tr><th>Issue</th><th>What happens</th><th>What we'd add</th></tr></thead>
     <tbody>
       <tr>
-        <td>Anti-bot pages render empty for our fetcher → Faith marks legitimate citations <code>supported=false</code></td>
-        <td>r19 task-01 backpack and r20 task-32 camera: Amazon product pages came back as near-empty for <code>urllib</code>+UA-spoof, and Webpage Grounding said <code>supported=false</code> on every URL. The agent (running with the sandbox's browser tool) may have legitimately seen real products. v2 dragged task-01 5.0 → 4.4 and task-32 to 2.40 partly on this signal.</td>
-        <td>Surface <code>http_status</code> + <code>page_len</code> in each FaithfulnessFinding; have the sub-agent return <code>supported="unverifiable"</code> when the page is empty/blocked, distinct from <code>supported=false</code>. Effectiveness should disregard "unverifiable" rather than penalizing the dim.</td>
+        <td>Anti-bot pages render empty for our fetcher</td>
+        <td>The page sub-agent fetches the URL, gets a near-empty body, and reports the citation as unsupported — even when the agent saw a real product in its own browser tool. The verdict drops unfairly.</td>
+        <td>Distinguish "page blocked or empty" from "page renders but doesn't support the claim." Ignore the former rather than penalising it.</td>
       </tr>
       <tr>
-        <td>Schema-strict failure tanks an answer that is correct in prose</td>
-        <td>r20 task-104 Redfin: agent produced 3705 chars of substantive prose with the answer but never wrapped it in <code>=== JSON RESULT ===</code>. Hard <code>summary_json_parseable</code> failed first → 2.30. If the prose answer is right, this verdict is too harsh — we're scoring schema compliance, not task quality.</td>
-        <td>When the JSON block is missing but stdout/prose is substantive, fall back to a prose-only Effectiveness pass and flag <code>schema_compliance=false</code> separately, instead of folding both into the same low number.</td>
+        <td>Strict schema penalises a correct prose answer</td>
+        <td>Substantive prose with no JSON block currently lands the same low score as a wrong answer.</td>
+        <td>Fall back to scoring the prose when the JSON is missing; flag the schema miss separately.</td>
       </tr>
       <tr>
-        <td>JS-rendered / paywalled sources read as "unsupported" by the sub-agent</td>
-        <td>r20 task-05 nba.com: <code>stat_accuracy_recency</code> = 2 because Webpage Grounding couldn't pull the live numbers (the page is JS-heavy and our fetcher gets the static shell). The agent likely retrieved fresh stats via its own browser tool. v2 read the missing match as evidence of staleness.</td>
-        <td>Same fix as above — treat empty/JS-only fetches as "unverifiable" not "unsupported"; or add an optional headless-browser path for the sub-agent's fetcher.</td>
+        <td>JavaScript-rendered sources read as unsupported</td>
+        <td>Pages that need a browser to render (e.g. live sports stats) come back as static shells; the sub-agent finds nothing and the judge infers staleness.</td>
+        <td>Treat empty / JS-only fetches as "unverifiable" instead of "unsupported", or add a headless-browser path.</td>
       </tr>
     </tbody>
   </table>
