@@ -1,0 +1,945 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//worldcup2026//ICS//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:FIFA World Cup 2026
+X-WR-TIMEZONE:UTC
+X-WR-CALDESC:All 104 matches of the 2026 FIFA World Cup (USA/Canada/Mexico). Compiled from public sources June 2026; verify kick-off times on fifa.com.
+BEGIN:VEVENT
+UID:wc2026-match-1@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260611T190000Z
+DTEND:20260611T210000Z
+SUMMARY:Mexico vs South Africa (Group A)
+LOCATION:Estadio Azteca\, Mexico City
+DESCRIPTION:Group A - Match 1. Venue: Estadio Azteca\, Mexico City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-2@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260612T020000Z
+DTEND:20260612T040000Z
+SUMMARY:Korea Republic vs Czechia (Group A)
+LOCATION:Estadio Akron\, Guadalajara
+DESCRIPTION:Group A - Match 2. Venue: Estadio Akron\, Guadalajara. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-3@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260612T230000Z
+DTEND:20260613T010000Z
+SUMMARY:Canada vs Bosnia and Herzegovina (Group B)
+LOCATION:BMO Field\, Toronto
+DESCRIPTION:Group B - Match 3. Venue: BMO Field\, Toronto. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-4@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260613T010000Z
+DTEND:20260613T030000Z
+SUMMARY:United States vs Paraguay (Group D)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Group D - Match 4. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-5@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260613T200000Z
+DTEND:20260613T220000Z
+SUMMARY:Qatar vs Switzerland (Group B)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Group B - Match 5. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-6@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260613T230000Z
+DTEND:20260614T010000Z
+SUMMARY:Brazil vs Morocco (Group C)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Group C - Match 6. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-7@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260614T170000Z
+DTEND:20260614T190000Z
+SUMMARY:Haiti vs Scotland (Group C)
+LOCATION:Gillette Stadium\, Boston
+DESCRIPTION:Group C - Match 7. Venue: Gillette Stadium\, Boston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-8@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260614T190000Z
+DTEND:20260614T210000Z
+SUMMARY:Germany vs Curacao (Group E)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Group E - Match 8. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-9@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260614T210000Z
+DTEND:20260614T230000Z
+SUMMARY:Cote d'Ivoire vs Ecuador (Group E)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Group E - Match 9. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-10@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260614T230000Z
+DTEND:20260615T010000Z
+SUMMARY:Australia vs Turkiye (Group D)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Group D - Match 10. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-11@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260615T010000Z
+DTEND:20260615T030000Z
+SUMMARY:Netherlands vs Japan (Group F)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Group F - Match 11. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-12@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260615T170000Z
+DTEND:20260615T190000Z
+SUMMARY:Tunisia vs Sweden (Group F)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Group F - Match 12. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-13@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260615T200000Z
+DTEND:20260615T220000Z
+SUMMARY:Belgium vs Egypt (Group G)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Group G - Match 13. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-14@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260615T230000Z
+DTEND:20260616T010000Z
+SUMMARY:Iran vs New Zealand (Group G)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Group G - Match 14. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-15@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260616T160000Z
+DTEND:20260616T180000Z
+SUMMARY:Spain vs Cabo Verde (Group H)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Group H - Match 15. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-16@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260616T190000Z
+DTEND:20260616T210000Z
+SUMMARY:Saudi Arabia vs Uruguay (Group H)
+LOCATION:Arrowhead Stadium\, Kansas City
+DESCRIPTION:Group H - Match 16. Venue: Arrowhead Stadium\, Kansas City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-17@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260616T220000Z
+DTEND:20260617T000000Z
+SUMMARY:France vs Senegal (Group I)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Group I - Match 17. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-18@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260617T010000Z
+DTEND:20260617T030000Z
+SUMMARY:Norway vs Iraq (Group I)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Group I - Match 18. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-19@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260617T170000Z
+DTEND:20260617T190000Z
+SUMMARY:Argentina vs Jordan (Group J)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Group J - Match 19. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-20@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260617T200000Z
+DTEND:20260617T220000Z
+SUMMARY:Algeria vs Austria (Group J)
+LOCATION:Gillette Stadium\, Boston
+DESCRIPTION:Group J - Match 20. Venue: Gillette Stadium\, Boston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-21@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260617T220000Z
+DTEND:20260618T000000Z
+SUMMARY:Portugal vs Congo DR (Group K)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Group K - Match 21. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-22@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260618T010000Z
+DTEND:20260618T030000Z
+SUMMARY:Uzbekistan vs Colombia (Group K)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Group K - Match 22. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-23@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260618T160000Z
+DTEND:20260618T180000Z
+SUMMARY:England vs Croatia (Group L)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Group L - Match 23. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-24@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260618T190000Z
+DTEND:20260618T210000Z
+SUMMARY:Ghana vs Panama (Group L)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Group L - Match 24. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-25@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260618T220000Z
+DTEND:20260619T000000Z
+SUMMARY:Mexico vs Korea Republic (Group A)
+LOCATION:Estadio Azteca\, Mexico City
+DESCRIPTION:Group A - Match 25. Venue: Estadio Azteca\, Mexico City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-26@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260619T000000Z
+DTEND:20260619T020000Z
+SUMMARY:Czechia vs South Africa (Group A)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Group A - Match 26. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-27@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260619T160000Z
+DTEND:20260619T180000Z
+SUMMARY:Switzerland vs Bosnia and Herzegovina (Group B)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Group B - Match 27. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-28@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260619T190000Z
+DTEND:20260619T210000Z
+SUMMARY:Canada vs Qatar (Group B)
+LOCATION:BMO Field\, Toronto
+DESCRIPTION:Group B - Match 28. Venue: BMO Field\, Toronto. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-29@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260619T190000Z
+DTEND:20260619T210000Z
+SUMMARY:United States vs Australia (Group D)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Group D - Match 29. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-30@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260619T220000Z
+DTEND:20260620T000000Z
+SUMMARY:Scotland vs Morocco (Group C)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Group C - Match 30. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-31@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260620T010000Z
+DTEND:20260620T030000Z
+SUMMARY:Brazil vs Haiti (Group C)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Group C - Match 31. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-32@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260620T040000Z
+DTEND:20260620T060000Z
+SUMMARY:Turkiye vs Paraguay (Group D)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Group D - Match 32. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-33@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260620T170000Z
+DTEND:20260620T190000Z
+SUMMARY:Netherlands vs Sweden (Group F)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Group F - Match 33. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-34@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260620T200000Z
+DTEND:20260620T220000Z
+SUMMARY:Germany vs Cote d'Ivoire (Group E)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Group E - Match 34. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-35@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260621T000000Z
+DTEND:20260621T020000Z
+SUMMARY:Ecuador vs Curacao (Group E)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Group E - Match 35. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-36@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260621T040000Z
+DTEND:20260621T060000Z
+SUMMARY:Tunisia vs Japan (Group F)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Group F - Match 36. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-37@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260621T160000Z
+DTEND:20260621T180000Z
+SUMMARY:Spain vs Saudi Arabia (Group H)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Group H - Match 37. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-38@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260621T190000Z
+DTEND:20260621T210000Z
+SUMMARY:Belgium vs Iran (Group G)
+LOCATION:Arrowhead Stadium\, Kansas City
+DESCRIPTION:Group G - Match 38. Venue: Arrowhead Stadium\, Kansas City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-39@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260621T220000Z
+DTEND:20260622T000000Z
+SUMMARY:Uruguay vs Cabo Verde (Group H)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Group H - Match 39. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-40@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260622T010000Z
+DTEND:20260622T030000Z
+SUMMARY:New Zealand vs Egypt (Group G)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Group G - Match 40. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-41@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260622T170000Z
+DTEND:20260622T190000Z
+SUMMARY:Argentina vs Austria (Group J)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Group J - Match 41. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-42@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260622T210000Z
+DTEND:20260622T230000Z
+SUMMARY:France vs Iraq (Group I)
+LOCATION:Gillette Stadium\, Boston
+DESCRIPTION:Group I - Match 42. Venue: Gillette Stadium\, Boston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-43@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260623T000000Z
+DTEND:20260623T020000Z
+SUMMARY:Norway vs Senegal (Group I)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Group I - Match 43. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-44@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260623T030000Z
+DTEND:20260623T050000Z
+SUMMARY:Jordan vs Algeria (Group J)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Group J - Match 44. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-45@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260623T170000Z
+DTEND:20260623T190000Z
+SUMMARY:Portugal vs Uzbekistan (Group K)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Group K - Match 45. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-46@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260623T200000Z
+DTEND:20260623T220000Z
+SUMMARY:England vs Ghana (Group L)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Group L - Match 46. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-47@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260623T230000Z
+DTEND:20260624T010000Z
+SUMMARY:Panama vs Croatia (Group L)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Group L - Match 47. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-48@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260624T020000Z
+DTEND:20260624T040000Z
+SUMMARY:Colombia vs Congo DR (Group K)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Group K - Match 48. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-49@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260624T220000Z
+DTEND:20260625T000000Z
+SUMMARY:South Africa vs Korea Republic (Group A)
+LOCATION:Estadio Akron\, Guadalajara
+DESCRIPTION:Group A - Match 49. Venue: Estadio Akron\, Guadalajara. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-50@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260624T220000Z
+DTEND:20260625T000000Z
+SUMMARY:Mexico vs Czechia (Group A)
+LOCATION:Estadio Azteca\, Mexico City
+DESCRIPTION:Group A - Match 50. Venue: Estadio Azteca\, Mexico City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-51@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260625T000000Z
+DTEND:20260625T020000Z
+SUMMARY:Qatar vs Bosnia and Herzegovina (Group B)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Group B - Match 51. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-52@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260625T000000Z
+DTEND:20260625T020000Z
+SUMMARY:Canada vs Switzerland (Group B)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Group B - Match 52. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-53@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260624T220000Z
+DTEND:20260625T000000Z
+SUMMARY:Scotland vs Brazil (Group C)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Group C - Match 53. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-54@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260624T220000Z
+DTEND:20260625T000000Z
+SUMMARY:Morocco vs Haiti (Group C)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Group C - Match 54. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-55@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260626T020000Z
+DTEND:20260626T040000Z
+SUMMARY:Turkiye vs United States (Group D)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Group D - Match 55. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-56@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260626T020000Z
+DTEND:20260626T040000Z
+SUMMARY:Paraguay vs Australia (Group D)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Group D - Match 56. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-57@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260625T200000Z
+DTEND:20260625T220000Z
+SUMMARY:Ecuador vs Germany (Group E)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Group E - Match 57. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-58@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260625T200000Z
+DTEND:20260625T220000Z
+SUMMARY:Curacao vs Cote d'Ivoire (Group E)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Group E - Match 58. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-59@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260625T230000Z
+DTEND:20260626T010000Z
+SUMMARY:Japan vs Sweden (Group F)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Group F - Match 59. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-60@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260625T230000Z
+DTEND:20260626T010000Z
+SUMMARY:Tunisia vs Netherlands (Group F)
+LOCATION:Arrowhead Stadium\, Kansas City
+DESCRIPTION:Group F - Match 60. Venue: Arrowhead Stadium\, Kansas City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-61@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T030000Z
+DTEND:20260627T050000Z
+SUMMARY:Egypt vs Iran (Group G)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Group G - Match 61. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-62@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T030000Z
+DTEND:20260627T050000Z
+SUMMARY:New Zealand vs Belgium (Group G)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Group G - Match 62. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-63@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T000000Z
+DTEND:20260627T020000Z
+SUMMARY:Cabo Verde vs Saudi Arabia (Group H)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Group H - Match 63. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-64@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T000000Z
+DTEND:20260627T020000Z
+SUMMARY:Uruguay vs Spain (Group H)
+LOCATION:Estadio Akron\, Guadalajara
+DESCRIPTION:Group H - Match 64. Venue: Estadio Akron\, Guadalajara. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-65@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260626T190000Z
+DTEND:20260626T210000Z
+SUMMARY:Norway vs France (Group I)
+LOCATION:Gillette Stadium\, Boston
+DESCRIPTION:Group I - Match 65. Venue: Gillette Stadium\, Boston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-66@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260626T190000Z
+DTEND:20260626T210000Z
+SUMMARY:Senegal vs Iraq (Group I)
+LOCATION:BMO Field\, Toronto
+DESCRIPTION:Group I - Match 66. Venue: BMO Field\, Toronto. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-67@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T220000Z
+DTEND:20260628T000000Z
+SUMMARY:Argentina vs Algeria (Group J)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Group J - Match 67. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-68@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T220000Z
+DTEND:20260628T000000Z
+SUMMARY:Austria vs Jordan (Group J)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Group J - Match 68. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-69@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T233000Z
+DTEND:20260628T013000Z
+SUMMARY:Congo DR vs Uzbekistan (Group K)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Group K - Match 69. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-70@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260627T233000Z
+DTEND:20260628T013000Z
+SUMMARY:Colombia vs Portugal (Group K)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Group K - Match 70. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-71@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260628T020000Z
+DTEND:20260628T040000Z
+SUMMARY:Panama vs England (Group L)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Group L - Match 71. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-72@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260628T020000Z
+DTEND:20260628T040000Z
+SUMMARY:Croatia vs Ghana (Group L)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Group L - Match 72. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-73@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260628T200000Z
+DTEND:20260628T220000Z
+SUMMARY:Runner-up Group A vs Runner-up Group B (Round of 32)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Round of 32 - Match 73. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-74@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260629T170000Z
+DTEND:20260629T190000Z
+SUMMARY:Winner Group C vs Runner-up Group F (Round of 32)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Round of 32 - Match 74. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-75@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260629T203000Z
+DTEND:20260629T223000Z
+SUMMARY:Winner Group E vs Third Place A/B/C/D/F (Round of 32)
+LOCATION:Gillette Stadium\, Boston
+DESCRIPTION:Round of 32 - Match 75. Venue: Gillette Stadium\, Boston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-76@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260630T010000Z
+DTEND:20260630T030000Z
+SUMMARY:Winner Group F vs Runner-up Group C (Round of 32)
+LOCATION:Estadio BBVA\, Monterrey
+DESCRIPTION:Round of 32 - Match 76. Venue: Estadio BBVA\, Monterrey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-77@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260630T170000Z
+DTEND:20260630T190000Z
+SUMMARY:Runner-up Group E vs Runner-up Group I (Round of 32)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Round of 32 - Match 77. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-78@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260630T210000Z
+DTEND:20260630T230000Z
+SUMMARY:Winner Group I vs Third Place C/D/F/G/H (Round of 32)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Round of 32 - Match 78. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-79@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260701T010000Z
+DTEND:20260701T030000Z
+SUMMARY:Winner Group A vs Third Place C/E/F/H/I (Round of 32)
+LOCATION:Estadio Azteca\, Mexico City
+DESCRIPTION:Round of 32 - Match 79. Venue: Estadio Azteca\, Mexico City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-80@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260701T160000Z
+DTEND:20260701T180000Z
+SUMMARY:Winner Group L vs Third Place E/H/I/J/K (Round of 32)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Round of 32 - Match 80. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-81@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260701T200000Z
+DTEND:20260701T220000Z
+SUMMARY:Winner Group G vs Third Place A/E/H/I/J (Round of 32)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Round of 32 - Match 81. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-82@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260702T000000Z
+DTEND:20260702T020000Z
+SUMMARY:Winner Group D vs Third Place B/E/F/I/J (Round of 32)
+LOCATION:Levi's Stadium\, San Francisco Bay Area
+DESCRIPTION:Round of 32 - Match 82. Venue: Levi's Stadium\, San Francisco Bay Area. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-83@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260702T170000Z
+DTEND:20260702T190000Z
+SUMMARY:Runner-up Group K vs Runner-up Group L (Round of 32)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Round of 32 - Match 83. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-84@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260702T200000Z
+DTEND:20260702T220000Z
+SUMMARY:Winner Group H vs Runner-up Group J (Round of 32)
+LOCATION:Estadio Akron\, Guadalajara
+DESCRIPTION:Round of 32 - Match 84. Venue: Estadio Akron\, Guadalajara. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-85@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260702T230000Z
+DTEND:20260703T010000Z
+SUMMARY:Winner Group B vs Third Place E/F/G/I/J (Round of 32)
+LOCATION:BC Place\, Vancouver
+DESCRIPTION:Round of 32 - Match 85. Venue: BC Place\, Vancouver. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-86@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260703T160000Z
+DTEND:20260703T180000Z
+SUMMARY:Winner Group J vs Runner-up Group H (Round of 32)
+LOCATION:Arrowhead Stadium\, Kansas City
+DESCRIPTION:Round of 32 - Match 86. Venue: Arrowhead Stadium\, Kansas City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-87@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260703T190000Z
+DTEND:20260703T210000Z
+SUMMARY:Winner Group K vs Third Place D/E/I/J/L (Round of 32)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Round of 32 - Match 87. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-88@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260703T230000Z
+DTEND:20260704T010000Z
+SUMMARY:Runner-up Group D vs Runner-up Group G (Round of 32)
+LOCATION:BMO Field\, Toronto
+DESCRIPTION:Round of 32 - Match 88. Venue: BMO Field\, Toronto. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-89@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260704T170000Z
+DTEND:20260704T190000Z
+SUMMARY:Winner Match 74 vs Winner Match 77 (Round of 16)
+LOCATION:Lincoln Financial Field\, Philadelphia
+DESCRIPTION:Round of 16 - Match 89. Venue: Lincoln Financial Field\, Philadelphia. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-90@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260704T210000Z
+DTEND:20260704T230000Z
+SUMMARY:Winner Match 73 vs Winner Match 75 (Round of 16)
+LOCATION:NRG Stadium\, Houston
+DESCRIPTION:Round of 16 - Match 90. Venue: NRG Stadium\, Houston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-91@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260705T170000Z
+DTEND:20260705T190000Z
+SUMMARY:Winner Match 76 vs Winner Match 78 (Round of 16)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Round of 16 - Match 91. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-92@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260705T210000Z
+DTEND:20260705T230000Z
+SUMMARY:Winner Match 80 vs Winner Match 82 (Round of 16)
+LOCATION:Estadio Azteca\, Mexico City
+DESCRIPTION:Round of 16 - Match 92. Venue: Estadio Azteca\, Mexico City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-93@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260706T170000Z
+DTEND:20260706T190000Z
+SUMMARY:Winner Match 79 vs Winner Match 81 (Round of 16)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Round of 16 - Match 93. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-94@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260706T210000Z
+DTEND:20260706T230000Z
+SUMMARY:Winner Match 83 vs Winner Match 84 (Round of 16)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Round of 16 - Match 94. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-95@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260707T170000Z
+DTEND:20260707T190000Z
+SUMMARY:Winner Match 86 vs Winner Match 88 (Round of 16)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Round of 16 - Match 95. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-96@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260707T210000Z
+DTEND:20260707T230000Z
+SUMMARY:Winner Match 85 vs Winner Match 87 (Round of 16)
+LOCATION:Lumen Field\, Seattle
+DESCRIPTION:Round of 16 - Match 96. Venue: Lumen Field\, Seattle. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-97@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260709T210000Z
+DTEND:20260709T230000Z
+SUMMARY:Winner Match 89 vs Winner Match 90 (Quarter-final)
+LOCATION:Gillette Stadium\, Boston
+DESCRIPTION:Quarter-final - Match 97. Venue: Gillette Stadium\, Boston. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-98@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260710T210000Z
+DTEND:20260710T230000Z
+SUMMARY:Winner Match 93 vs Winner Match 94 (Quarter-final)
+LOCATION:SoFi Stadium\, Los Angeles
+DESCRIPTION:Quarter-final - Match 98. Venue: SoFi Stadium\, Los Angeles. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-99@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260711T160000Z
+DTEND:20260711T180000Z
+SUMMARY:Winner Match 91 vs Winner Match 92 (Quarter-final)
+LOCATION:Arrowhead Stadium\, Kansas City
+DESCRIPTION:Quarter-final - Match 99. Venue: Arrowhead Stadium\, Kansas City. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-100@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260711T200000Z
+DTEND:20260711T220000Z
+SUMMARY:Winner Match 95 vs Winner Match 96 (Quarter-final)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Quarter-final - Match 100. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-101@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260714T230000Z
+DTEND:20260715T010000Z
+SUMMARY:Winner Match 97 vs Winner Match 98 (Semi-final)
+LOCATION:AT&T Stadium\, Dallas
+DESCRIPTION:Semi-final - Match 101. Venue: AT&T Stadium\, Dallas. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-102@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260715T230000Z
+DTEND:20260716T010000Z
+SUMMARY:Winner Match 99 vs Winner Match 100 (Semi-final)
+LOCATION:Mercedes-Benz Stadium\, Atlanta
+DESCRIPTION:Semi-final - Match 102. Venue: Mercedes-Benz Stadium\, Atlanta. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-103@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260718T200000Z
+DTEND:20260718T220000Z
+SUMMARY:Loser Match 101 vs Loser Match 102 (Third-place play-off)
+LOCATION:Hard Rock Stadium\, Miami
+DESCRIPTION:Third-place play-off - Match 103. Venue: Hard Rock Stadium\, Miami. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+BEGIN:VEVENT
+UID:wc2026-match-104@worldcup2026
+DTSTAMP:20260616T214949Z
+DTSTART:20260719T190000Z
+DTEND:20260719T210000Z
+SUMMARY:Winner Match 101 vs Winner Match 102 (Final)
+LOCATION:MetLife Stadium\, New York / New Jersey
+DESCRIPTION:Final - Match 104. Venue: MetLife Stadium\, New York / New Jersey. Times are best-effort (UTC)\; verify on fifa.com.
+END:VEVENT
+END:VCALENDAR
