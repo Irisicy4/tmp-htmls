@@ -333,6 +333,46 @@
   <h1>How the agentic judge works</h1>
   <p class="small">A single language model reading the agent's prose and assigning a score can be fooled by an answer that <em>looks</em> well-cited but isn't. The agentic judge keeps the rubric scoring, adds a small layer of structural checks for the things that have one right answer, and gives the main judge a source-checking helper it can ask to actually open the cited pages and verify what the agent said.</p>
 
+  <h2 style="margin-top:22px;">By the numbers</h2>
+  <p class="small" style="margin:0 0 10px;">Run on 33 long-horizon web research tasks (real consumer sites: Amazon, JD.com, Medicare, SEC, USCIS, USPTO, NBA, dining apps, etc.). One agent answer per task; one judge verdict per task.</p>
+  <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin:10px 0 16px;">
+    <div style="border:1px solid var(--line); border-top:3px solid var(--ink); padding:12px 14px;">
+      <div style="font-size:26px; font-weight:700; color:var(--ink);">3.50</div>
+      <div style="font-size:13px; color:var(--muted);">mean final score (out of 5)</div>
+    </div>
+    <div style="border:1px solid var(--line); border-top:3px solid var(--good); padding:12px 14px;">
+      <div style="font-size:26px; font-weight:700; color:var(--good);">58%</div>
+      <div style="font-size:13px; color:var(--muted);">tasks passing (19 of 33)</div>
+    </div>
+    <div style="border:1px solid var(--line); border-top:3px solid var(--hard); padding:12px 14px;">
+      <div style="font-size:26px; font-weight:700; color:var(--hard);">14</div>
+      <div style="font-size:13px; color:var(--muted);">tasks passing every structural check</div>
+    </div>
+    <div style="border:1px solid var(--line); border-top:3px solid var(--faith); padding:12px 14px;">
+      <div style="font-size:26px; font-weight:700; color:var(--faith);">26 / 55</div>
+      <div style="font-size:13px; color:var(--muted);">cited URLs verified by the source helper</div>
+    </div>
+    <div style="border:1px solid var(--line); border-top:3px solid var(--eff); padding:12px 14px;">
+      <div style="font-size:26px; font-weight:700; color:var(--eff);">18</div>
+      <div style="font-size:13px; color:var(--muted);">tasks where the main judge sent follow-ups</div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; margin:10px 0 22px;">
+    <div style="border:1px solid var(--line); border-left:3px solid var(--good); padding:14px 16px;">
+      <h4 style="margin:0 0 6px; color:var(--good); text-transform:none; font-family:Charter,Georgia,serif; font-size:15px; letter-spacing:0;">What it does well</h4>
+      <p class="small" style="margin:0;"><strong>13 of 33 tasks</strong> the source helper actively caught at least one unsupported citation, and the main judge propagated that into the rubric scores — a real catch the rubric-only judge would have missed. On <strong>18 tasks</strong> the main judge raised follow-up questions to the source helper mid-judgment and revised its scores once answers came back.</p>
+    </div>
+    <div style="border:1px solid var(--line); border-left:3px solid var(--faith); padding:14px 16px;">
+      <h4 style="margin:0 0 6px; color:var(--faith-fg); text-transform:none; font-family:Charter,Georgia,serif; font-size:15px; letter-spacing:0;">Where it is too harsh (false positives)</h4>
+      <p class="small" style="margin:0;"><strong>7 of 33 tasks</strong> showed the anti-bot signature — every cited page returned near-empty to our fetcher, so the source helper marked every citation unsupported. The agent likely saw real content in its browser; our verdict was too low. Fix: distinguish "page blocked" from "page renders but doesn't support the claim."</p>
+    </div>
+    <div style="border:1px solid var(--line); border-left:3px solid var(--bad); padding:14px 16px;">
+      <h4 style="margin:0 0 6px; color:var(--bad); text-transform:none; font-family:Charter,Georgia,serif; font-size:15px; letter-spacing:0;">What it can still miss (false negatives)</h4>
+      <p class="small" style="margin:0;"><strong>14 tasks</strong> passed both structural and source-helper layers and got a high rubric score; those are candidates for human audit. Predicate-shape-passes-but-reasoning-wrong is the failure mode the current layers cannot catch by construction, and it requires either denser semantic constraints or a human spot check.</p>
+    </div>
+  </div>
+
   <section class="brief">
     <h2 style="margin-top:0;">The three judges</h2>
     <div class="judge-strip">
@@ -672,15 +712,15 @@ Anchor language:
       3.50 — judge asked 3 follow-ups, re-scored
     </text>
 
-    <!-- Legend (bottom-left corner) -->
+    <!-- Legend (top-right corner) -->
     <g font-family="-apple-system,Arial,sans-serif" font-size="13" fill="#374151">
-      <rect x="92" y="200" width="270" height="74" fill="#fff" stroke="#d1d5db" stroke-width="0.6"/>
-      <line x1="106" y1="216" x2="136" y2="216" stroke="#b91c1c" stroke-width="2.6"/>
-      <text x="144" y="220">Backpack search (4 URLs, anti-bot)</text>
-      <line x1="106" y1="236" x2="136" y2="236" stroke="#1d4ed8" stroke-width="2.2" stroke-dasharray="6,4"/>
-      <text x="144" y="240">Email composition (no URLs)</text>
-      <line x1="106" y1="256" x2="136" y2="256" stroke="#6b7280" stroke-width="2.2"/>
-      <text x="144" y="260">Horticulture question (1 verified)</text>
+      <rect x="780" y="48" width="270" height="74" fill="#fff" stroke="#d1d5db" stroke-width="0.6"/>
+      <line x1="794" y1="64" x2="824" y2="64" stroke="#b91c1c" stroke-width="2.6"/>
+      <text x="832" y="68">Backpack search (4 URLs, anti-bot)</text>
+      <line x1="794" y1="84" x2="824" y2="84" stroke="#1d4ed8" stroke-width="2.2" stroke-dasharray="6,4"/>
+      <text x="832" y="88">Email composition (no URLs)</text>
+      <line x1="794" y1="104" x2="824" y2="104" stroke="#6b7280" stroke-width="2.2"/>
+      <text x="832" y="108">Horticulture question (1 verified)</text>
     </g>
 
     <!-- Y-axis title -->
