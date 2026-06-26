@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Data Survey</title>
+<style>
+  :root{ --ink:#111827; --muted:#4b5563; --line:#d9dce1; --accent:#6d28d9;
+         --qa:#1d4ed8; --qa-bg:#eef2ff; --bench:#b45309; --bench-bg:#fff7ed; --scene:#15803d; --scene-bg:#ecfdf3;
+         --yes:#15803d; --no:#9ca3af; --part:#b45309; }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#f6f6f4;color:var(--ink);
+    font-family:"Charter","Source Serif Pro",Georgia,"Times New Roman",serif;line-height:1.5;font-size:15px}
+  .wrap{max-width:1240px;margin:28px auto;background:#fff;border:1px solid var(--line);padding:38px 46px 56px}
+  h1{font-size:25px;margin:0 0 4px;font-weight:600}
+  .sub{color:var(--muted);margin:4px 0 2px;font-size:15px}
+  .note{color:var(--muted);font-size:13px;font-family:-apple-system,Arial,sans-serif;margin:6px 0 0}
+  a{color:#1f49b6;text-decoration:none} a:hover{text-decoration:underline}
+  h2{font-size:14px;margin:34px 0 6px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;
+     font-family:-apple-system,Arial,sans-serif;display:inline-block;padding:4px 11px;border-radius:5px}
+  h2.qa{color:var(--qa);background:var(--qa-bg)} h2.bench{color:var(--bench);background:var(--bench-bg)}
+  h2.scene{color:var(--scene);background:var(--scene-bg)}
+  .secnote{color:var(--muted);font-size:13px;font-family:-apple-system,Arial,sans-serif;margin:0 0 10px}
+  table{border-collapse:collapse;width:100%;font-family:-apple-system,Arial,sans-serif;font-size:13px}
+  thead th{position:sticky;top:0;background:#f3f4f6;text-align:left;padding:8px 9px;border-bottom:2px solid #cbd0d8;
+    font-weight:700;color:#374151;white-space:nowrap}
+  td{padding:7px 9px;border-bottom:1px solid #edeef1;vertical-align:top}
+  tbody tr:hover{background:#fafbfc}
+  .ds{font-weight:700;font-size:13.5px;white-space:nowrap}
+  .ds .yr{color:#9ca3af;font-weight:400;font-size:11.5px;margin-left:4px}
+  .vol{white-space:nowrap;color:#1f2937}
+  .yes{color:var(--yes);font-weight:700} .no{color:var(--no)} .part{color:var(--part);font-weight:600}
+  .fmt{color:#374151} .fmt code{background:#f1f3f5;border-radius:3px;padding:0 4px;font-size:11.5px;color:#3b3f46}
+  .dl{white-space:nowrap}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 6px}
+  .p-hf{background:#fef3c7;color:#92560a} .p-direct{background:#dcfce7;color:#166534}
+  .p-req{background:#fee2e2;color:#991b1b} .p-git{background:#e0e7ff;color:#3730a3} .p-api{background:#ede9fe;color:#5b21b6}
+  footer{color:#6b7280;font-size:12.5px;margin-top:34px;border-top:1px solid var(--line);padding-top:12px;
+    font-family:-apple-system,Arial,sans-serif}
+  .legend{font-family:-apple-system,Arial,sans-serif;font-size:12px;color:var(--muted);margin:10px 0 0}
+  .legend .pill{margin:0 3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>3D Data Survey</h1>
+<p class="sub">3D datasets for scene/object understanding and 3D&ndash;language modeling, partitioned by primary use.
+<b>Volume</b> is approximate (cleaned/usable counts). <b>Mesh</b> = ships reconstructed/CAD surface meshes;
+QA &amp; grounding sets reuse a base scene corpus, marked <span class="part">via&nbsp;X</span>.</p>
+<p class="legend">Download:
+  <span class="pill p-hf">HF</span> Hugging Face
+  <span class="pill p-direct">direct</span> open download/script
+  <span class="pill p-git">git</span> GitHub (links/Drive)
+  <span class="pill p-req">request</span> ToS / form / academic agreement
+  <span class="pill p-api">API</span> programmatic loader</p>
+
+<!-- ============ TRAINING QA / 3D-LANGUAGE ============ -->
+<h2 class="qa">Training data &middot; 3D QA &amp; language</h2>
+<div class="secnote">QA / caption / grounding annotations layered on a base 3D corpus (rarely ship their own geometry).</div>
+<table>
+<thead><tr><th>Dataset</th><th>Volume</th><th>Mesh</th><th>Key format / modality</th><th>Base corpus</th><th>Download</th></tr></thead>
+<tbody>
+<tr><td class="ds"><a href="https://github.com/ATR-DBI/ScanQA">ScanQA</a><span class="yr">'22</span></td><td class="vol">41k QA / 800 scenes</td><td class="part">via ScanNet</td><td class="fmt">indoor VQA over <code>point cloud + RGB-D</code></td><td>ScanNet</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://sqa3d.github.io/">SQA3D</a><span class="yr">'23</span></td><td class="vol">33.4k QA / 650 scenes</td><td class="part">via ScanNet</td><td class="fmt">situated QA (agent pose) </td><td>ScanNet</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/UMass-Foundation-Model/3D-LLM">3D-LLM</a><span class="yr">'23</span></td><td class="vol">~300k 3D&ndash;lang pairs</td><td class="part">via base sets</td><td class="fmt">QA + caption + grounding, multi-task</td><td>Objaverse / ScanNet / HM3D</td><td class="dl"><span class="pill p-hf">HF</span></td></tr>
+<tr><td class="ds"><a href="https://scene-verse.github.io/">SceneVerse</a><span class="yr">'24</span></td><td class="vol">2.5M pairs / 68k scenes</td><td class="part">via base sets</td><td class="fmt">grounded scene&ndash;language (largest)</td><td>ScanNet/HM3D/3RScan/Structured3D/ProcTHOR</td><td class="dl"><span class="pill p-hf">HF</span></td></tr>
+<tr><td class="ds"><a href="https://cap3d.github.io/">Cap3D</a><span class="yr">'23</span></td><td class="vol">~1M object captions</td><td class="part">via Objaverse</td><td class="fmt">automatic object captions</td><td>Objaverse(-XL)</td><td class="dl"><span class="pill p-hf">HF</span></td></tr>
+<tr><td class="ds"><a href="https://daveredrum.github.io/ScanRefer/">ScanRefer</a><span class="yr">'20</span></td><td class="vol">51.5k descriptions / 800 scenes</td><td class="part">via ScanNet</td><td class="fmt">3D referring / grounding</td><td>ScanNet</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://referit3d.github.io/">ReferIt3D (Nr3D+Sr3D)</a><span class="yr">'20</span></td><td class="vol">41.5k + 114k expressions</td><td class="part">via ScanNet</td><td class="fmt">fine-grained object grounding</td><td>ScanNet</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://3dmv-vqa.github.io/">3DMV-VQA</a><span class="yr">'23</span></td><td class="vol">50k QA / 5k scenes</td><td class="no">no</td><td class="fmt">multi-view <code>posed RGB</code> compositional QA</td><td>HM3D</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/OpenM3D/M3DBench">M3DBench</a><span class="yr">'23</span></td><td class="vol">~320k instruction pairs</td><td class="part">via base sets</td><td class="fmt">interleaved 3D instruction-following</td><td>ScanNet / multi</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/Open3DA/LL3DA">LL3DA</a><span class="yr">'24</span></td><td class="vol">~140k instruction pairs</td><td class="part">via ScanNet</td><td class="fmt">visual-interactive instruction tuning</td><td>ScanNet</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+</tbody>
+</table>
+
+<!-- ============ BENCHMARKS ============ -->
+<h2 class="bench">Benchmarks &middot; eval splits &amp; tasks</h2>
+<div class="secnote">Held-out evaluation sets &mdash; 3D-language QA/grounding and classic geometry tasks (seg / detection / classification).</div>
+<table>
+<thead><tr><th>Dataset</th><th>Volume</th><th>Mesh</th><th>Key format / modality</th><th>Task</th><th>Download</th></tr></thead>
+<tbody>
+<tr><td class="ds"><a href="https://github.com/ATR-DBI/ScanQA">ScanQA (test)</a><span class="yr">'22</span></td><td class="vol">~6k QA</td><td class="part">via ScanNet</td><td class="fmt">indoor VQA</td><td>QA (EM / CIDEr)</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://sqa3d.github.io/">SQA3D</a><span class="yr">'23</span></td><td class="vol">~3.5k QA</td><td class="part">via ScanNet</td><td class="fmt">situated reasoning</td><td>QA accuracy</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/3dlg-hcvc/M3DRef-CLIP">Multi3DRefer</a><span class="yr">'23</span></td><td class="vol">62k descriptions</td><td class="part">via ScanNet</td><td class="fmt">multi/zero-target grounding</td><td>grounding F1</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+<tr><td class="ds"><a href="http://www.scan-net.org/">ScanNet / ScanNet200</a><span class="yr">'17/'22</span></td><td class="vol">1,513 scans</td><td class="yes">yes</td><td class="fmt"><code>mesh</code> + <code>RGB-D</code> + instances</td><td>semantic / instance seg, detect</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="http://buildingparser.stanford.edu/dataset.html">S3DIS</a><span class="yr">'16</span></td><td class="vol">271 rooms / 6 areas</td><td class="no">no</td><td class="fmt"><code>point cloud</code> + <code>RGB-D</code></td><td>semantic segmentation</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://modelnet.cs.princeton.edu/">ModelNet40</a><span class="yr">'15</span></td><td class="vol">12,311 CAD models</td><td class="yes">yes</td><td class="fmt">synthetic <code>mesh</code> (OFF)</td><td>shape classification</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+<tr><td class="ds"><a href="https://hkust-vgd.github.io/scanobjectnn/">ScanObjectNN</a><span class="yr">'19</span></td><td class="vol">~15k objects</td><td class="no">no</td><td class="fmt">real-scan <code>point cloud</code></td><td>robust classification</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="http://semantic-kitti.org/">SemanticKITTI</a><span class="yr">'19</span></td><td class="vol">43k scans / 22 seq</td><td class="no">no</td><td class="fmt"><code>LiDAR point cloud</code></td><td>LiDAR semantic seg</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+<tr><td class="ds"><a href="https://www.nuscenes.org/">nuScenes</a><span class="yr">'19</span></td><td class="vol">1,000 driving scenes</td><td class="no">no</td><td class="fmt"><code>LiDAR</code> + 6&times;<code>camera</code> + radar</td><td>3D detection / tracking</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://waymo.com/open/">Waymo Open</a><span class="yr">'19</span></td><td class="vol">1,150 segments</td><td class="no">no</td><td class="fmt"><code>LiDAR</code> + <code>camera</code></td><td>3D detection</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/matsuren/Hypo3D">Hypo3D / 3D-POPE</a><span class="yr">'24</span></td><td class="vol">~7k probes</td><td class="part">via ScanNet</td><td class="fmt">hallucination / hypothetical reasoning</td><td>VLM robustness</td><td class="dl"><span class="pill p-git">git</span></td></tr>
+</tbody>
+</table>
+
+<!-- ============ PURE SCENE / OBJECT (non-QA) ============ -->
+<h2 class="scene">Pure 3D data &middot; scene &amp; object (non-QA)</h2>
+<div class="secnote">Raw geometry corpora &mdash; the base 3D the sets above annotate. <code>obj</code> = object-level, <code>scn</code> = scene-level.</div>
+<table>
+<thead><tr><th>Dataset</th><th>Volume</th><th>Mesh</th><th>Key format / modality</th><th>Type</th><th>Download</th></tr></thead>
+<tbody>
+<tr><td class="ds"><a href="https://shapenet.org/">ShapeNet (Core v2)</a><span class="yr">'15</span></td><td class="vol">51k (3M raw)</td><td class="yes">yes</td><td class="fmt">synthetic CAD <code>mesh</code> (OBJ), textured</td><td>obj</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://objaverse.allenai.org/">Objaverse 1.0</a><span class="yr">'23</span></td><td class="vol">~800k objects</td><td class="yes">yes</td><td class="fmt">web <code>mesh</code> (GLB), animated/PBR</td><td>obj</td><td class="dl"><span class="pill p-api">API</span> <span class="pill p-hf">HF</span></td></tr>
+<tr><td class="ds"><a href="https://objaverse.allenai.org/objaverse-xl/">Objaverse-XL</a><span class="yr">'23</span></td><td class="vol">10.2M objects</td><td class="yes">yes</td><td class="fmt"><code>mesh</code> (GLB/OBJ/USDZ/&hellip;)</td><td>obj</td><td class="dl"><span class="pill p-api">API</span></td></tr>
+<tr><td class="ds"><a href="https://amazon-berkeley-objects.s3.amazonaws.com/index.html">ABO</a><span class="yr">'22</span></td><td class="vol">8k 3D / 147k images</td><td class="yes">yes</td><td class="fmt">product <code>mesh</code> (glb) + catalog images</td><td>obj</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+<tr><td class="ds"><a href="https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research">Google Scanned Objects</a><span class="yr">'22</span></td><td class="vol">1,030 objects</td><td class="yes">yes</td><td class="fmt">scanned <code>mesh</code> + textures</td><td>obj</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+<tr><td class="ds"><a href="https://omniobject3d.github.io/">OmniObject3D</a><span class="yr">'23</span></td><td class="vol">6k objects / 190 cats</td><td class="yes">yes</td><td class="fmt"><code>mesh</code> + <code>point cloud</code> + multiview + video</td><td>obj</td><td class="dl"><span class="pill p-hf">HF</span></td></tr>
+<tr><td class="ds"><a href="https://niessner.github.io/Matterport/">Matterport3D</a><span class="yr">'17</span></td><td class="vol">90 buildings / 10.8k panos</td><td class="yes">yes</td><td class="fmt">textured <code>mesh</code> + <code>RGB-D</code> panoramas</td><td>scn</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="http://www.scan-net.org/">ScanNet</a><span class="yr">'17</span></td><td class="vol">1,513 scans / 707 spaces</td><td class="yes">yes</td><td class="fmt"><code>RGB-D</code> video + reconstructed <code>mesh</code></td><td>scn</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://kaldir.vc.in.tum.de/scannetpp/">ScanNet++</a><span class="yr">'23</span></td><td class="vol">460+ scenes</td><td class="yes">yes</td><td class="fmt">laser <code>mesh</code> + DSLR + iPhone <code>RGB-D</code></td><td>scn</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/facebookresearch/Replica-Dataset">Replica</a><span class="yr">'19</span></td><td class="vol">18 scenes</td><td class="yes">yes</td><td class="fmt">high-fidelity <code>mesh</code> + HDR textures</td><td>scn</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+<tr><td class="ds"><a href="https://aihabitat.org/datasets/hm3d/">HM3D</a><span class="yr">'21</span></td><td class="vol">1,000 scenes</td><td class="yes">yes</td><td class="fmt">building-scale <code>mesh</code> (Habitat)</td><td>scn</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset">3D-FRONT / 3D-FUTURE</a><span class="yr">'20</span></td><td class="vol">18.8k rooms / 13k furniture</td><td class="yes">yes</td><td class="fmt">synthetic layout <code>mesh</code></td><td>scn+obj</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://structured3d-dataset.org/">Structured3D</a><span class="yr">'20</span></td><td class="vol">3,500 scenes / 21.8k rooms</td><td class="part">partial</td><td class="fmt">photo-real <code>panorama</code> + structure (plane/line)</td><td>scn</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/apple/ARKitScenes">ARKitScenes</a><span class="yr">'21</span></td><td class="vol">5,047 scans</td><td class="yes">yes</td><td class="fmt"><code>RGB-D</code> + LiDAR + low-res <code>mesh</code></td><td>scn</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+<tr><td class="ds"><a href="https://github.com/WaldJohannaU/3RScan">3RScan</a><span class="yr">'19</span></td><td class="vol">1,482 scans / 478 scenes</td><td class="yes">yes</td><td class="fmt"><code>RGB-D</code> + <code>mesh</code>, temporal changes</td><td>scn</td><td class="dl"><span class="pill p-req">request</span></td></tr>
+<tr><td class="ds"><a href="https://machinelearning.apple.com/research/hypersim">Hypersim</a><span class="yr">'21</span></td><td class="vol">461 scenes / 77k frames</td><td class="yes">yes</td><td class="fmt">synthetic photoreal <code>RGB-D</code> + geometry + materials</td><td>scn</td><td class="dl"><span class="pill p-direct">direct</span></td></tr>
+</tbody>
+</table>
+
+<footer>
+Survey snapshot &mdash; volumes are approximate usable counts; verify against each dataset's official page and license before use.
+Hosted via GitHub Pages from <code>Irisicy4/tmp-htmls</code>. Updated <span id="ts"></span>.
+</footer>
+</div>
+<script>document.getElementById('ts').textContent=new Date().toISOString().slice(0,10);</script>
+</body>
+</html>
