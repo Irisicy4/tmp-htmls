@@ -11,3 +11,4 @@ After the first push, enable Pages once: **Settings → Pages → Build and depl
 - [`index.html`](./index.html) — landing page linking to v1 and v2
 - [`v1.html`](./v1.html) — original 3-judge design (single pass, substring-match faithfulness)
 - [`v2.html`](./v2.html) — Effectiveness as main judge with LLM-agentic Faithfulness sub-agent and pending-question loop
+- [`retrieval-qc-review-1000/index.html`](./retrieval-qc-review-1000/index.html) — QC review of a 1,000-sample reasoning-retrieval draw (pie chart + per-category image gallery, 139/600 flagged). Includes `serve.sh` for local/SSH-tunnel viewing.
