@@ -19,6 +19,7 @@
   a.legend-row:hover { background:#f0f3f8; }
   .legend-row.is-good { font-weight:700; background:#eaf6ec; border-radius:6px; }
   .legend-row.remaining { color:#8a8f96; font-style:italic; }
+  .legend-row.legend-subtotal { font-weight:700; border-top:1px dashed #d8dbe0; margin-top:2px; padding-top:6px; }
   .legend-groupdiv { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:#9aa0a6;
                        margin:8px 2px 2px; font-weight:700; }
   .swatch { width:12px; height:12px; border-radius:3px; display:inline-block; }
@@ -71,27 +72,27 @@
 </header>
 <div class="wrap">
   <div class="summary">
-    <div><svg viewBox="0 0 300 300" width="320" height="320"><path d="M 150,150 L 150.00,20.00 A 130,130 0 0 1 191.46,26.79 Z" fill="#2e7d32" stroke="#fff" stroke-width="1.5"><title>Good: 31 (5.2%)</title></path><path d="M 150,150 L 191.46,26.79 A 130,130 0 0 1 201.63,30.69 Z" fill="#c62828" stroke="#fff" stroke-width="1.5"><title>Bad &quot;go well with&quot;: 8 (1.3%)</title></path><path d="M 150,150 L 201.63,30.69 A 130,130 0 0 1 240.96,57.12 Z" fill="#ef6c00" stroke="#fff" stroke-width="1.5"><title>Non-identifiable: 35 (5.8%)</title></path><path d="M 150,150 L 240.96,57.12 A 130,130 0 0 1 263.92,87.37 Z" fill="#6a1b9a" stroke="#fff" stroke-width="1.5"><title>Size / detail / texture mismatch: 28 (4.7%)</title></path><path d="M 150,150 L 263.92,87.37 A 130,130 0 0 1 274.05,111.12 Z" fill="#455a64" stroke="#fff" stroke-width="1.5"><title>Other reasons: 19 (3.2%)</title></path><path d="M 150,150 L 274.05,111.12 A 130,130 0 0 1 276.87,121.64 Z" fill="#00838f" stroke="#fff" stroke-width="1.5"><title>Similar-than reasoning: 8 (1.3%)</title></path><path d="M 150,150 L 276.87,121.64 A 130,130 0 0 1 278.97,133.71 Z" fill="#ad1457" stroke="#fff" stroke-width="1.5"><title>Text shortcut: 9 (1.5%)</title></path><path d="M 150,150 L 278.97,133.71 A 130,130 0 0 1 279.14,135.06 Z" fill="#8d1a0f" stroke="#fff" stroke-width="1.5"><title>Image error: 1 (0.2%)</title></path><path d="M 150,150 L 279.14,135.06 A 130,130 0 1 1 150.00,20.00 Z" fill="#cfd8dc" stroke="#fff" stroke-width="1.5"><title>Not flagged: 461 (76.8%)</title></path></svg></div>
+    <div><svg viewBox="0 0 300 300" width="320" height="320"><path d="M 150,150 L 150.00,20.00 A 130,130 0 0 1 191.46,26.79 Z" fill="#2e7d32" stroke="#fff" stroke-width="1.5"><title>Good: 31 (5.2%)</title></path><path d="M 150,150 L 191.46,26.79 A 130,130 0 0 1 201.63,30.69 Z" fill="#c62828" stroke="#fff" stroke-width="1.5"><title>Bad &quot;go well with&quot;: 8 (1.3%)</title></path><path d="M 150,150 L 201.63,30.69 A 130,130 0 0 1 240.96,57.12 Z" fill="#ef6c00" stroke="#fff" stroke-width="1.5"><title>Non-identifiable: 35 (5.8%)</title></path><path d="M 150,150 L 240.96,57.12 A 130,130 0 0 1 263.92,87.37 Z" fill="#6a1b9a" stroke="#fff" stroke-width="1.5"><title>Size / detail / texture mismatch: 28 (4.7%)</title></path><path d="M 150,150 L 263.92,87.37 A 130,130 0 0 1 272.31,105.96 Z" fill="#455a64" stroke="#fff" stroke-width="1.5"><title>Other reasons: 15 (2.5%)</title></path><path d="M 150,150 L 272.31,105.96 A 130,130 0 0 1 275.57,116.35 Z" fill="#00838f" stroke="#fff" stroke-width="1.5"><title>Similar-than reasoning: 8 (1.3%)</title></path><path d="M 150,150 L 275.57,116.35 A 130,130 0 0 1 278.18,128.32 Z" fill="#ad1457" stroke="#fff" stroke-width="1.5"><title>Text shortcut: 9 (1.5%)</title></path><path d="M 150,150 L 278.18,128.32 A 130,130 0 0 1 279.14,135.06 Z" fill="#8d1a0f" stroke="#fff" stroke-width="1.5"><title>Image error: 5 (0.8%)</title></path><path d="M 150,150 L 279.14,135.06 A 130,130 0 1 1 150.00,20.00 Z" fill="#cfd8dc" stroke="#fff" stroke-width="1.5"><title>Not flagged: 461 (76.8%)</title></path></svg></div>
     <div class="legend"><a href="#cat-good" class="legend-row is-good"><span class="swatch" style="background:#2e7d32"></span><span class="lname">Good</span><span class="lcount">31</span><span class="lpct">5.2%</span></a><div class="legend-groupdiv">Issue types</div><a href="#cat-bad_"go_well_with"" class="legend-row"><span class="swatch" style="background:#c62828"></span><span class="lname">Bad &quot;go well with&quot;</span><span class="lcount">8</span><span class="lpct">1.3%</span></a>
 <a href="#cat-non_identifiable" class="legend-row"><span class="swatch" style="background:#ef6c00"></span><span class="lname">Non-identifiable</span><span class="lcount">35</span><span class="lpct">5.8%</span></a>
 <a href="#cat-size_detail_texture_mismatch" class="legend-row"><span class="swatch" style="background:#6a1b9a"></span><span class="lname">Size / detail / texture mismatch</span><span class="lcount">28</span><span class="lpct">4.7%</span></a>
-<a href="#cat-other_reasons" class="legend-row"><span class="swatch" style="background:#455a64"></span><span class="lname">Other reasons</span><span class="lcount">19</span><span class="lpct">3.2%</span></a>
+<a href="#cat-other_reasons" class="legend-row"><span class="swatch" style="background:#455a64"></span><span class="lname">Other reasons</span><span class="lcount">15</span><span class="lpct">2.5%</span></a>
 <a href="#cat-similar_than_reasoning" class="legend-row"><span class="swatch" style="background:#00838f"></span><span class="lname">Similar-than reasoning</span><span class="lcount">8</span><span class="lpct">1.3%</span></a>
 <a href="#cat-text_shortcut" class="legend-row"><span class="swatch" style="background:#ad1457"></span><span class="lname">Text shortcut</span><span class="lcount">9</span><span class="lpct">1.5%</span></a>
-<a href="#cat-image_error" class="legend-row"><span class="swatch" style="background:#8d1a0f"></span><span class="lname">Image error</span><span class="lcount">1</span><span class="lpct">0.2%</span></a><div class="legend-groupdiv">Unreviewed</div><div class="legend-row remaining"><span class="swatch" style="background:#cfd8dc"></span><span class="lname">Not flagged</span><span class="lcount">461</span><span class="lpct">76.8%</span></div></div>
+<a href="#cat-image_error" class="legend-row"><span class="swatch" style="background:#8d1a0f"></span><span class="lname">Image error</span><span class="lcount">5</span><span class="lpct">0.8%</span></a><div class="legend-row legend-subtotal"><span class="swatch" style="background:transparent"></span><span class="lname">Total issues</span><span class="lcount">108</span><span class="lpct">18.0%</span></div><div class="legend-groupdiv">Unreviewed</div><div class="legend-row remaining"><span class="swatch" style="background:#cfd8dc"></span><span class="lname">Not flagged</span><span class="lcount">461</span><span class="lpct">76.8%</span></div></div>
   </div>
   <div class="chipgroup">
     <div class="chips"><a href="#cat-good" class="chip chip-good" style="border-color:#2e7d32"><span class="dot" style="background:#2e7d32"></span>Good (31)</a></div>
   </div>
   <div class="chipgroup">
-    <div class="chipgroup-label">Issue types</div>
+    <div class="chipgroup-label">Issue types &mdash; 108 total</div>
     <div class="chips"><a href="#cat-bad_"go_well_with"" class="chip chip-issue" style="border-color:#c62828"><span class="dot" style="background:#c62828"></span>Bad &quot;go well with&quot; (8)</a>
 <a href="#cat-non_identifiable" class="chip chip-issue" style="border-color:#ef6c00"><span class="dot" style="background:#ef6c00"></span>Non-identifiable (35)</a>
 <a href="#cat-size_detail_texture_mismatch" class="chip chip-issue" style="border-color:#6a1b9a"><span class="dot" style="background:#6a1b9a"></span>Size / detail / texture mismatch (28)</a>
-<a href="#cat-other_reasons" class="chip chip-issue" style="border-color:#455a64"><span class="dot" style="background:#455a64"></span>Other reasons (19)</a>
+<a href="#cat-other_reasons" class="chip chip-issue" style="border-color:#455a64"><span class="dot" style="background:#455a64"></span>Other reasons (15)</a>
 <a href="#cat-similar_than_reasoning" class="chip chip-issue" style="border-color:#00838f"><span class="dot" style="background:#00838f"></span>Similar-than reasoning (8)</a>
 <a href="#cat-text_shortcut" class="chip chip-issue" style="border-color:#ad1457"><span class="dot" style="background:#ad1457"></span>Text shortcut (9)</a>
-<a href="#cat-image_error" class="chip chip-issue" style="border-color:#8d1a0f"><span class="dot" style="background:#8d1a0f"></span>Image error (1)</a></div>
+<a href="#cat-image_error" class="chip chip-issue" style="border-color:#8d1a0f"><span class="dot" style="background:#8d1a0f"></span>Image error (5)</a></div>
   </div>
   
     <section id="cat-good" class="category category-good" style="--accent:#2e7d32">
@@ -1451,7 +1452,7 @@
     <section id="cat-other_reasons" class="category category-issue" style="--accent:#455a64">
       <div class="eyebrow eyebrow-issue">&#9888; Issue type</div>
       <h2><span class="swatch" style="background:#455a64"></span>Other reasons
-        <span class="count-badge">19 / 600 &middot; 3.2%</span></h2>
+        <span class="count-badge">15 / 600 &middot; 2.5%</span></h2>
       <div class="grid">
         <div class="card">
           <div class="card-id">#12</div>
@@ -1571,19 +1572,6 @@
           </details>
         </div>
         <div class="card">
-          <div class="card-id">#216</div>
-          <div class="thumbs">
-            <figure><img loading="lazy" src="images/f70a64040f0c4e9d8e31350d7da4648c6ca93109eaff276cf3a7301d7dce9033.jpg" alt="query 216"><figcaption>query</figcaption></figure>
-            <figure><img loading="lazy" src="images/d8dd24f166022814bee7b5ca432b79611a9e47ad7af576d13f3893ee4cfc94a2.jpg" alt="target 216"><figcaption>target</figcaption></figure>
-          </div>
-          <div class="text"><b>Instruction:</b> Where would this look best?</div>
-          <details class="more">
-            <summary>Target caption &amp; rationale</summary>
-            <div class="text"><b>Target caption:</b> A wide-angle shot of a minimalist home office setup featuring a dual-monitor workstation, a clean white desk, and a comfortable swivel chair in a brightly lit room</div>
-            <div class="text rationale"><b>Rationale:</b> I identify the query image as a piece of office furniture or a desk accessory. By linking it to the target caption of a minimalist home office setup, I reason that the user is looking for an appropriate environmental con…</div>
-          </details>
-        </div>
-        <div class="card">
           <div class="card-id">#259</div>
           <div class="thumbs">
             <figure><img loading="lazy" src="images/731dd7f2553bb917b0094f8b004922f7157aad211470ece3ae464732a6f62760.jpg" alt="query 259"><figcaption>query</figcaption></figure>
@@ -1597,19 +1585,6 @@
           </details>
         </div>
         <div class="card">
-          <div class="card-id">#299</div>
-          <div class="thumbs">
-            <figure><img loading="lazy" src="images/c0c5d0ddd6fc41c330068670b0c1696f72f3050ff80ca2b0e3cab7aa14301fef.jpg" alt="query 299"><figcaption>query</figcaption></figure>
-            <figure><img loading="lazy" src="images/cbd3f0b66dde3fe244ab4cb745b189211ca2f610b68e78812224e458af11c7fe.jpg" alt="target 299"><figcaption>target</figcaption></figure>
-          </div>
-          <div class="text"><b>Instruction:</b> How could this be integrated into a wall?</div>
-          <details class="more">
-            <summary>Target caption &amp; rationale</summary>
-            <div class="text"><b>Target caption:</b> A high-resolution image of a modern minimalist interior wall featuring a recessed geometric niche with integrated LED strip lighting and a smooth matte grey finish</div>
-            <div class="text rationale"><b>Rationale:</b> The query image shows a geometric cutout or profile, and the target image demonstrates a real-world application of such a shape as a recessed wall niche with lighting. By asking how the shape can be integrated into a wal…</div>
-          </details>
-        </div>
-        <div class="card">
           <div class="card-id">#307</div>
           <div class="thumbs">
             <figure><img loading="lazy" src="images/e7aafe82bc7e391206ef5fd02cad86443cf3c546d7069b02b16c5862f4044e81.jpg" alt="query 307"><figcaption>query</figcaption></figure>
@@ -1620,19 +1595,6 @@
             <summary>Target caption &amp; rationale</summary>
             <div class="text"><b>Target caption:</b> An image of a blood pressure cuff wrapped around a person&#x27;s arm with a digital monitor displaying systolic and diastolic readings</div>
             <div class="text rationale"><b>Rationale:</b> The query image shows a heart symbol, which is the primary organ associated with cardiovascular health. The target image depicts a blood pressure monitor, which is the standard medical tool used to measure heart-related…</div>
-          </details>
-        </div>
-        <div class="card">
-          <div class="card-id">#324</div>
-          <div class="thumbs">
-            <figure><img loading="lazy" src="images/8b2910b84716e9b41084fa0ef1860730acac062e2e65bd0cac594d16526a2c2a.jpg" alt="query 324"><figcaption>query</figcaption></figure>
-            <figure><img loading="lazy" src="images/82c3315f596de792baf914e17980b0692be4e242e7646f67372debe15ea86d3e.jpg" alt="target 324"><figcaption>target</figcaption></figure>
-          </div>
-          <div class="text"><b>Instruction:</b> What does the system look like on the backend when this happens?</div>
-          <details class="more">
-            <summary>Target caption &amp; rationale</summary>
-            <div class="text"><b>Target caption:</b> A digital illustration of a cybersecurity dashboard showing a red alert icon and a world map with highlighted blocked IP addresses and traffic spikes</div>
-            <div class="text rationale"><b>Rationale:</b> The query image shows an &#x27;Access Restricted&#x27; error message, which is a front-end notification of a security block. The target caption describes a cybersecurity dashboard monitoring traffic spikes and blocked IP addresses…</div>
           </details>
         </div>
         <div class="card">
@@ -1659,19 +1621,6 @@
             <summary>Target caption &amp; rationale</summary>
             <div class="text"><b>Target caption:</b> An Impressionist style painting of a sunny garden courtyard featuring a small child in white clothing feeding a flock of white birds scattered across a cobblestone path</div>
             <div class="text rationale"><b>Rationale:</b> The query image and the target image are visually identical, both depicting an Impressionist painting of a child feeding birds by a fountain. Since the target caption describes the scene in detail and the image is a larg…</div>
-          </details>
-        </div>
-        <div class="card">
-          <div class="card-id">#394</div>
-          <div class="thumbs">
-            <figure><img loading="lazy" src="images/cf8b68ed1ccd963ce77fce9bdb71c2653ec6ca7b3340d147461a5efee028638a.jpg" alt="query 394"><figcaption>query</figcaption></figure>
-            <figure><img loading="lazy" src="images/429283a7e96e7857b41e3d18b49d450169613f940897f399dbe6bd62b41250b4.jpg" alt="target 394"><figcaption>target</figcaption></figure>
-          </div>
-          <div class="text"><b>Instruction:</b> Where can I display this in a professional setting?</div>
-          <details class="more">
-            <summary>Target caption &amp; rationale</summary>
-            <div class="text"><b>Target caption:</b> A wide shot of a modern digital gallery wall featuring multiple backlit LED screens displaying various landscape photographs in a minimalist art museum</div>
-            <div class="text rationale"><b>Rationale:</b> The query image depicts a photograph, and the target caption describes a digital gallery wall in a museum designed to display photographs. By asking for a professional way to display the item, the reasoning links the ind…</div>
           </details>
         </div>
         <div class="card">
@@ -1940,8 +1889,60 @@
     <section id="cat-image_error" class="category category-issue" style="--accent:#8d1a0f">
       <div class="eyebrow eyebrow-issue">&#9888; Issue type</div>
       <h2><span class="swatch" style="background:#8d1a0f"></span>Image error
-        <span class="count-badge">1 / 600 &middot; 0.2%</span></h2>
+        <span class="count-badge">5 / 600 &middot; 0.8%</span></h2>
       <div class="grid">
+        <div class="card">
+          <div class="card-id">#216</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/f70a64040f0c4e9d8e31350d7da4648c6ca93109eaff276cf3a7301d7dce9033.jpg" alt="query 216"><figcaption>query</figcaption></figure>
+            <figure><img loading="lazy" src="images/d8dd24f166022814bee7b5ca432b79611a9e47ad7af576d13f3893ee4cfc94a2.jpg" alt="target 216"><figcaption>target</figcaption></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would this look best?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wide-angle shot of a minimalist home office setup featuring a dual-monitor workstation, a clean white desk, and a comfortable swivel chair in a brightly lit room</div>
+            <div class="text rationale"><b>Rationale:</b> I identify the query image as a piece of office furniture or a desk accessory. By linking it to the target caption of a minimalist home office setup, I reason that the user is looking for an appropriate environmental con…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#299</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/c0c5d0ddd6fc41c330068670b0c1696f72f3050ff80ca2b0e3cab7aa14301fef.jpg" alt="query 299"><figcaption>query</figcaption></figure>
+            <figure><img loading="lazy" src="images/cbd3f0b66dde3fe244ab4cb745b189211ca2f610b68e78812224e458af11c7fe.jpg" alt="target 299"><figcaption>target</figcaption></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> How could this be integrated into a wall?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A high-resolution image of a modern minimalist interior wall featuring a recessed geometric niche with integrated LED strip lighting and a smooth matte grey finish</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a geometric cutout or profile, and the target image demonstrates a real-world application of such a shape as a recessed wall niche with lighting. By asking how the shape can be integrated into a wal…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#324</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/8b2910b84716e9b41084fa0ef1860730acac062e2e65bd0cac594d16526a2c2a.jpg" alt="query 324"><figcaption>query</figcaption></figure>
+            <figure><img loading="lazy" src="images/82c3315f596de792baf914e17980b0692be4e242e7646f67372debe15ea86d3e.jpg" alt="target 324"><figcaption>target</figcaption></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does the system look like on the backend when this happens?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A digital illustration of a cybersecurity dashboard showing a red alert icon and a world map with highlighted blocked IP addresses and traffic spikes</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows an &#x27;Access Restricted&#x27; error message, which is a front-end notification of a security block. The target caption describes a cybersecurity dashboard monitoring traffic spikes and blocked IP addresses…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#394</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/cf8b68ed1ccd963ce77fce9bdb71c2653ec6ca7b3340d147461a5efee028638a.jpg" alt="query 394"><figcaption>query</figcaption></figure>
+            <figure><img loading="lazy" src="images/429283a7e96e7857b41e3d18b49d450169613f940897f399dbe6bd62b41250b4.jpg" alt="target 394"><figcaption>target</figcaption></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where can I display this in a professional setting?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wide shot of a modern digital gallery wall featuring multiple backlit LED screens displaying various landscape photographs in a minimalist art museum</div>
+            <div class="text rationale"><b>Rationale:</b> The query image depicts a photograph, and the target caption describes a digital gallery wall in a museum designed to display photographs. By asking for a professional way to display the item, the reasoning links the ind…</div>
+          </details>
+        </div>
         <div class="card">
           <div class="card-id">#403</div>
           <div class="thumbs">
