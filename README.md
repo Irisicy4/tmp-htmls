@@ -12,4 +12,4 @@ After the first push, enable Pages once: **Settings → Pages → Build and depl
 - [`v1.html`](./v1.html) — original 3-judge design (single pass, substring-match faithfulness)
 - [`v2.html`](./v2.html) — Effectiveness as main judge with LLM-agentic Faithfulness sub-agent and pending-question loop
 - [`retrieval-qc-review-1000/index.html`](./retrieval-qc-review-1000/index.html) — QC review of a 1,000-sample reasoning-retrieval draw (pie chart + per-category image gallery, 139/600 flagged).
-- [`retrieval-results-qc-101/index.html`](./retrieval-results-qc-101/index.html) — QC review of the first 101 samples of `ba8ab380-results.parquet` (pie chart + per-category gallery, 53/101 tagged: 8 good, 45 issues across 5 failure types).
+- [`retrieval-results-qc-101/index.html`](./retrieval-results-qc-101/index.html) — QC review of a 100-sample draw from `ba8ab380-results.parquet` (pie chart + per-category gallery, 53/100 tagged: 8 good, 45 issues across 5 failure types).

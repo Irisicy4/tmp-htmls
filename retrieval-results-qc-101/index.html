@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Results.parquet QC Review (n=101)</title>
+<title>Results.parquet QC Review (n=100)</title>
 <style>
   :root { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
   body { margin:0; background:#f7f8fa; color:#1a1a1a; }
@@ -69,12 +69,12 @@
 <body>
 <header>
   <h1>Results.parquet &mdash; Reasoning-Retrieval QC Review</h1>
-  <p>ba8ab380-results.parquet &middot; first 101 samples (idx 0&ndash;100) manually tagged &middot; 8 good, 45 issues across 5 issue types, 48 not flagged</p>
+  <p>ba8ab380-results.parquet &middot; 100-sample review (0-indexed) manually tagged &middot; 8 good, 45 issues across 5 issue types, 47 not flagged</p>
 </header>
 <div class="wrap">
   <div class="summary">
-    <div><svg viewBox="0 0 300 300" width="320" height="320"><path d="M 150,150 L 150.00,20.00 A 130,130 0 0 1 212.06,35.77 Z" fill="#2e7d32" stroke="#fff" stroke-width="1.5"><title>Good: 8 (7.9%)</title></path><path d="M 150,150 L 212.06,35.77 A 130,130 0 0 1 238.28,54.57 Z" fill="#ef6c00" stroke="#fff" stroke-width="1.5"><title>Non-identifiable: 4 (4.0%)</title></path><path d="M 150,150 L 238.28,54.57 A 130,130 0 0 1 263.25,86.17 Z" fill="#6a1b9a" stroke="#fff" stroke-width="1.5"><title>Size mismatch: 5 (5.0%)</title></path><path d="M 150,150 L 263.25,86.17 A 130,130 0 0 1 252.00,230.60 Z" fill="#ad1457" stroke="#fff" stroke-width="1.5"><title>Text shortcut: 19 (18.8%)</title></path><path d="M 150,150 L 252.00,230.60 A 130,130 0 0 1 235.27,248.13 Z" fill="#c62828" stroke="#fff" stroke-width="1.5"><title>Complete mismatch: 3 (3.0%)</title></path><path d="M 150,150 L 235.27,248.13 A 130,130 0 0 1 129.86,278.43 Z" fill="#455a64" stroke="#fff" stroke-width="1.5"><title>Same combo: 14 (13.9%)</title></path><path d="M 150,150 L 129.86,278.43 A 130,130 0 0 1 150.00,20.00 Z" fill="#cfd8dc" stroke="#fff" stroke-width="1.5"><title>Not flagged: 48 (47.5%)</title></path></svg></div>
-    <div class="legend"><a href="#cat-good" class="legend-row is-good"><span class="swatch" style="background:#2e7d32"></span><span class="lname">Good</span><span class="lcount">8</span><span class="lpct">7.9%</span></a><div class="legend-groupdiv">Issue types</div><a href="#cat-non_identifiable" class="legend-row"><span class="swatch" style="background:#ef6c00"></span><span class="lname">Non-identifiable</span><span class="lcount">4</span><span class="lpct">4.0%</span></a><a href="#cat-size_mismatch" class="legend-row"><span class="swatch" style="background:#6a1b9a"></span><span class="lname">Size mismatch</span><span class="lcount">5</span><span class="lpct">5.0%</span></a><a href="#cat-text_shortcut" class="legend-row"><span class="swatch" style="background:#ad1457"></span><span class="lname">Text shortcut</span><span class="lcount">19</span><span class="lpct">18.8%</span></a><a href="#cat-complete_mismatch" class="legend-row"><span class="swatch" style="background:#c62828"></span><span class="lname">Complete mismatch</span><span class="lcount">3</span><span class="lpct">3.0%</span></a><a href="#cat-same_combo" class="legend-row"><span class="swatch" style="background:#455a64"></span><span class="lname">Same combo</span><span class="lcount">14</span><span class="lpct">13.9%</span></a><div class="legend-row legend-subtotal"><span class="swatch" style="background:transparent"></span><span class="lname">Total issues</span><span class="lcount">45</span><span class="lpct">44.6%</span></div><div class="legend-row remaining"><span class="swatch" style="background:#cfd8dc"></span><span class="lname">Not flagged</span><span class="lcount">48</span><span class="lpct">47.5%</span></div></div>
+    <div><svg viewBox="0 0 300 300" width="320" height="320"><path d="M 150,150 L 150.00,20.00 A 130,130 0 0 1 212.63,36.08 Z" fill="#2e7d32" stroke="#fff" stroke-width="1.5"><title>Good: 8 (8.0%)</title></path><path d="M 150,150 L 212.63,36.08 A 130,130 0 0 1 238.99,55.23 Z" fill="#ef6c00" stroke="#fff" stroke-width="1.5"><title>Non-identifiable: 4 (4.0%)</title></path><path d="M 150,150 L 238.99,55.23 A 130,130 0 0 1 263.92,87.37 Z" fill="#6a1b9a" stroke="#fff" stroke-width="1.5"><title>Size mismatch: 5 (5.0%)</title></path><path d="M 150,150 L 263.92,87.37 A 130,130 0 0 1 250.17,232.87 Z" fill="#ad1457" stroke="#fff" stroke-width="1.5"><title>Text shortcut: 19 (19.0%)</title></path><path d="M 150,150 L 250.17,232.87 A 130,130 0 0 1 232.87,250.17 Z" fill="#c62828" stroke="#fff" stroke-width="1.5"><title>Complete mismatch: 3 (3.0%)</title></path><path d="M 150,150 L 232.87,250.17 A 130,130 0 0 1 125.64,277.70 Z" fill="#455a64" stroke="#fff" stroke-width="1.5"><title>Same combo: 14 (14.0%)</title></path><path d="M 150,150 L 125.64,277.70 A 130,130 0 0 1 150.00,20.00 Z" fill="#cfd8dc" stroke="#fff" stroke-width="1.5"><title>Not flagged: 47 (47.0%)</title></path></svg></div>
+    <div class="legend"><a href="#cat-good" class="legend-row is-good"><span class="swatch" style="background:#2e7d32"></span><span class="lname">Good</span><span class="lcount">8</span><span class="lpct">8.0%</span></a><div class="legend-groupdiv">Issue types</div><a href="#cat-non_identifiable" class="legend-row"><span class="swatch" style="background:#ef6c00"></span><span class="lname">Non-identifiable</span><span class="lcount">4</span><span class="lpct">4.0%</span></a><a href="#cat-size_mismatch" class="legend-row"><span class="swatch" style="background:#6a1b9a"></span><span class="lname">Size mismatch</span><span class="lcount">5</span><span class="lpct">5.0%</span></a><a href="#cat-text_shortcut" class="legend-row"><span class="swatch" style="background:#ad1457"></span><span class="lname">Text shortcut</span><span class="lcount">19</span><span class="lpct">19.0%</span></a><a href="#cat-complete_mismatch" class="legend-row"><span class="swatch" style="background:#c62828"></span><span class="lname">Complete mismatch</span><span class="lcount">3</span><span class="lpct">3.0%</span></a><a href="#cat-same_combo" class="legend-row"><span class="swatch" style="background:#455a64"></span><span class="lname">Same combo</span><span class="lcount">14</span><span class="lpct">14.0%</span></a><div class="legend-row legend-subtotal"><span class="swatch" style="background:transparent"></span><span class="lname">Total issues</span><span class="lcount">45</span><span class="lpct">45.0%</span></div><div class="legend-row remaining"><span class="swatch" style="background:#cfd8dc"></span><span class="lname">Not flagged</span><span class="lcount">47</span><span class="lpct">47.0%</span></div></div>
   </div>
   <div class="chipgroup">
     <div class="chips"><a href="#cat-good" class="chip chip-good" style="border-color:#2e7d32"><span class="dot" style="background:#2e7d32"></span>Good (8)</a></div>
@@ -91,7 +91,7 @@
     <section id="cat-good" class="category category-good" style="--accent:#2e7d32">
       <div class="eyebrow eyebrow-good">&#10003; Positive example</div>
       <h2><span class="swatch" style="background:#2e7d32"></span>Good
-        <span class="count-badge">8 / 101 &middot; 7.9%</span></h2>
+        <span class="count-badge">8 / 100 &middot; 8.0%</span></h2>
       <p class="cat-desc">Instruction requires genuine reasoning; target is a correct, non-trivial answer.</p>
       <div class="grid">
         <div class="card">
@@ -202,7 +202,7 @@
     </section>    <section id="cat-non_identifiable" class="category" style="--accent:#ef6c00">
       <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
       <h2><span class="swatch" style="background:#ef6c00"></span>Non-identifiable
-        <span class="count-badge">4 / 101 &middot; 4.0%</span></h2>
+        <span class="count-badge">4 / 100 &middot; 4.0%</span></h2>
       <p class="cat-desc">Query subject can&#x27;t be reliably identified, so the reasoning link is unverifiable.</p>
       <div class="grid">
         <div class="card">
@@ -261,7 +261,7 @@
     </section>    <section id="cat-size_mismatch" class="category" style="--accent:#6a1b9a">
       <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
       <h2><span class="swatch" style="background:#6a1b9a"></span>Size mismatch
-        <span class="count-badge">5 / 101 &middot; 5.0%</span></h2>
+        <span class="count-badge">5 / 100 &middot; 5.0%</span></h2>
       <p class="cat-desc">Query and target differ in scale / level of detail / texture in a way that breaks the pair.</p>
       <div class="grid">
         <div class="card">
@@ -333,7 +333,7 @@
     </section>    <section id="cat-text_shortcut" class="category" style="--accent:#ad1457">
       <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
       <h2><span class="swatch" style="background:#ad1457"></span>Text shortcut
-        <span class="count-badge">19 / 101 &middot; 18.8%</span></h2>
+        <span class="count-badge">19 / 100 &middot; 19.0%</span></h2>
       <p class="cat-desc">Instruction leaks the answer or can be solved from text alone without the query image.</p>
       <div class="grid">
         <div class="card">
@@ -587,7 +587,7 @@
     </section>    <section id="cat-complete_mismatch" class="category" style="--accent:#c62828">
       <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
       <h2><span class="swatch" style="background:#c62828"></span>Complete mismatch
-        <span class="count-badge">3 / 101 &middot; 3.0%</span></h2>
+        <span class="count-badge">3 / 100 &middot; 3.0%</span></h2>
       <p class="cat-desc">Query and target are unrelated; no plausible reasoning connects them.</p>
       <div class="grid">
         <div class="card">
@@ -633,7 +633,7 @@
     </section>    <section id="cat-same_combo" class="category" style="--accent:#455a64">
       <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
       <h2><span class="swatch" style="background:#455a64"></span>Same combo
-        <span class="count-badge">14 / 101 &middot; 13.9%</span></h2>
+        <span class="count-badge">14 / 100 &middot; 14.0%</span></h2>
       <p class="cat-desc">Query and target are near-duplicates or the same object/scene combination.</p>
       <div class="grid">
         <div class="card">
@@ -822,6 +822,6 @@
     </section>
 </div>
 <a class="top" href="#">&uarr; Top</a>
-<footer>Generated from ba8ab380-results.parquet &middot; 101 samples reviewed (indices 0&ndash;100).</footer>
+<footer>Generated from ba8ab380-results.parquet &middot; 100 samples reviewed (0-indexed).</footer>
 </body>
 </html>
