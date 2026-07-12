@@ -80,25 +80,39 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
     uniapi_key, uniapi_base = _detect_uniapi()
 
     if agent_name == "claude-code":
-        key = os.environ.get("ANTHROPIC_API_KEY", "")
-        base_url = os.environ.get("ANTHROPIC_BASE_URL", "")
-        # UniAPI: use its native Claude endpoint
-        if not key and uniapi_key:
-            key = uniapi_key
-            base_url = base_url or f"{uniapi_base}/claude"
-        if base_url:
-            # Proxy mode: pass AUTH_TOKEN for the settings.local.json injection,
-            # and also set ANTHROPIC_API_KEY so Harbor doesn't complain (it gets
-            # overridden by settings.local.json inside the sandbox)
-            extra_env["ANTHROPIC_AUTH_TOKEN"] = key
-            extra_env["ANTHROPIC_API_KEY"] = key  # Harbor needs this to not error
-            extra_env["ANTHROPIC_BASE_URL"] = base_url
-            # Pass model name to proxy config injector
+        claude_auth_mode = (os.environ.get("CLAUDE_AUTH_MODE") or "").lower()
+        if claude_auth_mode == "subscription":
+            # Subscription mode — Modal Secret claude-code-auth provides the
+            # OAuth credentials; runner writes ~/.claude/.credentials.json.
+            # Do NOT set ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL — those would
+            # force claude-code into API/proxy mode and shadow the OAuth path.
+            extra_env["CLAUDE_AUTH_MODE"] = "subscription"
             resolved_model = model or os.environ.get("LLM_MODEL", "") or _DEFAULT_MODELS.get("claude-code", "")
             extra_env["_CLAUDE_MODEL"] = resolved_model
-            print(f"  [proxy] claude-code -> {base_url} (model: {resolved_model})")
-        elif key:
-            extra_env["ANTHROPIC_API_KEY"] = key
+            print("  [auth] claude-code -> Claude subscription "
+                  "(credentials.json via Modal Secret claude-code-auth)"
+                  f"  model: {resolved_model}")
+            # Skip the proxy path below
+        else:
+            key = os.environ.get("ANTHROPIC_API_KEY", "")
+            base_url = os.environ.get("ANTHROPIC_BASE_URL", "")
+            # UniAPI: use its native Claude endpoint
+            if not key and uniapi_key:
+                key = uniapi_key
+                base_url = base_url or f"{uniapi_base}/claude"
+            if base_url:
+                # Proxy mode: pass AUTH_TOKEN for the settings.local.json injection,
+                # and also set ANTHROPIC_API_KEY so Harbor doesn't complain (it gets
+                # overridden by settings.local.json inside the sandbox)
+                extra_env["ANTHROPIC_AUTH_TOKEN"] = key
+                extra_env["ANTHROPIC_API_KEY"] = key  # Harbor needs this to not error
+                extra_env["ANTHROPIC_BASE_URL"] = base_url
+                # Pass model name to proxy config injector
+                resolved_model = model or os.environ.get("LLM_MODEL", "") or _DEFAULT_MODELS.get("claude-code", "")
+                extra_env["_CLAUDE_MODEL"] = resolved_model
+                print(f"  [proxy] claude-code -> {base_url} (model: {resolved_model})")
+            elif key:
+                extra_env["ANTHROPIC_API_KEY"] = key
 
     elif agent_name in ("codex", "aider"):
         codex_auth_mode = (os.environ.get("CODEX_AUTH_MODE") or "").lower()
@@ -165,6 +179,10 @@ def _build_agent_kwargs(agent_name: str, model: str) -> dict:
     if judge_base:
         extra_env.setdefault("OPENAI_BASE_URL", judge_base)
 
+    prompt_mode = os.environ.get("PROMPT_MODE", "")
+    if prompt_mode:
+        extra_env["PROMPT_MODE"] = prompt_mode
+
     kwargs: dict = {}
     if extra_env:
         kwargs["extra_env"] = extra_env
@@ -188,6 +206,20 @@ def main():
               "OPENAI_BASE_URL via UniAPI/etc. 'chatgpt' uses the Modal "
               "Secret 'codex-chatgpt-auth' containing your local "
               "~/.codex/auth.json (subscription mode)."))
+    parser.add_argument(
+        "--claude-auth", choices=["api", "subscription"], default="api",
+        help=("claude-code auth mode. 'api' (default) uses ANTHROPIC_API_KEY + "
+              "ANTHROPIC_BASE_URL (UniAPI proxy etc.). 'subscription' uses the "
+              "Modal Secret 'claude-code-auth' containing your local OAuth "
+              "credentials extracted from macOS keychain (Claude Max/Pro)."))
+    parser.add_argument(
+        "--prompt-mode", choices=["inline", "two-phase", "two-turn"], default="two-phase",
+        help=("Prompt shape. 'two-phase' (default, after exp1 result) "
+              "strips the inline addendum, runs the brief naturally, then "
+              "asks the agent for a JSON summary as STEP 2 of the same "
+              "instruction — wins by +1.79 mean score on LH tasks, ties "
+              "on real_118. 'inline' appends the schema addendum to the "
+              "brief so the agent emits prose + JSON in one go."))
     parser.add_argument("--tasks-dir", default="", help="Task subfolder under tasks/ (e.g. batch-1, updated-deprivacy-100, real_118)")
     parser.add_argument("--first-n", type=int, default=0, help="Run only first N tasks (0 = all)")
     parser.add_argument("--task-names", default="", help="Comma-separated task names")
@@ -211,9 +243,12 @@ def main():
 
     _load_env()
 
-    # Propagate --codex-auth into the env so _build_agent_kwargs picks it up
+    # Propagate --codex-auth / --claude-auth into the env so _build_agent_kwargs picks them up
     if args.codex_auth == "chatgpt":
         os.environ["CODEX_AUTH_MODE"] = "chatgpt"
+    if args.claude_auth == "subscription":
+        os.environ["CLAUDE_AUTH_MODE"] = "subscription"
+    os.environ["PROMPT_MODE"] = args.prompt_mode
 
     # Tag format: deprivacy/<agent>/<timestamp>
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")

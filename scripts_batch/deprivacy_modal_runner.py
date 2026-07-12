@@ -54,11 +54,34 @@ harbor_image = (
         "jinja2>=3.0",
         "pydantic>=2.0",
         "shortuuid>=1.0",
+        "playwright>=1.48",
+        "pypdf>=4.0",
     )
+    # System deps Chromium needs
+    .apt_install(
+        "libnss3", "libatk-bridge2.0-0", "libx11-xcb1", "libxcomposite1",
+        "libxdamage1", "libxfixes3", "libxrandr2", "libgbm1", "libgtk-3-0",
+        "libasound2", "libxkbcommon0", "libpango-1.0-0", "libcairo2",
+        "libatspi2.0-0", "fonts-liberation",
+    )
+    # Install the Chromium browser used by the grounding fetcher
+    .run_commands("python -m playwright install chromium")
+    # Cache-buster: bump this string to force the tasks/ layer below to
+    # re-copy from local (Modal's content-hash on a large nested dir does
+    # not always detect edits to deeply-nested task files).
+    .run_commands("echo tasks-layer-cachebust-20260713-two-turn")
     .add_local_dir(
         "tasks",
         "/harbor-bench/tasks",
         copy=True,
+    )
+    # Grounded judging framework — shipped alongside tasks so
+    # each task's tests/test_grounded.py can import from it.
+    .add_local_dir(
+        "agentic_judge",
+        "/harbor-bench/agentic_judge",
+        copy=True,
+        ignore=["__pycache__"],
     )
     # Harness modules for skill extraction/injection (agent-agnostic)
     .add_local_file("harness/skill_extractor.py", "/harness/skill_extractor.py", copy=True)
@@ -196,6 +219,37 @@ def _discover_tasks(first_n: int = 0, task_names_csv: str = "", tasks_dir: str =
 # Output parsers (unchanged from harbor_modal_runner.py)
 # ---------------------------------------------------------------------------
 
+def _smart_truncate(text: str, cap: int = 60_000) -> str:
+    """Cap text at `cap` chars, but preserve any `=== JSON RESULT ===` block
+    that lives at the tail so the grader can always parse it.
+
+    If text fits under cap → return as-is.
+    Otherwise look for the LAST `=== JSON RESULT ===` ... `=== END JSON ===`
+    delimiter pair, keep that intact, and fit as much of the preceding prose
+    as the budget allows.
+    """
+    if not text:
+        return ""
+    if len(text) <= cap:
+        return text
+    import re as _re
+    # Find the LAST JSON-result block (agents sometimes mention the delim in
+    # prose before emitting the real block at the end)
+    matches = list(_re.finditer(
+        r"=== JSON RESULT ===[\s\S]*?=== END JSON ===", text))
+    if not matches:
+        # No JSON block in the text — just truncate
+        return text[:cap]
+    js_start, js_end = matches[-1].span()
+    json_block = text[js_start:js_end]
+    if len(json_block) >= cap - 100:
+        # JSON block alone is huge; keep it
+        return json_block
+    # Keep a leading prose window + the JSON block, joined with an ellipsis
+    head_budget = cap - len(json_block) - 32
+    return text[:head_budget] + "\n…[truncated]…\n" + json_block
+
+
 def _parse_claude_code_output(stdout: str) -> dict:
     conversation = []
     for line in stdout.splitlines():
@@ -224,7 +278,16 @@ def _parse_claude_code_output(stdout: str) -> dict:
         if msg["role"] == "assistant" and msg["content"].strip():
             task_result = msg["content"]
             break
-    return {"task_result": task_result, "conversation": conversation, "execution_summary": ""}
+    # Keep the raw stdout (capped) so the grounded judge can read tool
+    # calls, fetched-page snippets, intermediate reasoning, and error
+    # traces — not just the final agent_message.  Effectiveness trims
+    # further at prompt time.
+    return {
+        "task_result": task_result,
+        "conversation": conversation,
+        "agent_stdout": stdout[-60_000:] if len(stdout) > 60_000 else stdout,
+        "execution_summary": "",
+    }
 
 
 def _parse_codex_output(stdout: str) -> dict:
@@ -263,11 +326,57 @@ def _parse_codex_output(stdout: str) -> dict:
         if msg["role"] == "assistant" and msg["content"].strip():
             task_result = msg["content"]
             break
-    return {"task_result": task_result, "conversation": conversation, "execution_summary": ""}
+    # Keep the raw stdout (capped) so the grounded judge can read tool
+    # calls, fetched-page snippets, intermediate reasoning, and error
+    # traces — not just the final agent_message.  Effectiveness trims
+    # further at prompt time.
+    return {
+        "task_result": task_result,
+        "conversation": conversation,
+        "agent_stdout": stdout[-60_000:] if len(stdout) > 60_000 else stdout,
+        "execution_summary": "",
+    }
 
 
 def _parse_generic_output(stdout: str) -> dict:
-    return {"task_result": stdout.strip(), "conversation": [], "execution_summary": ""}
+    return {
+        "task_result": stdout.strip(),
+        "conversation": [],
+        "agent_stdout": stdout[-60_000:] if len(stdout) > 60_000 else stdout,
+        "execution_summary": "",
+    }
+
+
+def _render_followup_from_spec(task_dir: Path) -> str:
+    """Load <task_dir>/tests/test_grounded.py and render the followup-mode
+    addendum from its SUMMARY_SCHEMA. Returns "" if the spec or schema
+    is missing."""
+    spec_path = task_dir / "tests" / "test_grounded.py"
+    if not spec_path.is_file():
+        return ""
+    # The spec does `from agentic_judge.grounded...`; ensure that is
+    # importable HERE. This runs during instruction-building, before
+    # _evaluate adds the bench root to sys.path — without this, the very
+    # first task in a container fails the import, the followup silently
+    # returns "", and two-phase/two-turn fall back to single-turn.
+    for _p in ("/harbor-bench", str(TASKS_ROOT.parent)):
+        if _p not in sys.path:
+            sys.path.insert(0, _p)
+    try:
+        import importlib.util as _ilu
+        mod_name = f"_render_followup_{task_dir.name.replace('-','_')}"
+        spec = _ilu.spec_from_file_location(mod_name, spec_path)
+        mod = _ilu.module_from_spec(spec)
+        sys.modules[mod_name] = mod
+        mod.__name__ = mod_name
+        spec.loader.exec_module(mod)
+        schema = getattr(mod, "SUMMARY_SCHEMA", None)
+        if schema is None:
+            return ""
+        return schema.to_instruction_addendum(mode="followup")
+    except Exception as exc:
+        print(f"[render_followup] {task_dir.name}: {type(exc).__name__}: {exc}")
+        return ""
 
 
 def _wrap_codex_instruction(instruction: str) -> str:
@@ -278,6 +387,20 @@ def _wrap_codex_instruction(instruction: str) -> str:
         "(no external dependencies) rather than a terminal or desktop application. "
         "After creating any files, print each file's complete contents to stdout "
         "wrapped like this: === FILE: <filename> ===\n<contents>\n=== END FILE ===\n\n"
+        # JSON-block self-check loop — up to 3 attempts before terminating.
+        # The grader hard-penalises missing JSON (-2.0), so this is treated as a
+        # blocking exit condition. If the task is infeasible, emit the JSON block
+        # with a single `infeasible_reason` key (see instruction.md addendum).
+        "BEFORE YOU END YOUR TURN, do this check up to THREE times:\n"
+        "  1. Scan your final response.\n"
+        "  2. Confirm it contains a JSON block between the EXACT delimiters\n"
+        "     === JSON RESULT === and === END JSON === (these literal strings).\n"
+        "  3. If the JSON block is missing, append it now and re-check.\n"
+        "  4. The JSON must be either a structured answer for the task, OR\n"
+        "     `{\"infeasible_reason\": \"<short explanation>\"}` if the task cannot\n"
+        "     be completed (site unreachable, login required, data does not exist).\n"
+        "Do not end your turn until either the JSON block is present or you have\n"
+        "made 3 attempts to add it.\n\n"
         "Task:\n" + instruction
     )
 
@@ -293,9 +416,50 @@ AGENT_OUTPUT_PARSERS = {
 # ---------------------------------------------------------------------------
 
 def _evaluate(task_name: str, result: dict, tasks_dir: str = "") -> dict:
-    test_script = _get_tasks_base(tasks_dir) / task_name / "tests" / "test_task.py"
+    task_root = _get_tasks_base(tasks_dir) / task_name
+    test_script = task_root / "tests" / "test_task.py"
+    grounded_script = task_root / "tests" / "test_grounded.py"
     if not test_script.exists():
         return {"passed": False, "overall_score": 0.0, "feedback": "no evaluator"}
+
+    # Make `import agentic_judge.*` resolvable inside the sandbox.
+    # The image bakes agentic_judge/ next to tasks/ at /harbor-bench.
+    import sys as _sys
+    bench_root = "/harbor-bench"
+    if bench_root not in _sys.path:
+        _sys.path.insert(0, bench_root)
+
+    # Prefer the grounded judge (LLM-agentic Faithfulness + pending-question
+    # loop) when test_grounded.py is present.  Fall back to the v1 LLM-only
+    # judge in test_task.py::test otherwise.
+    if grounded_script.exists():
+        try:
+            mod_name = f"test_grounded_{task_name.replace('-', '_')}"
+            gspec = importlib.util.spec_from_file_location(
+                mod_name, grounded_script)
+            gmod = importlib.util.module_from_spec(gspec)
+            # IMPORTANT: register before exec so `sys.modules[__name__]`
+            # inside grade_with_llm finds the module.
+            _sys.modules[mod_name] = gmod
+            gmod.__name__ = mod_name
+            gspec.loader.exec_module(gmod)
+            if hasattr(gmod, "grade_with_llm"):
+                out = gmod.grade_with_llm(result)
+                # grounded_judge_test returns
+                # {passed, feedback, details:{overall_score,...}}
+                # — flatten overall_score to top-level for compatibility
+                # with downstream tooling that reads result['overall_score'].
+                if isinstance(out, dict) and "details" in out:
+                    out.setdefault("overall_score",
+                                     out["details"].get("overall_score", 0.0))
+                    out.setdefault("dimension_scores",
+                                     out["details"].get("dimension_scores", {}))
+                return out
+        except Exception as exc:
+            # Surface but fall through to v1 judge so we always get a verdict
+            print(f"[grounded judge fell through] {task_name}: "
+                  f"{type(exc).__name__}: {exc}")
+
     spec = importlib.util.spec_from_file_location("test_task", test_script)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -363,6 +527,89 @@ async def _read_stdout(exec_result) -> str:
     if isinstance(raw, bytes):
         return raw.decode(errors="replace").strip()
     return raw.strip()
+
+
+async def _run_codex_turn2(harbor_env, followup: str, extra_env: dict,
+                            task_name: str, run_tag: str) -> str:
+    """Genuine two-turn: resume the codex session from turn 1 and send the
+    followup as a second message. Returns the turn-2 stdout (which carries
+    the JSON summary). Codex only — other agents fall back to single-turn.
+
+    The turn-1 session is recorded in $CODEX_HOME/sessions/, so
+    `codex exec resume --last` continues that exact conversation with the
+    agent's turn-1 answer in context. The chatgpt-mode `codex` wrapper (see
+    _inject_proxy_config) self-restores auth.json and allocates a pty on
+    each invocation, so no extra auth wiring is needed there; for api mode
+    we (re)write auth.json from OPENAI_API_KEY since harbor's turn-1 trap
+    deletes it on exit."""
+    import shlex as _shlex
+    from harbor.models.trial.paths import EnvironmentPaths
+    codex_home = EnvironmentPaths.agent_dir.as_posix()
+    esc = _shlex.quote(followup)
+    auth_mode = (extra_env.get("CODEX_AUTH_MODE") or "").lower()
+
+    if auth_mode == "chatgpt":
+        auth_setup = (
+            f'if [ -f /opt/codex-chatgpt-auth.json ]; then '
+            f'mkdir -p {codex_home!r}; '
+            f'cp /opt/codex-chatgpt-auth.json {codex_home + "/auth.json"!r}; '
+            f'chmod 600 {codex_home + "/auth.json"!r}; fi; '
+        )
+    else:
+        auth_setup = (
+            f'mkdir -p {codex_home!r}; '
+            f'printf \'{{"OPENAI_API_KEY": "%s"}}\' "$OPENAI_API_KEY" '
+            f'> {codex_home + "/auth.json"!r}; '
+        )
+
+    cmd = (
+        f'export CODEX_HOME={codex_home!r}; '
+        f'{auth_setup}'
+        '. ~/.nvm/nvm.sh >/dev/null 2>&1 || true; '
+        'codex exec resume --last '
+        '--dangerously-bypass-approvals-and-sandbox '
+        '--skip-git-repo-check '
+        '--json '
+        '--enable unified_exec '
+        f'-- {esc} 2>&1 </dev/null'
+    )
+    diag = {"cmd": cmd, "auth_mode": auth_mode, "codex_home": codex_home}
+    try:
+        # First: does a turn-1 session exist to resume?
+        probe = await harbor_env._sandbox.exec.aio(
+            "bash", "-lc",
+            f'ls -la {codex_home!r}/sessions 2>&1; echo "---"; '
+            f'find {codex_home!r}/sessions -name "*.jsonl" 2>&1 | head')
+        await probe.wait.aio()
+        diag["sessions_probe"] = (await _read_stdout(probe))[:1500]
+
+        res = await harbor_env._sandbox.exec.aio("bash", "-lc", cmd)
+        await res.wait.aio()
+        out = await _read_stdout(res)
+        diag["stdout_len"] = len(out)
+        diag["stdout_head"] = out[:2000]
+        print(f"[{task_name}] turn-2 (resume) produced {len(out)} chars")
+        try:
+            _os_p = __import__("pathlib").Path
+            dbg = _os_p(str(RESULTS_BASE)) / run_tag / "turn2_debug"
+            dbg.mkdir(parents=True, exist_ok=True)
+            (dbg / f"{task_name}.json").write_text(__import__("json").dumps(diag, indent=2))
+            await results_volume.commit.aio()
+        except Exception:
+            pass
+        return out
+    except Exception as e:
+        diag["exception"] = f"{type(e).__name__}: {e}"
+        print(f"[{task_name}] turn-2 resume failed: {type(e).__name__}: {e}")
+        try:
+            _os_p = __import__("pathlib").Path
+            dbg = _os_p(str(RESULTS_BASE)) / run_tag / "turn2_debug"
+            dbg.mkdir(parents=True, exist_ok=True)
+            (dbg / f"{task_name}.json").write_text(__import__("json").dumps(diag, indent=2))
+            await results_volume.commit.aio()
+        except Exception:
+            pass
+        return ""
 
 
 # ---------------------------------------------------------------------------
@@ -525,6 +772,84 @@ async def _inject_proxy_config(agent_name: str, extra_env: dict, harbor_env, tri
             except Exception as e:
                 print(f"  [proxy] Failed to write codex config.toml: {e}")
 
+    elif agent_name == "claude-code" and extra_env.get("CLAUDE_AUTH_MODE","").lower() == "subscription":
+        # Claude Code subscription auth — same pattern as codex chatgpt subscription.
+        # The Modal Secret `claude-code-auth` provides CLAUDE_CODE_CREDENTIALS_JSON
+        # (the macOS keychain blob `{"claudeAiOauth": {...}}`). We:
+        #   1) Write that JSON to ~/.claude/.credentials.json inside the sandbox
+        #      (claude-code CLI reads this file on Linux)
+        #   2) Clear ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN
+        #      so they don't shadow the OAuth path
+        #   3) Use the default Anthropic endpoint (no proxy)
+        import os as _os
+        creds_blob = _os.environ.get("CLAUDE_CODE_CREDENTIALS_JSON", "")
+        if not creds_blob:
+            print("  [proxy] CLAUDE_AUTH_MODE=subscription but CLAUDE_CODE_CREDENTIALS_JSON "
+                  "is missing — claude will likely fail")
+        else:
+            # Extract the OAuth accessToken from the keychain blob so we can
+            # export it as CLAUDE_CODE_OAUTH_TOKEN (the documented headless-
+            # auth env var). Also write the full .credentials.json so claude
+            # can refresh the token when it expires.
+            import json as _json, shlex as _shlex
+            try:
+                _parsed = _json.loads(creds_blob)
+                access_token = _parsed.get("claudeAiOauth", {}).get("accessToken", "")
+            except Exception:
+                access_token = ""
+            install_cmd = (
+                "set -e\n"
+                # 1) Write the full credentials.json (both leading-dot and
+                #    plain — different claude-code versions look at each)
+                "mkdir -p /root/.claude /home/gem/.claude\n"
+                "cat > /root/.claude/.credentials.json << 'CREDSEOF'\n"
+                f"{creds_blob}\n"
+                "CREDSEOF\n"
+                "cp /root/.claude/.credentials.json /root/.claude/credentials.json\n"
+                "cp /root/.claude/.credentials.json /home/gem/.claude/.credentials.json\n"
+                "cp /root/.claude/.credentials.json /home/gem/.claude/credentials.json\n"
+                "chmod 600 /root/.claude/*.json /home/gem/.claude/*.json 2>/dev/null || true\n"
+                # 2) Install a claude wrapper that exports CLAUDE_CODE_OAUTH_TOKEN
+                #    AND unsets the proxy/API env vars before exec'ing the real binary
+                "REAL=$(command -v claude 2>/dev/null || true)\n"
+                'if [ -z "$REAL" ]; then\n'
+                '  for cand in /root/.local/bin/claude /usr/local/bin/claude '
+                '"$NVM_DIR"/versions/node/*/bin/claude; do\n'
+                '    [ -x "$cand" ] && REAL="$cand" && break\n'
+                '  done\n'
+                'fi\n'
+                'if [ -n "$REAL" ] && [ ! -f "${REAL}.real" ]; then\n'
+                '  cp "$REAL" "${REAL}.real"\n'
+                "  cat > \"$REAL\" << 'WRAPEOF'\n"
+                "#!/bin/bash\n"
+                "# Claude subscription wrapper — exports OAuth token, blocks shadowing env vars\n"
+                f'export CLAUDE_CODE_OAUTH_TOKEN={_shlex.quote(access_token)}\n'
+                'unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN ANTHROPIC_BASE_URL\n'
+                'unset ANTHROPIC_MODEL ANTHROPIC_DEFAULT_SONNET_MODEL\n'
+                'unset ANTHROPIC_DEFAULT_OPUS_MODEL ANTHROPIC_DEFAULT_HAIKU_MODEL\n'
+                'export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"\n'
+                '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" >/dev/null 2>&1 || true\n'
+                'exec __REAL_BIN__ "$@"\n'
+                "WRAPEOF\n"
+                '  sed -i "s|__REAL_BIN__|${REAL}.real|g" "$REAL"\n'
+                '  chmod +x "$REAL"\n'
+                '  echo "[proxy] claude wrapper installed -> $REAL (real at $REAL.real)"\n'
+                "fi\n"
+                f'echo "[proxy] claude subscription creds installed ({len(creds_blob)} bytes, '
+                f'token={access_token[:18]}...)"\n'
+            )
+            try:
+                res = await harbor_env._sandbox.exec.aio("bash", "-c", install_cmd)
+                await res.wait.aio()
+                stdout = await _read_stdout(res)
+                print(f"  [proxy] Wrote claude .credentials.json -> /root/.claude/ "
+                      f"(subscription mode, {len(creds_blob)} bytes)")
+                if stdout:
+                    for line in stdout.splitlines():
+                        print(f"  {line}")
+            except Exception as e:
+                print(f"  [proxy] Failed to install claude subscription creds: {e}")
+
     elif agent_name == "claude-code" and anthropic_base and anthropic_token:
         # Claude Code with proxy (OpenRouter/UniAPI) requires:
         #   ANTHROPIC_BASE_URL = proxy URL
@@ -645,6 +970,52 @@ async def _run_task(
 
     task_dir = _get_tasks_base(tasks_dir) / task_name
     instruction = _load_task_instruction(task_dir).strip()
+
+    # Two-phase prompt mode: strip the inline addendum below the first
+    # `---` separator and append a "STEP 2" follow-up that asks the
+    # agent to summarise as JSON after answering the brief. The phase-2
+    # text is rendered from the task's SUMMARY_SCHEMA so paths stay in
+    # sync with the hard-constraint layer. Inline mode keeps the
+    # current single-turn behaviour.
+    prompt_mode = (agent_kwargs.get("extra_env", {}) or {}).get("PROMPT_MODE", "inline")
+    # In genuine two-turn mode the followup is sent as a SEPARATE second
+    # message (codex exec resume), so the agent's turn-1 answer is in its
+    # conversation history when it produces the JSON. `two_turn_followup`
+    # is set here and consumed after agent.run() below.
+    two_turn_followup = None
+    if prompt_mode == "two-phase":
+        brief, _, _addendum = instruction.partition("\n---\n")
+        followup = _render_followup_from_spec(task_dir)
+        if followup:
+            instruction = (
+                "STEP 1 — Answer the user's task naturally. Do NOT mention "
+                "anything about JSON output, schemas, or grading. Finalise "
+                "a complete prose answer before moving to STEP 2.\n\n"
+                f"{brief.strip()}\n\n"
+                "STEP 2 — After your STEP 1 answer is complete, write a "
+                "JSON summary of what you did, without changing the "
+                "substance of your STEP 1 answer.\n\n"
+                f"{followup}"
+            )
+            print(f"[{task_name}] PROMPT_MODE=two-phase: brief={len(brief)} chars, "
+                  f"followup={len(followup)} chars")
+        else:
+            print(f"[{task_name}] PROMPT_MODE=two-phase but no SUMMARY_SCHEMA "
+                  f"found — falling back to original instruction")
+    elif prompt_mode == "two-turn":
+        # Turn 1 = the brief alone. Turn 2 = the schema followup, sent as a
+        # real second message after the agent answers turn 1.
+        brief, _, _addendum = instruction.partition("\n---\n")
+        followup = _render_followup_from_spec(task_dir)
+        if followup:
+            instruction = brief.strip()
+            two_turn_followup = followup
+            print(f"[{task_name}] PROMPT_MODE=two-turn: turn1(brief)={len(brief)} chars, "
+                  f"turn2(followup)={len(followup)} chars")
+        else:
+            print(f"[{task_name}] PROMPT_MODE=two-turn but no SUMMARY_SCHEMA "
+                  f"found — falling back to single-turn brief")
+
     instruction += OUTPUT_DIR_INSTRUCTION
 
     # --- Learning injection: history trace ---
@@ -746,6 +1117,24 @@ async def _run_task(
 
         print(f"[{task_name}] Running agent ...")
         await agent.run(instruction, env, context)
+
+        # --- Genuine two-turn: send the schema followup as a second
+        # message so the agent's turn-1 answer is in its context. ---
+        if two_turn_followup and agent_name == "codex":
+            print(f"[{task_name}] Running turn 2 (codex resume) ...")
+            turn2_out = await _run_codex_turn2(
+                env, two_turn_followup,
+                agent_kwargs.get("extra_env", {}) or {}, task_name, run_tag)
+            if turn2_out.strip():
+                # Persist turn-2 stdout next to turn-1 so the parser can
+                # combine them.
+                try:
+                    (trial_paths.agent_dir / "turn2_stdout.txt").write_text(turn2_out)
+                except Exception as _e:
+                    print(f"[{task_name}] could not save turn2 stdout: {_e}")
+        elif two_turn_followup:
+            print(f"[{task_name}] two-turn requested but agent={agent_name} "
+                  f"has no resume path — turn-1 answer used as-is")
     except Exception as exc:
         print(f"[{task_name}] Agent error: {exc}")
     finally:
@@ -827,6 +1216,21 @@ async def _run_task(
     if artifact_texts:
         result_dict["task_result"] = (result_dict.get("task_result") or "") + "".join(artifact_texts)
         print(f"[{task_name}] Appended {len(artifact_texts)} artifact(s) to task_result")
+
+    # --- Two-turn: append the parsed turn-2 output (the schema JSON) LAST,
+    # after artifacts, so the extractor's "prefer last JSON block" picks the
+    # turn-2 schema summary rather than a turn-1 draft or an artifact copy. ---
+    turn2_file = trial_paths.agent_dir / "turn2_stdout.txt"
+    if turn2_file.exists():
+        turn2_raw = turn2_file.read_text()
+        if turn2_raw.strip():
+            turn2_parsed = parser(turn2_raw).get("task_result", "") or turn2_raw
+            result_dict["task_result"] = (
+                (result_dict.get("task_result") or "")
+                + "\n\n=== TURN 2 (JSON summary) ===\n"
+                + turn2_parsed
+            )
+            print(f"[{task_name}] Appended turn-2 output LAST ({len(turn2_parsed)} chars)")
 
     # --- List collected artifacts ---
     collected_artifacts = sorted(
@@ -935,12 +1339,38 @@ def _build_result(
         "votes_used": details.get("votes_used", 1),
         "pass_threshold": details.get("pass_threshold", 3.0),
 
+        # --- Full per-layer judge trace (persisted for audit) ---
+        # Every step the judge took, so a curator can see WHY a task
+        # scored what it did without re-running the judge:
+        #   layer 1  hard_constraint_report  — each predicate + pass/detail
+        #   layer 2  faithfulness_report      — per-URL fetch + per-field
+        #                                       agent-vs-judge verdicts
+        #   layer 3  effectiveness_judge      — rubric dims, reasoning,
+        #            effectiveness_judge_prior  pending-question loop
+        "judge_trace": {
+            "overall_score": details.get("overall_score"),
+            "llm_overall_score": details.get("llm_overall_score"),
+            "hard_constraint_pass_rate": details.get("hard_constraint_pass_rate"),
+            "hard_constraint_report": details.get("hard_constraint_report", []),
+            "faithfulness_report": details.get("faithfulness_report", {}),
+            "summary_json_parsed": details.get("summary_json_parsed"),
+            "summary_json_source": details.get("summary_json_source"),
+            "summary_json": details.get("summary_json"),
+            "effectiveness_judge": details.get("effectiveness_judge", {}),
+            "effectiveness_judge_prior": details.get("effectiveness_judge_prior"),
+            "pending_faith_questions_answered": details.get("pending_faith_questions_answered", []),
+            "score_components": details.get("score_components", {}),
+        },
+
         # --- Timing ---
         "started_at": started_at,
         "finished_at": finished_at,
 
-        # --- Agent output (truncated for storage, full version in trials/) ---
-        "task_result": task_result[:10000] if task_result else "",
+        # --- Agent output (capped for storage, full version in trials/) ---
+        # Cap is high enough to fit a long analysis + JSON tail; if the agent
+        # writes more, _smart_truncate preserves the `=== JSON RESULT ===`
+        # block from the tail so the grader can still parse it.
+        "task_result": _smart_truncate(task_result, cap=60_000),
 
         # --- Artifacts ---
         "artifacts": artifacts or [],
@@ -961,8 +1391,16 @@ def _build_result(
     image=harbor_image,
     timeout=3600,
     volumes={str(RESULTS_BASE): results_volume},
-    max_containers=20,
-    secrets=[modal.Secret.from_name("codex-chatgpt-auth")],
+    # Throttled to 2 concurrent containers — Anthropic claude-code
+    # subscription throttles parallel bursts ("Server is temporarily limiting
+    # requests · Rate limited" 429s), so we cap concurrency here. For codex
+    # the rate-limit is per-account-per-day, so concurrency cap doesn't help
+    # there, but 2 is still enough to make codex runs reasonable.
+    max_containers=2,
+    secrets=[
+        modal.Secret.from_name("codex-chatgpt-auth"),
+        modal.Secret.from_name("claude-code-auth"),
+    ],
 )
 async def run_task_remote(
     task_name: str,
@@ -1127,3 +1565,4 @@ def main(collect: str = "", list_runs: bool = False):
         return
 
     print("Use scripts_batch/trigger_deprivacy.py to dispatch experiments.")
+
