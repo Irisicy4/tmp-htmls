@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instruct Subset QC Review (n=100)</title>
+<style>
+  :root { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+  body { margin:0; background:#f7f8fa; color:#1a1a1a; }
+  header { background:#0b3d91; color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:22px; }
+  header p { margin:0; opacity:.85; font-size:13px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 32px 60px; }
+  .summary { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start;
+              background:#fff; border:1px solid #e3e6ea; border-radius:10px; padding:20px 24px; margin-bottom:24px; }
+  .legend { display:flex; flex-direction:column; gap:2px; min-width:320px; }
+  .legend-row { display:grid; grid-template-columns:14px 1fr 44px 56px; align-items:center; gap:10px;
+                 text-decoration:none; color:inherit; padding:4px 6px; border-radius:6px; }
+  a.legend-row:hover { background:#f0f3f8; }
+  .legend-row.is-good { font-weight:700; background:#eaf6ec; border-radius:6px; }
+  .legend-row.remaining { color:#8a8f96; font-style:italic; }
+  .legend-row.legend-subtotal { font-weight:700; border-top:1px dashed #d8dbe0; margin-top:2px; padding-top:6px; }
+  .legend-groupdiv { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:#9aa0a6;
+                       margin:8px 2px 2px; font-weight:700; }
+  .swatch { width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .lcount { text-align:right; font-weight:600; }
+  .lpct { text-align:right; color:#666; font-size:12.5px; }
+  .lname { font-size:13.5px; }
+  .chipgroup { margin-top:14px; }
+  .chipgroup-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:#9aa0a6;
+                       font-weight:700; margin:0 0 6px 2px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1.5px solid #ccc; border-radius:999px; padding:5px 12px; font-size:12.5px;
+           text-decoration:none; color:#1a1a1a; display:inline-flex; align-items:center; gap:6px; background:#fff; }
+  .chip .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .chip:hover { background:#f0f3f8; }
+  .chip-good { background:#eaf6ec; font-weight:700; }
+  section.category { background:#fff; border:1px solid #e3e6ea; border-left:6px solid var(--accent);
+                       border-radius:10px; padding:18px 22px 22px; margin-bottom:22px; scroll-margin-top:14px; }
+  section.category-good { background:#f3fbf4; }
+  .eyebrow { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  .eyebrow-good { color:#2e7d32; }
+  .eyebrow-issue { color:#a1440f; }
+  section.category h2 { font-size:16.5px; margin:0 0 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .count-badge { font-size:12px; font-weight:400; color:#666; background:#f0f2f5; padding:2px 9px; border-radius:999px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+  .card { border:1px solid #e6e8eb; border-radius:8px; padding:12px; background:#fbfbfc; }
+  .card-id { font-size:11px; color:#999; font-weight:600; margin-bottom:6px; }
+  .thumbs { display:flex; gap:8px; margin-bottom:8px; }
+  .thumbs figure { margin:0; flex:1; text-align:center; }
+  .thumbs img { width:100%; height:110px; object-fit:cover; border-radius:6px; border:1px solid #ddd; background:#eee; }
+  .thumbs figcaption { font-size:10.5px; color:#999; margin-top:2px; text-transform:uppercase; letter-spacing:.03em; }
+  .text { font-size:12.5px; line-height:1.45; margin-bottom:6px; color:#333; }
+  .text b { color:#111; }
+  .rationale { color:#666; }
+  details.more { margin-top:4px; }
+  details.more summary { cursor:pointer; font-size:11.5px; color:#0b5fa5; font-weight:600; list-style:none; }
+  details.more summary::-webkit-details-marker { display:none; }
+  details.more summary::before { content:"▸ "; }
+  details.more[open] summary::before { content:"▾ "; }
+  details.more .text { margin-top:8px; }
+  footer { text-align:center; color:#9aa0a6; font-size:12px; padding:20px 0 40px; }
+  a.top { position:fixed; right:20px; bottom:20px; background:#0b3d91; color:#fff; text-decoration:none;
+           padding:9px 14px; border-radius:999px; font-size:12.5px; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+  .cat-desc { font-size:12.5px; color:#667; margin:-6px 0 14px; max-width:70ch; }
+  .thumbs .hash { display:block; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:8.5px; line-height:1.25; color:#8a8f96; word-break:break-all; margin-top:3px; user-select:all; cursor:text; }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Instruct Subset &mdash; Reasoning-Retrieval QC Review</h1>
+  <p>instruct_subset500 (05_instruct) &middot; first 100 samples manually tagged &middot; 34 good, 29 issues across 5 issue types, 37 not flagged</p>
+</header>
+<div class="wrap">
+  <div class="summary">
+    <div><svg viewBox="0 0 300 300" width="320" height="320"><path d="M 150,150 L 150.00,20.00 A 130,130 0 0 1 259.76,219.66 Z" fill="#2e7d32" stroke="#fff" stroke-width="1.5"><title>Good: 34 (34.0%)</title></path><path d="M 150,150 L 259.76,219.66 A 130,130 0 0 1 219.66,259.76 Z" fill="#ef6c00" stroke="#fff" stroke-width="1.5"><title>Non-identifiable: 7 (7.0%)</title></path><path d="M 150,150 L 219.66,259.76 A 130,130 0 0 1 133.71,278.97 Z" fill="#6a1b9a" stroke="#fff" stroke-width="1.5"><title>Size mismatch: 11 (11.0%)</title></path><path d="M 150,150 L 133.71,278.97 A 130,130 0 0 1 80.34,259.76 Z" fill="#ad1457" stroke="#fff" stroke-width="1.5"><title>Text shortcut: 7 (7.0%)</title></path><path d="M 150,150 L 80.34,259.76 A 130,130 0 0 1 61.01,244.77 Z" fill="#c62828" stroke="#fff" stroke-width="1.5"><title>Complete mismatch: 3 (3.0%)</title></path><path d="M 150,150 L 61.01,244.77 A 130,130 0 0 1 55.23,238.99 Z" fill="#00838f" stroke="#fff" stroke-width="1.5"><title>Repetitive pair: 1 (1.0%)</title></path><path d="M 150,150 L 55.23,238.99 A 130,130 0 0 1 150.00,20.00 Z" fill="#cfd8dc" stroke="#fff" stroke-width="1.5"><title>Not flagged: 37 (37.0%)</title></path></svg></div>
+    <div class="legend"><a href="#cat-good" class="legend-row is-good"><span class="swatch" style="background:#2e7d32"></span><span class="lname">Good</span><span class="lcount">34</span><span class="lpct">34.0%</span></a><div class="legend-groupdiv">Issue types</div><a href="#cat-non_identifiable" class="legend-row"><span class="swatch" style="background:#ef6c00"></span><span class="lname">Non-identifiable</span><span class="lcount">7</span><span class="lpct">7.0%</span></a><a href="#cat-size_mismatch" class="legend-row"><span class="swatch" style="background:#6a1b9a"></span><span class="lname">Size mismatch</span><span class="lcount">11</span><span class="lpct">11.0%</span></a><a href="#cat-text_shortcut" class="legend-row"><span class="swatch" style="background:#ad1457"></span><span class="lname">Text shortcut</span><span class="lcount">7</span><span class="lpct">7.0%</span></a><a href="#cat-complete_mismatch" class="legend-row"><span class="swatch" style="background:#c62828"></span><span class="lname">Complete mismatch</span><span class="lcount">3</span><span class="lpct">3.0%</span></a><a href="#cat-repetitive_pair" class="legend-row"><span class="swatch" style="background:#00838f"></span><span class="lname">Repetitive pair</span><span class="lcount">1</span><span class="lpct">1.0%</span></a><div class="legend-row legend-subtotal"><span class="swatch" style="background:transparent"></span><span class="lname">Total issues</span><span class="lcount">29</span><span class="lpct">29.0%</span></div><div class="legend-row remaining"><span class="swatch" style="background:#cfd8dc"></span><span class="lname">Not flagged</span><span class="lcount">37</span><span class="lpct">37.0%</span></div></div>
+  </div>
+  <div class="chipgroup"><div class="chips"><a href="#cat-good" class="chip chip-good" style="border-color:#2e7d32"><span class="dot" style="background:#2e7d32"></span>Good (34)</a></div></div>
+  <div class="chipgroup">
+    <div class="chipgroup-label">Issue types &mdash; 29 total</div>
+    <div class="chips"><a href="#cat-non_identifiable" class="chip chip-issue" style="border-color:#ef6c00"><span class="dot" style="background:#ef6c00"></span>Non-identifiable (7)</a>
+<a href="#cat-size_mismatch" class="chip chip-issue" style="border-color:#6a1b9a"><span class="dot" style="background:#6a1b9a"></span>Size mismatch (11)</a>
+<a href="#cat-text_shortcut" class="chip chip-issue" style="border-color:#ad1457"><span class="dot" style="background:#ad1457"></span>Text shortcut (7)</a>
+<a href="#cat-complete_mismatch" class="chip chip-issue" style="border-color:#c62828"><span class="dot" style="background:#c62828"></span>Complete mismatch (3)</a>
+<a href="#cat-repetitive_pair" class="chip chip-issue" style="border-color:#00838f"><span class="dot" style="background:#00838f"></span>Repetitive pair (1)</a></div>
+  </div>
+
+    <section id="cat-good" class="category category-good" style="--accent:#2e7d32">
+      <div class="eyebrow eyebrow-good">&#10003; Positive example</div>
+      <h2><span class="swatch" style="background:#2e7d32"></span>Good
+        <span class="count-badge">34 / 100 &middot; 34.0%</span></h2>
+      <p class="cat-desc">Instruction requires genuine reasoning; target is a correct, non-trivial answer.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#2</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/a1ae5b04bed82778548d5dff8e604759da5fc0bd814d60f458f25e2d8b71bdc6.jpg" alt="query 2"><figcaption>query</figcaption><code class="hash" title="a1ae5b04bed82778548d5dff8e604759da5fc0bd814d60f458f25e2d8b71bdc6">a1ae5b04bed82778548d5dff8e604759da5fc0bd814d60f458f25e2d8b71bdc6</code></figure>
+            <figure><img loading="lazy" src="images/84d64a3b5e8778ceb78f1f1f6c10806e8a7a7f0212d7bfdd4a8391580d2b8622.jpg" alt="target 2"><figcaption>target</figcaption><code class="hash" title="84d64a3b5e8778ceb78f1f1f6c10806e8a7a7f0212d7bfdd4a8391580d2b8622">84d64a3b5e8778ceb78f1f1f6c10806e8a7a7f0212d7bfdd4a8391580d2b8622</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is the primary ingredient used to top this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A handful of raw, unshelled pecans in a brown paper bag</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a pecan pie, and the instruction asks for its main topping ingredient, leading to the raw pecans in the target image, which are the distinct raw components of the finished dish.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#6</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/376c903219b32e9bdabce3e2eb360320b4a3b00fcce5acce2933b2044500f5c9.jpg" alt="query 6"><figcaption>query</figcaption><code class="hash" title="376c903219b32e9bdabce3e2eb360320b4a3b00fcce5acce2933b2044500f5c9">376c903219b32e9bdabce3e2eb360320b4a3b00fcce5acce2933b2044500f5c9</code></figure>
+            <figure><img loading="lazy" src="images/d02a8baa46fa166be98eafd169f91aa5943eaec056f84040589bbf1944b27f4e.jpg" alt="target 6"><figcaption>target</figcaption><code class="hash" title="d02a8baa46fa166be98eafd169f91aa5943eaec056f84040589bbf1944b27f4e">d02a8baa46fa166be98eafd169f91aa5943eaec056f84040589bbf1944b27f4e</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What tools would be needed to carve designs into these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wooden carving tool set with small chisels and gouges</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows pumpkins and squashes, which are traditionally carved for holidays; the target image provides the carving tools (chisels/gouges) required for that activity, introducing a functional complement to the query su…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#7</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/89239d14cc15525455a54fab0b21bc1aa6cd791ae12ca9daf330b1f4d71ebae5.jpg" alt="query 7"><figcaption>query</figcaption><code class="hash" title="89239d14cc15525455a54fab0b21bc1aa6cd791ae12ca9daf330b1f4d71ebae5">89239d14cc15525455a54fab0b21bc1aa6cd791ae12ca9daf330b1f4d71ebae5</code></figure>
+            <figure><img loading="lazy" src="images/a5bd6a0e4e76d9c6e7e86edd2df1bc67ea831bf5ce61ee36d3fccf74185f66b6.jpg" alt="target 7"><figcaption>target</figcaption><code class="hash" title="a5bd6a0e4e76d9c6e7e86edd2df1bc67ea831bf5ce61ee36d3fccf74185f66b6">a5bd6a0e4e76d9c6e7e86edd2df1bc67ea831bf5ce61ee36d3fccf74185f66b6</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to ensure you can find your way back from this place?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a handheld GPS device showing a topographic map</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a remote, secluded beach; the instruction asks for a tool to prevent getting lost, leading to the handheld GPS device in the target image, which is a distinct tool for navigation.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#9</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/df352b4010d483ff8fed9a56640825803e501c7be28505c545f32f11b51ad904.jpg" alt="query 9"><figcaption>query</figcaption><code class="hash" title="df352b4010d483ff8fed9a56640825803e501c7be28505c545f32f11b51ad904">df352b4010d483ff8fed9a56640825803e501c7be28505c545f32f11b51ad904</code></figure>
+            <figure><img loading="lazy" src="images/1a2976b264276fc61b1d99837b98e6c2683aa2af6cb61a61cb815092fe8b1d4c.jpg" alt="target 9"><figcaption>target</figcaption><code class="hash" title="1a2976b264276fc61b1d99837b98e6c2683aa2af6cb61a61cb815092fe8b1d4c">1a2976b264276fc61b1d99837b98e6c2683aa2af6cb61a61cb815092fe8b1d4c</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Who would be most likely to serve this at a party?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A person wearing a Halloween costume with fake blood and makeup</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a gruesome eyeball cake, which implies a horror-themed event or a person with a macabre persona; the target image is a person in a horror costume, making them the natural host or provider of such a themed desser…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#14</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/6b9e70b9bc3d356d3c2b1750d320866e8e001e388d530d89408b58506e1d191b.jpg" alt="query 14"><figcaption>query</figcaption><code class="hash" title="6b9e70b9bc3d356d3c2b1750d320866e8e001e388d530d89408b58506e1d191b">6b9e70b9bc3d356d3c2b1750d320866e8e001e388d530d89408b58506e1d191b</code></figure>
+            <figure><img loading="lazy" src="images/fb129381a8bde5dc34b059421369524d6aeb583e4493b9cb9d37d2d303c31738.jpg" alt="target 14"><figcaption>target</figcaption><code class="hash" title="fb129381a8bde5dc34b059421369524d6aeb583e4493b9cb9d37d2d303c31738">fb129381a8bde5dc34b059421369524d6aeb583e4493b9cb9d37d2d303c31738</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What item represents the commitment made by these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of two gold wedding bands resting on a white silk cushion</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows cupcakes with &#x27;i do&#x27; tags, which signify wedding vows; the target image shows wedding rings, the physical symbol of that commitment, which is a distinct object reached by reasoning about the event implied.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#16</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/059ad64595fb021eede02ae6b1f9c48f7403409c756347705d5a88294853746d.jpg" alt="query 16"><figcaption>query</figcaption><code class="hash" title="059ad64595fb021eede02ae6b1f9c48f7403409c756347705d5a88294853746d">059ad64595fb021eede02ae6b1f9c48f7403409c756347705d5a88294853746d</code></figure>
+            <figure><img loading="lazy" src="images/f23b6b579faa53a794e94a82b5a9f903d667d5e59e1cf8f87fbac4db9afd23be.jpg" alt="target 16"><figcaption>target</figcaption><code class="hash" title="f23b6b579faa53a794e94a82b5a9f903d667d5e59e1cf8f87fbac4db9afd23be">f23b6b579faa53a794e94a82b5a9f903d667d5e59e1cf8f87fbac4db9afd23be</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What do I need to consult if it breaks down?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A car owner&#x27;s manual open to the maintenance schedule page</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a vehicle, and the target is a service manual, which is the natural resource needed to troubleshoot or repair a vehicle when it breaks down.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#20</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/133359c2fb78d892778407b8c35c9642c6e4622368a89520be1301a5052057b9.jpg" alt="query 20"><figcaption>query</figcaption><code class="hash" title="133359c2fb78d892778407b8c35c9642c6e4622368a89520be1301a5052057b9">133359c2fb78d892778407b8c35c9642c6e4622368a89520be1301a5052057b9</code></figure>
+            <figure><img loading="lazy" src="images/d0dc5551738e79da4283f6a7f81486401c0632890194aa51dee2ce5b9877c4d0.jpg" alt="target 20"><figcaption>target</figcaption><code class="hash" title="d0dc5551738e79da4283f6a7f81486401c0632890194aa51dee2ce5b9877c4d0">d0dc5551738e79da4283f6a7f81486401c0632890194aa51dee2ce5b9877c4d0</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would these individuals typically work?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> An aerial view of a crowded airport runway with several airplanes parked</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows characters dressed as flight crew for a charter airline; the target image shows a fleet of airplanes, which is the distinct environment where such staff are employed.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#21</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/aa5823b559dbb01cb3b3dede5aa3c38f97386ddcf6a6c7d1bef7cd544b6f0890.jpg" alt="query 21"><figcaption>query</figcaption><code class="hash" title="aa5823b559dbb01cb3b3dede5aa3c38f97386ddcf6a6c7d1bef7cd544b6f0890">aa5823b559dbb01cb3b3dede5aa3c38f97386ddcf6a6c7d1bef7cd544b6f0890</code></figure>
+            <figure><img loading="lazy" src="images/ad3d711f5d8ca8fed7bceb3467b9ad74b1d2efc2af292f5bcdb7a2bf9531ca2b.jpg" alt="target 21"><figcaption>target</figcaption><code class="hash" title="ad3d711f5d8ca8fed7bceb3467b9ad74b1d2efc2af292f5bcdb7a2bf9531ca2b">ad3d711f5d8ca8fed7bceb3467b9ad74b1d2efc2af292f5bcdb7a2bf9531ca2b</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would this group perform?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A dimly lit jazz club interior with small round tables and candles</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a jazz trio, and the target is a jazz club interior, which is the natural professional venue for such a group, introducing a distinct environmental context.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#22</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/3e4ad47f5c67e9fbfdbeb20d2d09fa80740a2db6694e33a53629fdd5ce6a7d2d.jpg" alt="query 22"><figcaption>query</figcaption><code class="hash" title="3e4ad47f5c67e9fbfdbeb20d2d09fa80740a2db6694e33a53629fdd5ce6a7d2d">3e4ad47f5c67e9fbfdbeb20d2d09fa80740a2db6694e33a53629fdd5ce6a7d2d</code></figure>
+            <figure><img loading="lazy" src="images/d8f6183d8fe8daa850d848d94290d713005e6f2d22e0ecbf2fcf669b568412f5.jpg" alt="target 22"><figcaption>target</figcaption><code class="hash" title="d8f6183d8fe8daa850d848d94290d713005e6f2d22e0ecbf2fcf669b568412f5">d8f6183d8fe8daa850d848d94290d713005e6f2d22e0ecbf2fcf669b568412f5</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would this person be packing for the trip immediately following this event?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A view of a honeymoon suitcase packed with summer clothes and a passport</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a bride in wedding attire; the natural next step is a honeymoon, and the target shows the intimate apparel packed for such a trip, introducing a distinct new context and set of items.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#26</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/eb381d9cc9848a79a98d279c0bdd56e2e69b97d96a4156178636061a29cd53b0.jpg" alt="query 26"><figcaption>query</figcaption><code class="hash" title="eb381d9cc9848a79a98d279c0bdd56e2e69b97d96a4156178636061a29cd53b0">eb381d9cc9848a79a98d279c0bdd56e2e69b97d96a4156178636061a29cd53b0</code></figure>
+            <figure><img loading="lazy" src="images/6fb7983582702516c00fb2cdd0319093bc5317ec8a23df333295f1db50465d6b.jpg" alt="target 26"><figcaption>target</figcaption><code class="hash" title="6fb7983582702516c00fb2cdd0319093bc5317ec8a23df333295f1db50465d6b">6fb7983582702516c00fb2cdd0319093bc5317ec8a23df333295f1db50465d6b</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would a traveler in this setting use to carry their small personal essentials?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A vintage 19th-century leather medicine bag on a wooden table</div>
+            <div class="text rationale"><b>Rationale:</b> The query image depicts a 19th-century American frontier town (Omaha, 1864), and the target is a vintage leather pouch from that same era, providing a distinct personal accessory that fits the historical and social context of the…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#27</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/9a7403060ce18c0995495e27eb520636a4ca78c32a7bafb6480020a4bf63877a.jpg" alt="query 27"><figcaption>query</figcaption><code class="hash" title="9a7403060ce18c0995495e27eb520636a4ca78c32a7bafb6480020a4bf63877a">9a7403060ce18c0995495e27eb520636a4ca78c32a7bafb6480020a4bf63877a</code></figure>
+            <figure><img loading="lazy" src="images/accd1868e5d733b68c49d38d1ff133dbba11c2039fce146fd232b60c82fbe628.jpg" alt="target 27"><figcaption>target</figcaption><code class="hash" title="accd1868e5d733b68c49d38d1ff133dbba11c2039fce146fd232b60c82fbe628">accd1868e5d733b68c49d38d1ff133dbba11c2039fce146fd232b60c82fbe628</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to trim these to size?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A pair of sharp fabric shears on a cutting table</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows decorative ribbons, and the natural tool required to trim them is a pair of shears/scissors, which is a distinct new object necessary for the task.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#33</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/5f34220e71e764bf6ca31ae53332bc7f6554b0ffbfddeea9bead385488f1a0c6.jpg" alt="query 33"><figcaption>query</figcaption><code class="hash" title="5f34220e71e764bf6ca31ae53332bc7f6554b0ffbfddeea9bead385488f1a0c6">5f34220e71e764bf6ca31ae53332bc7f6554b0ffbfddeea9bead385488f1a0c6</code></figure>
+            <figure><img loading="lazy" src="images/c37e9c96fa31fbddafffe517a29429b669ce1b22f6af3217b00671abbf196726.jpg" alt="target 33"><figcaption>target</figcaption><code class="hash" title="c37e9c96fa31fbddafffe517a29429b669ce1b22f6af3217b00671abbf196726">c37e9c96fa31fbddafffe517a29429b669ce1b22f6af3217b00671abbf196726</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is a spicy alternative to this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photo of a metal Christmas tree stand on a wooden floor</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a traditional white Christmas tree; the instruction &#x27;spicy alternative&#x27; reasons to the target image, which is a tree composed of red chili peppers, introducing a distinct material and conceptual shift while m…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#37</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/af55feb2148c2675238c16568c32c9dc4b37caff651c98aa9f5effd63fc3f9a4.jpg" alt="query 37"><figcaption>query</figcaption><code class="hash" title="af55feb2148c2675238c16568c32c9dc4b37caff651c98aa9f5effd63fc3f9a4">af55feb2148c2675238c16568c32c9dc4b37caff651c98aa9f5effd63fc3f9a4</code></figure>
+            <figure><img loading="lazy" src="images/7a6fa8c0f2a5afa6896c978d5ea3546e705476408c5fbe8127a7c10d98525a22.jpg" alt="target 37"><figcaption>target</figcaption><code class="hash" title="7a6fa8c0f2a5afa6896c978d5ea3546e705476408c5fbe8127a7c10d98525a22">7a6fa8c0f2a5afa6896c978d5ea3546e705476408c5fbe8127a7c10d98525a22</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What remains after using this for a long time?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A small pile of grey wood ash in a metal bucket</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a wood-burning stove, and the target shows the resulting ash in a bucket, which is a natural consequence of the combustion process.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#40</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/b94b7d3ba22f7651a422fd929e288f028d1cab573225c9d15b9cce698b23a8a9.jpg" alt="query 40"><figcaption>query</figcaption><code class="hash" title="b94b7d3ba22f7651a422fd929e288f028d1cab573225c9d15b9cce698b23a8a9">b94b7d3ba22f7651a422fd929e288f028d1cab573225c9d15b9cce698b23a8a9</code></figure>
+            <figure><img loading="lazy" src="images/825c9714100451c15d50018c1f22f363dfab89edaa7836e856e1e54f2c6a7f10.jpg" alt="target 40"><figcaption>target</figcaption><code class="hash" title="825c9714100451c15d50018c1f22f363dfab89edaa7836e856e1e54f2c6a7f10">825c9714100451c15d50018c1f22f363dfab89edaa7836e856e1e54f2c6a7f10</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is the mechanism that makes these move?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> a close-up of a heavy-duty steel wheel and axle assembly for a rail vehicle</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows various rail vehicles; the instruction asks for the underlying movement mechanism, leading to a close-up of the wheel and axle assembly, which is a concealed aspect of the vehicles in the query.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#43</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/d9cb278fc8c50134115e82fd4b5389e5a2db1f5e7e10e5cce3d5b8c1a54eb60e.jpg" alt="query 43"><figcaption>query</figcaption><code class="hash" title="d9cb278fc8c50134115e82fd4b5389e5a2db1f5e7e10e5cce3d5b8c1a54eb60e">d9cb278fc8c50134115e82fd4b5389e5a2db1f5e7e10e5cce3d5b8c1a54eb60e</code></figure>
+            <figure><img loading="lazy" src="images/3ee0dc1746f24bb88c4926db006478b77e2e2934d4d95b54e91bcf83e978fa79.jpg" alt="target 43"><figcaption>target</figcaption><code class="hash" title="3ee0dc1746f24bb88c4926db006478b77e2e2934d4d95b54e91bcf83e978fa79">3ee0dc1746f24bb88c4926db006478b77e2e2934d4d95b54e91bcf83e978fa79</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is hiding beneath the surface of this water?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photograph of a freshwater crayfish on a riverbed</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a serene river landscape; the instruction asks to look below the surface, leading to a target image of a crayfish which is a distinct creature that lives on the riverbed.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#44</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/b98ccd89a39c1c1de89ef2e94e368596e3c13def9e650a34c2215895a76fcbf6.jpg" alt="query 44"><figcaption>query</figcaption><code class="hash" title="b98ccd89a39c1c1de89ef2e94e368596e3c13def9e650a34c2215895a76fcbf6">b98ccd89a39c1c1de89ef2e94e368596e3c13def9e650a34c2215895a76fcbf6</code></figure>
+            <figure><img loading="lazy" src="images/6fc62af33ef9dee8d4abd1b7638ce80fa68bf8191480f160f22119c498824705.jpg" alt="target 44"><figcaption>target</figcaption><code class="hash" title="6fc62af33ef9dee8d4abd1b7638ce80fa68bf8191480f160f22119c498824705">6fc62af33ef9dee8d4abd1b7638ce80fa68bf8191480f160f22119c498824705</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where should this be placed to get it clean?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> a close-up of a dishwasher interior with racks and spray arms</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a dirty or used ceramic plate, and the instruction asks for its cleaning location, leading to the interior of a dishwasher, which is a distinct functional environment from the object itself.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#45</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/8a489147b7fb06745c6cf774d0e868afe0c1c842e2629bd873ded0024978adf5.jpg" alt="query 45"><figcaption>query</figcaption><code class="hash" title="8a489147b7fb06745c6cf774d0e868afe0c1c842e2629bd873ded0024978adf5">8a489147b7fb06745c6cf774d0e868afe0c1c842e2629bd873ded0024978adf5</code></figure>
+            <figure><img loading="lazy" src="images/fda2d403ed6fb03eac5f4e75b07252431d55aa0be984060a86119d78e7a96463.jpg" alt="target 45"><figcaption>target</figcaption><code class="hash" title="fda2d403ed6fb03eac5f4e75b07252431d55aa0be984060a86119d78e7a96463">fda2d403ed6fb03eac5f4e75b07252431d55aa0be984060a86119d78e7a96463</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where should this be kept to prevent it from getting scratched?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> An open velvet-lined jewelry box with a dedicated slot for a watch</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a delicate mechanical pocket watch; the instruction asks for a protective storage solution, leading to the target image of a jewelry/watch box, which is a distinct complementary object.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#49</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/999b0004162f994e6f0635514546d55a7c8c0fbe4e1a70dfc0b4187a2995da36.jpg" alt="query 49"><figcaption>query</figcaption><code class="hash" title="999b0004162f994e6f0635514546d55a7c8c0fbe4e1a70dfc0b4187a2995da36">999b0004162f994e6f0635514546d55a7c8c0fbe4e1a70dfc0b4187a2995da36</code></figure>
+            <figure><img loading="lazy" src="images/b559b90e18b93ff970c494f38fa3eaa20968a606455b2e3710fbfa912227a05f.jpg" alt="target 49"><figcaption>target</figcaption><code class="hash" title="b559b90e18b93ff970c494f38fa3eaa20968a606455b2e3710fbfa912227a05f">b559b90e18b93ff970c494f38fa3eaa20968a606455b2e3710fbfa912227a05f</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where should these be stored to keep them fresh?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> a cardboard cookie jar with a ceramic lid</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows cookies, and the natural storage solution to maintain freshness is a cookie jar, which is a distinct object that complements the food item.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#50</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/36b1300901f33318990af483e2c5be7a8b3bc47dee85df74f540457fc0f0983c.jpg" alt="query 50"><figcaption>query</figcaption><code class="hash" title="36b1300901f33318990af483e2c5be7a8b3bc47dee85df74f540457fc0f0983c">36b1300901f33318990af483e2c5be7a8b3bc47dee85df74f540457fc0f0983c</code></figure>
+            <figure><img loading="lazy" src="images/d8c37b8eb74382bb80d5c04ded6da72c4f2ec11190d5c8c90fe44d3f2399c959.jpg" alt="target 50"><figcaption>target</figcaption><code class="hash" title="d8c37b8eb74382bb80d5c04ded6da72c4f2ec11190d5c8c90fe44d3f2399c959">d8c37b8eb74382bb80d5c04ded6da72c4f2ec11190d5c8c90fe44d3f2399c959</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to prepare for a performance like this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a professional makeup vanity mirror with bright lightbulbs around the frame</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows performers in high-glamour stage attire, which implies a rigorous beauty and makeup preparation process, making a professional vanity mirror the distinct and logical tool used for that preparation.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#51</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/945d5a4e31fd58250622235b3e6d4302182b24cca4a29626dd8ac3703753cf59.jpg" alt="query 51"><figcaption>query</figcaption><code class="hash" title="945d5a4e31fd58250622235b3e6d4302182b24cca4a29626dd8ac3703753cf59">945d5a4e31fd58250622235b3e6d4302182b24cca4a29626dd8ac3703753cf59</code></figure>
+            <figure><img loading="lazy" src="images/c2d30473231e43bef02181764f6c21f2bce2d68c9e1e0953033fb71b6bdff690.jpg" alt="target 51"><figcaption>target</figcaption><code class="hash" title="c2d30473231e43bef02181764f6c21f2bce2d68c9e1e0953033fb71b6bdff690">c2d30473231e43bef02181764f6c21f2bce2d68c9e1e0953033fb71b6bdff690</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to treat the effects of eating too many of these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photo of a dental drill in a clinic</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows sugary candies, which lead to tooth decay; the target image is a dental drill used to treat the resulting cavities, introducing a distinct medical tool linked by a cause-and-effect relationship.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#52</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/58c016cdb9854235b21f569e1fa35a1197cc78234b8c06c0b66f3a80e6b86b8d.jpg" alt="query 52"><figcaption>query</figcaption><code class="hash" title="58c016cdb9854235b21f569e1fa35a1197cc78234b8c06c0b66f3a80e6b86b8d">58c016cdb9854235b21f569e1fa35a1197cc78234b8c06c0b66f3a80e6b86b8d</code></figure>
+            <figure><img loading="lazy" src="images/f7ca65fde6b5e6c2b14f15d8f370d7bc1b18ca21c9994b4412aae997d028bd8a.jpg" alt="target 52"><figcaption>target</figcaption><code class="hash" title="f7ca65fde6b5e6c2b14f15d8f370d7bc1b18ca21c9994b4412aae997d028bd8a">f7ca65fde6b5e6c2b14f15d8f370d7bc1b18ca21c9994b4412aae997d028bd8a</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Who would typically be attending an event like this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> a tray of champagne glasses being carried by a waiter</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a formal outdoor banquet setup, and the target image shows a group of formally dressed guests, which is the natural human complement to the setting.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#54</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/e30f39e6d989455b0789811a77092406c652740b3ea2d873d01c405a2017f360.jpg" alt="query 54"><figcaption>query</figcaption><code class="hash" title="e30f39e6d989455b0789811a77092406c652740b3ea2d873d01c405a2017f360">e30f39e6d989455b0789811a77092406c652740b3ea2d873d01c405a2017f360</code></figure>
+            <figure><img loading="lazy" src="images/ae0769f0b8b59dadcbf32fa5c1b62ed9294e4e8eb0977a49cd3229d2ada63e6e.jpg" alt="target 54"><figcaption>target</figcaption><code class="hash" title="ae0769f0b8b59dadcbf32fa5c1b62ed9294e4e8eb0977a49cd3229d2ada63e6e">ae0769f0b8b59dadcbf32fa5c1b62ed9294e4e8eb0977a49cd3229d2ada63e6e</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to bring these to life?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wide variety of colorful spools of thread on a wooden shelf</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows sewing patterns for dresses; the target image shows spools of thread, which are essential tools required to sew the garments described by the patterns.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#56</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/9132bb2fb5641190d5b2a4a742dc8a60429c6c5f4e334b03fbc561c79cafe2d0.jpg" alt="query 56"><figcaption>query</figcaption><code class="hash" title="9132bb2fb5641190d5b2a4a742dc8a60429c6c5f4e334b03fbc561c79cafe2d0">9132bb2fb5641190d5b2a4a742dc8a60429c6c5f4e334b03fbc561c79cafe2d0</code></figure>
+            <figure><img loading="lazy" src="images/fe85ae2e6614e7c7d6d5b9e3677dc01937bac3d3485c5d733e1c8f3f24878a70.jpg" alt="target 56"><figcaption>target</figcaption><code class="hash" title="fe85ae2e6614e7c7d6d5b9e3677dc01937bac3d3485c5d733e1c8f3f24878a70">fe85ae2e6614e7c7d6d5b9e3677dc01937bac3d3485c5d733e1c8f3f24878a70</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is required externally to make this work?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A metal antenna mast extending from the roof of a house</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a vintage radio, which requires an external antenna to receive signals, making the target image a logically distinct and necessary complement.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#58</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/7cfd2b52a8f1e3d73d12dce21098eb432fec0e11d828c9d1031c5a667ebbe74f.jpg" alt="query 58"><figcaption>query</figcaption><code class="hash" title="7cfd2b52a8f1e3d73d12dce21098eb432fec0e11d828c9d1031c5a667ebbe74f">7cfd2b52a8f1e3d73d12dce21098eb432fec0e11d828c9d1031c5a667ebbe74f</code></figure>
+            <figure><img loading="lazy" src="images/77b33ef889cb3c27e093a9038e9238fa8276b4b19c76e2db18e2e3b1ba1101d9.jpg" alt="target 58"><figcaption>target</figcaption><code class="hash" title="77b33ef889cb3c27e093a9038e9238fa8276b4b19c76e2db18e2e3b1ba1101d9">77b33ef889cb3c27e093a9038e9238fa8276b4b19c76e2db18e2e3b1ba1101d9</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would typically be placed in front of this to show devotion?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photo of a beeswax candle flickering in a dark church</div>
+            <div class="text rationale"><b>Rationale:</b> The query is a religious icon; placing a candle (the target) in front of an icon is a common act of devotion in Orthodox and Catholic traditions, introducing a distinct physical object associated with the use of the query.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#61</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/663b5cc12a829cc29b7db00c35d949d94e55a0c5ed027b87963e97a168bf77c9.jpg" alt="query 61"><figcaption>query</figcaption><code class="hash" title="663b5cc12a829cc29b7db00c35d949d94e55a0c5ed027b87963e97a168bf77c9">663b5cc12a829cc29b7db00c35d949d94e55a0c5ed027b87963e97a168bf77c9</code></figure>
+            <figure><img loading="lazy" src="images/98f19100fcc311d76053129139c97f12fa701d635016d4af8be07f66218e3016.jpg" alt="target 61"><figcaption>target</figcaption><code class="hash" title="98f19100fcc311d76053129139c97f12fa701d635016d4af8be07f66218e3016">98f19100fcc311d76053129139c97f12fa701d635016d4af8be07f66218e3016</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is used to create the artwork on this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wooden embroidery hoop with fabric stretched tight</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a beaded/embroidered handbag; the target is an embroidery hoop, which is the tool used to hold fabric tight while creating such needlework. The tool is a distinct new element from the finished product.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#63</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/b11b18d91388c88108b10bd0db7c95abfe73731d348fe97072318c0f1df5520f.jpg" alt="query 63"><figcaption>query</figcaption><code class="hash" title="b11b18d91388c88108b10bd0db7c95abfe73731d348fe97072318c0f1df5520f">b11b18d91388c88108b10bd0db7c95abfe73731d348fe97072318c0f1df5520f</code></figure>
+            <figure><img loading="lazy" src="images/752a3f55558a99010f1f27dd886a23393ba7a58076c6c89dbdc06e0450c8a653.jpg" alt="target 63"><figcaption>target</figcaption><code class="hash" title="752a3f55558a99010f1f27dd886a23393ba7a58076c6c89dbdc06e0450c8a653">752a3f55558a99010f1f27dd886a23393ba7a58076c6c89dbdc06e0450c8a653</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which type of building would be found nearby in this region?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a blue-domed church roof against a bright sky</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows the characteristic white architecture of Santorini, Greece, and the instruction asks for another building type common to that specific region, leading to a Greek Orthodox church, which is a distinct architect…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#67</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/2c8a8399458d0beb155a6393c8b3a17a74af6741cbb18caed859a3407c069ce1.jpg" alt="query 67"><figcaption>query</figcaption><code class="hash" title="2c8a8399458d0beb155a6393c8b3a17a74af6741cbb18caed859a3407c069ce1">2c8a8399458d0beb155a6393c8b3a17a74af6741cbb18caed859a3407c069ce1</code></figure>
+            <figure><img loading="lazy" src="images/ae2eb1a861d2cdc068d5f28d1884a64f1bd1de8ef0c24d1e67491b96dda10463.jpg" alt="target 67"><figcaption>target</figcaption><code class="hash" title="ae2eb1a861d2cdc068d5f28d1884a64f1bd1de8ef0c24d1e67491b96dda10463">ae2eb1a861d2cdc068d5f28d1884a64f1bd1de8ef0c24d1e67491b96dda10463</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What architectural marker would typically designate the entrance to the site shown here?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wooden Japanese torii gate at the entrance of a shrine</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a painting of a Japanese temple or shrine landscape; the target is a torii gate, which is the distinct architectural element used specifically to mark the entrance to such sacred spaces.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#68</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/a8ff2a6936c1c7cf8c97f9ad28175bdacb7872ec3715bd127280e16a14128836.jpg" alt="query 68"><figcaption>query</figcaption><code class="hash" title="a8ff2a6936c1c7cf8c97f9ad28175bdacb7872ec3715bd127280e16a14128836">a8ff2a6936c1c7cf8c97f9ad28175bdacb7872ec3715bd127280e16a14128836</code></figure>
+            <figure><img loading="lazy" src="images/1f1a847a93c06bce85cc2c70d8064db8968bcf88202067f2063b3ffd9c8feb00.jpg" alt="target 68"><figcaption>target</figcaption><code class="hash" title="1f1a847a93c06bce85cc2c70d8064db8968bcf88202067f2063b3ffd9c8feb00">1f1a847a93c06bce85cc2c70d8064db8968bcf88202067f2063b3ffd9c8feb00</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would one go to find real versions of these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A supermarket produce section with bins of fresh fruit</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows artificial fruit; the instruction asks for the location to find real equivalents, leading to a supermarket produce section, which is a distinct setting from the objects themselves.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#72</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/4526ee8e3a40e890c97bfecee51df3c608851f3382e43c03fb754462a3fd3a46.jpg" alt="query 72"><figcaption>query</figcaption><code class="hash" title="4526ee8e3a40e890c97bfecee51df3c608851f3382e43c03fb754462a3fd3a46">4526ee8e3a40e890c97bfecee51df3c608851f3382e43c03fb754462a3fd3a46</code></figure>
+            <figure><img loading="lazy" src="images/9d29d27b1a8d0f7a85312a064fd721ddb5cbd78cc1c160eb09660ef946921d88.jpg" alt="target 72"><figcaption>target</figcaption><code class="hash" title="9d29d27b1a8d0f7a85312a064fd721ddb5cbd78cc1c160eb09660ef946921d88">9d29d27b1a8d0f7a85312a064fd721ddb5cbd78cc1c160eb09660ef946921d88</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What could be used to check the rotational speed of this while it is in motion?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A handheld digital tire pressure gauge</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a wheel rim; to determine its rotational speed (RPM) during operation, a tachometer (the target image) is the appropriate tool, introducing a distinct diagnostic device based on the function of the query object.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#77</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/8d7e0d17379b1efffc4c55ddfe233296f3adab4b212e22ebc6590a7f42632a8c.jpg" alt="query 77"><figcaption>query</figcaption><code class="hash" title="8d7e0d17379b1efffc4c55ddfe233296f3adab4b212e22ebc6590a7f42632a8c">8d7e0d17379b1efffc4c55ddfe233296f3adab4b212e22ebc6590a7f42632a8c</code></figure>
+            <figure><img loading="lazy" src="images/703dd8677008eb2ecaf97091f4589964b9aa1a95c4679fc0964736a2112e84ac.jpg" alt="target 77"><figcaption>target</figcaption><code class="hash" title="703dd8677008eb2ecaf97091f4589964b9aa1a95c4679fc0964736a2112e84ac">703dd8677008eb2ecaf97091f4589964b9aa1a95c4679fc0964736a2112e84ac</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> How would you arrange these for a meal?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A dining room table set with plates and silverware</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a storage hutch for dining ware; the instruction asks for the arrangement of those items for a meal, leading to the target image of a fully set dining table, which is a distinct functional state from the stor…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#80</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/fe7f88dce0d1b3183cc614095cd4bf9ee3cd759292e12d089710a2c8190ea0bd.jpg" alt="query 80"><figcaption>query</figcaption><code class="hash" title="fe7f88dce0d1b3183cc614095cd4bf9ee3cd759292e12d089710a2c8190ea0bd">fe7f88dce0d1b3183cc614095cd4bf9ee3cd759292e12d089710a2c8190ea0bd</code></figure>
+            <figure><img loading="lazy" src="images/cf7a88f02c5226d207e150fc325010a90a0851c13ae9351390b4ae9e5d7d2343.jpg" alt="target 80"><figcaption>target</figcaption><code class="hash" title="cf7a88f02c5226d207e150fc325010a90a0851c13ae9351390b4ae9e5d7d2343">cf7a88f02c5226d207e150fc325010a90a0851c13ae9351390b4ae9e5d7d2343</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What could be used to continue this routine when the weather is bad?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wooden yoga block on a gym floor</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows an outdoor exercise routine; the instruction reasons to a home-based fitness solution (a home gym kit) as a logical alternative for inclement weather, introducing a distinct product rather than just another person…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#82</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/75567a2af376aee0d87b25a4b7965644dd83856e22190359eb291c6685b0329e.jpg" alt="query 82"><figcaption>query</figcaption><code class="hash" title="75567a2af376aee0d87b25a4b7965644dd83856e22190359eb291c6685b0329e">75567a2af376aee0d87b25a4b7965644dd83856e22190359eb291c6685b0329e</code></figure>
+            <figure><img loading="lazy" src="images/db383f5c3486f61c077732210bac4a1d42a87d920a73729284f3ce4a03fb689a.jpg" alt="target 82"><figcaption>target</figcaption><code class="hash" title="db383f5c3486f61c077732210bac4a1d42a87d920a73729284f3ce4a03fb689a">db383f5c3486f61c077732210bac4a1d42a87d920a73729284f3ce4a03fb689a</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed underneath this to achieve its specific silhouette?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A white tiered crinoline petticoat on a dress form</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a full-skirted 1950s-style dress, which requires a crinoline/petticoat (the target) to provide the structural volume and shape seen in the image.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#88</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/1fa4506a1366a2d1991ca2693ff4b659c8f4f6572a1df6aefeb7387a983d1575.jpg" alt="query 88"><figcaption>query</figcaption><code class="hash" title="1fa4506a1366a2d1991ca2693ff4b659c8f4f6572a1df6aefeb7387a983d1575">1fa4506a1366a2d1991ca2693ff4b659c8f4f6572a1df6aefeb7387a983d1575</code></figure>
+            <figure><img loading="lazy" src="images/4b334bba327825eb0a1713da33f465bae46635140aee2b3bf69028fea727efcc.jpg" alt="target 88"><figcaption>target</figcaption><code class="hash" title="4b334bba327825eb0a1713da33f465bae46635140aee2b3bf69028fea727efcc">4b334bba327825eb0a1713da33f465bae46635140aee2b3bf69028fea727efcc</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What are the raw components used to make this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A collection of loose amethyst crystals and raw gemstones</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a finished piece of jewelry (a bracelet), and the instruction asks for the raw materials, leading to the target image of loose gemstones of the same type.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#93</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/5c1e864492f8ec25c3d1202b9376437f38a437aa3fc61485061bec3f5c7d939f.jpg" alt="query 93"><figcaption>query</figcaption><code class="hash" title="5c1e864492f8ec25c3d1202b9376437f38a437aa3fc61485061bec3f5c7d939f">5c1e864492f8ec25c3d1202b9376437f38a437aa3fc61485061bec3f5c7d939f</code></figure>
+            <figure><img loading="lazy" src="images/fe99994f3946745f7955b834509712a0d907b200dcc0b19efe07046fffa5b03c.jpg" alt="target 93"><figcaption>target</figcaption><code class="hash" title="fe99994f3946745f7955b834509712a0d907b200dcc0b19efe07046fffa5b03c">fe99994f3946745f7955b834509712a0d907b200dcc0b19efe07046fffa5b03c</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where could it go to lay its eggs?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A small wooden birdhouse with a circular entrance hole mounted on a post</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a bird, and the instruction asks for a nesting location, leading to a birdhouse as a distinct complementary object necessary for the bird&#x27;s life cycle.</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-non_identifiable" class="category" style="--accent:#ef6c00">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#ef6c00"></span>Non-identifiable
+        <span class="count-badge">7 / 100 &middot; 7.0%</span></h2>
+      <p class="cat-desc">Query subject can&#x27;t be reliably identified, so the reasoning link is unverifiable.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#12</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/607a5904625d271b5b0d949a62f88ace0f219a8b0667d07377c39a177a5aaecb.jpg" alt="query 12"><figcaption>query</figcaption><code class="hash" title="607a5904625d271b5b0d949a62f88ace0f219a8b0667d07377c39a177a5aaecb">607a5904625d271b5b0d949a62f88ace0f219a8b0667d07377c39a177a5aaecb</code></figure>
+            <figure><img loading="lazy" src="images/73be68cd483438b4c721d591a1e0ff7ca0c2ee619dd32311aafa782fcc2f6647.jpg" alt="target 12"><figcaption>target</figcaption><code class="hash" title="73be68cd483438b4c721d591a1e0ff7ca0c2ee619dd32311aafa782fcc2f6647">73be68cd483438b4c721d591a1e0ff7ca0c2ee619dd32311aafa782fcc2f6647</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is a simpler, baked alternative to this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A piece of yellow sponge cake being sliced by a knife</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a complex, multi-layered trifle; the target image provides a simple sponge cake, which serves as a foundational baked alternative to the layered assembly of the query.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#13</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/084bf8370cbc49234151182746dfdaad48bb65edfc80a94fcc0b6705edcd1630.jpg" alt="query 13"><figcaption>query</figcaption><code class="hash" title="084bf8370cbc49234151182746dfdaad48bb65edfc80a94fcc0b6705edcd1630">084bf8370cbc49234151182746dfdaad48bb65edfc80a94fcc0b6705edcd1630</code></figure>
+            <figure><img loading="lazy" src="images/0cda438d32991c2befbe1e4491f358e2e9802d56a6ba5982cb25d59bc8f5854e.jpg" alt="target 13"><figcaption>target</figcaption><code class="hash" title="0cda438d32991c2befbe1e4491f358e2e9802d56a6ba5982cb25d59bc8f5854e">0cda438d32991c2befbe1e4491f358e2e9802d56a6ba5982cb25d59bc8f5854e</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would this person be sitting to operate it?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> An image of a Millennium Falcon cockpit</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a person in a costume of a specific pilot (Chewbacca); the instruction asks for the operational location associated with that character, leading to the interior of the Millennium Falcon cockpit, which is a di…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#29</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/24595ea504779591d28bcf5b9abcab5b7f7bc33909133d5d80286813000687d7.jpg" alt="query 29"><figcaption>query</figcaption><code class="hash" title="24595ea504779591d28bcf5b9abcab5b7f7bc33909133d5d80286813000687d7">24595ea504779591d28bcf5b9abcab5b7f7bc33909133d5d80286813000687d7</code></figure>
+            <figure><img loading="lazy" src="images/a69c45ade47a2d2182d0e897e5bbf7eb0070b6fceb96566c1882c73e1169c1df.jpg" alt="target 29"><figcaption>target</figcaption><code class="hash" title="a69c45ade47a2d2182d0e897e5bbf7eb0070b6fceb96566c1882c73e1169c1df">a69c45ade47a2d2182d0e897e5bbf7eb0070b6fceb96566c1882c73e1169c1df</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does a close-up of its stem look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photo of a pruning shear cutting a plant stem</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a managed botanical garden/greenhouse scene; the instruction asks for a detailed view of the plant&#x27;s anatomy, leading to a close-up image of a stem, which is a concealed aspect of the larger plants shown.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#75</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/8c57fb55ab83773a0be1866076eae825379497fc774f5ca4b1ea80b83e760542.jpg" alt="query 75"><figcaption>query</figcaption><code class="hash" title="8c57fb55ab83773a0be1866076eae825379497fc774f5ca4b1ea80b83e760542">8c57fb55ab83773a0be1866076eae825379497fc774f5ca4b1ea80b83e760542</code></figure>
+            <figure><img loading="lazy" src="images/1ef61ae07688f259389fe70bc5b3b6fe7863824170701922b4076c85a56c445f.jpg" alt="target 75"><figcaption>target</figcaption><code class="hash" title="1ef61ae07688f259389fe70bc5b3b6fe7863824170701922b4076c85a56c445f">1ef61ae07688f259389fe70bc5b3b6fe7863824170701922b4076c85a56c445f</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would be visible from the front of the vehicle this person is operating?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A detailed view of a pilot&#x27;s cockpit instrument panel</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a person in a pilot&#x27;s uniform; the instruction asks for the view from the front of that vehicle, which logically leads to the cockpit instrument panel, introducing a distinct new element (the control interfac…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#76</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/5d82459201097fcc44190f376434f4b8d02748dc4fe0046f3596a6a8fcbddd02.jpg" alt="query 76"><figcaption>query</figcaption><code class="hash" title="5d82459201097fcc44190f376434f4b8d02748dc4fe0046f3596a6a8fcbddd02">5d82459201097fcc44190f376434f4b8d02748dc4fe0046f3596a6a8fcbddd02</code></figure>
+            <figure><img loading="lazy" src="images/c31a9bcafb8c765c29fdc4728e3f76670ddf28b765267bcc025b03428e5bef68.jpg" alt="target 76"><figcaption>target</figcaption><code class="hash" title="c31a9bcafb8c765c29fdc4728e3f76670ddf28b765267bcc025b03428e5bef68">c31a9bcafb8c765c29fdc4728e3f76670ddf28b765267bcc025b03428e5bef68</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What provides the context for this character&#x27;s story?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a horse&#x27;s hoof and a metal horseshoe</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a portrait of a character (a donkey); the target image is a &#x27;Prologue&#x27; page, which serves as the narrative introduction/context for a character&#x27;s story.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#85</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/f6dcf5c3b2c1f5ae8a4eccc6d7b19e9e2da7bd5398a896e964be3d28be8f25b2.jpg" alt="query 85"><figcaption>query</figcaption><code class="hash" title="f6dcf5c3b2c1f5ae8a4eccc6d7b19e9e2da7bd5398a896e964be3d28be8f25b2">f6dcf5c3b2c1f5ae8a4eccc6d7b19e9e2da7bd5398a896e964be3d28be8f25b2</code></figure>
+            <figure><img loading="lazy" src="images/c5d4b774320ddc771ca96cc405d3648813454aa6f1e3fd027c46948d4155dc79.jpg" alt="target 85"><figcaption>target</figcaption><code class="hash" title="c5d4b774320ddc771ca96cc405d3648813454aa6f1e3fd027c46948d4155dc79">c5d4b774320ddc771ca96cc405d3648813454aa6f1e3fd027c46948d4155dc79</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does the exterior of this place look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wide shot of a quiet university campus courtyard</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows the interior of a grand, historic library; the instruction asks for its exterior, which is a distinct new view of the same entity.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#87</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/7a6eecde80458bf0aa1d73d78562dd3345b2312d1cde3f47becc5f66c6d66832.jpg" alt="query 87"><figcaption>query</figcaption><code class="hash" title="7a6eecde80458bf0aa1d73d78562dd3345b2312d1cde3f47becc5f66c6d66832">7a6eecde80458bf0aa1d73d78562dd3345b2312d1cde3f47becc5f66c6d66832</code></figure>
+            <figure><img loading="lazy" src="images/95ddae7013aa4f08371517c8d43fb510c59504540797d23665f3060b16f8fb10.jpg" alt="target 87"><figcaption>target</figcaption><code class="hash" title="95ddae7013aa4f08371517c8d43fb510c59504540797d23665f3060b16f8fb10">95ddae7013aa4f08371517c8d43fb510c59504540797d23665f3060b16f8fb10</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is inside of it?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> An open jewelry box showing the velvet lining and empty compartments</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a decorative gift box; the instruction asks for its contents, leading to the target image which reveals the interior compartments and items of such a box, introducing the hidden internal state as a distinct n…</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-size_mismatch" class="category" style="--accent:#6a1b9a">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#6a1b9a"></span>Size mismatch
+        <span class="count-badge">11 / 100 &middot; 11.0%</span></h2>
+      <p class="cat-desc">Query and target differ in scale / level of detail / texture in a way that breaks the pair.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#1</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/259f1593dac886ce8e029d5f853c24ce7edfb522b6d331dc20fd34cdc454875b.jpg" alt="query 1"><figcaption>query</figcaption><code class="hash" title="259f1593dac886ce8e029d5f853c24ce7edfb522b6d331dc20fd34cdc454875b">259f1593dac886ce8e029d5f853c24ce7edfb522b6d331dc20fd34cdc454875b</code></figure>
+            <figure><img loading="lazy" src="images/5d498a37b0b8e941f54a3ed78d8b4989c8d213e3996052ddb3585df007106787.jpg" alt="target 1"><figcaption>target</figcaption><code class="hash" title="5d498a37b0b8e941f54a3ed78d8b4989c8d213e3996052ddb3585df007106787">5d498a37b0b8e941f54a3ed78d8b4989c8d213e3996052ddb3585df007106787</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would this character naturally live?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A detailed view of a carrot growing in garden soil</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a rabbit, and the target shows a garden interface/soil, which is the natural habitat for a rabbit; the target is distinct as it moves from a toy entity to its environmental context.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#17</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/0636d73e3eaeafee1d2b04649e150934f94ff6a3ff157fd16261157e81d70347.jpg" alt="query 17"><figcaption>query</figcaption><code class="hash" title="0636d73e3eaeafee1d2b04649e150934f94ff6a3ff157fd16261157e81d70347">0636d73e3eaeafee1d2b04649e150934f94ff6a3ff157fd16261157e81d70347</code></figure>
+            <figure><img loading="lazy" src="images/57a20049a2982067baee89562c4b0c0d867384cc9be1441293fa04f4a2ba0f7b.jpg" alt="target 17"><figcaption>target</figcaption><code class="hash" title="57a20049a2982067baee89562c4b0c0d867384cc9be1441293fa04f4a2ba0f7b">57a20049a2982067baee89562c4b0c0d867384cc9be1441293fa04f4a2ba0f7b</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What did she likely find and collect in those buckets?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A pile of colorful sea shells on a wooden table</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a young girl with buckets at a beach-like setting, and the target image shows a collection of seashells, which are the natural items one would collect in buckets at the beach.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#24</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/024a4b5174a1e8f5aba162a3ecb3b34fc565dccb90d75bb2fc2a84df9e9e65cf.jpg" alt="query 24"><figcaption>query</figcaption><code class="hash" title="024a4b5174a1e8f5aba162a3ecb3b34fc565dccb90d75bb2fc2a84df9e9e65cf">024a4b5174a1e8f5aba162a3ecb3b34fc565dccb90d75bb2fc2a84df9e9e65cf</code></figure>
+            <figure><img loading="lazy" src="images/4ab0d6372ba5666ea83f02a64daeff900cfc890ca37c5533bd4300193124b15d.jpg" alt="target 24"><figcaption>target</figcaption><code class="hash" title="4ab0d6372ba5666ea83f02a64daeff900cfc890ca37c5533bd4300193124b15d">4ab0d6372ba5666ea83f02a64daeff900cfc890ca37c5533bd4300193124b15d</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is another common way to serve this as a meal?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photo of a buttery garlic shrimp dish on a white ceramic plate</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a crab (shellfish), and the target image shows shrimp (another common shellfish) being cooked, representing a distinct but related entity within the same culinary category.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#28</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/d9ff142c9a4287bea1e87e68003d093f2e91b4a2f3b9805c2cec09b1c13bb0ae.jpg" alt="query 28"><figcaption>query</figcaption><code class="hash" title="d9ff142c9a4287bea1e87e68003d093f2e91b4a2f3b9805c2cec09b1c13bb0ae">d9ff142c9a4287bea1e87e68003d093f2e91b4a2f3b9805c2cec09b1c13bb0ae</code></figure>
+            <figure><img loading="lazy" src="images/7611aad00bd3c5f47de1f09b913af1901b0e91dd38fe701bef4015327ba1aae3.jpg" alt="target 28"><figcaption>target</figcaption><code class="hash" title="7611aad00bd3c5f47de1f09b913af1901b0e91dd38fe701bef4015327ba1aae3">7611aad00bd3c5f47de1f09b913af1901b0e91dd38fe701bef4015327ba1aae3</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What was used to create the decorative patterns on this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a sewing machine needle stitching fabric</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a garment with intricate embroidery; the target image shows yarn/thread, which is the essential material needed to create such embroidery, introducing a distinct new element (the raw material) via a part-to-w…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#59</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/4d6f67b0a83b2d0c9244ce289dec55cea4c55b3f5fdd1236fc9a2a09b41407db.jpg" alt="query 59"><figcaption>query</figcaption><code class="hash" title="4d6f67b0a83b2d0c9244ce289dec55cea4c55b3f5fdd1236fc9a2a09b41407db">4d6f67b0a83b2d0c9244ce289dec55cea4c55b3f5fdd1236fc9a2a09b41407db</code></figure>
+            <figure><img loading="lazy" src="images/0511f29c4480502f8f1f5200331835a616019c58243a4515448db64d70101306.jpg" alt="target 59"><figcaption>target</figcaption><code class="hash" title="0511f29c4480502f8f1f5200331835a616019c58243a4515448db64d70101306">0511f29c4480502f8f1f5200331835a616019c58243a4515448db64d70101306</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does the inside of this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a cake slice showing layers of sponge and cream inside</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a whole decorated cake; the instruction asks for its internal composition, leading to the target image which reveals a cross-section of the cake&#x27;s layers and filling.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#62</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/52be36a21fd5566080546b5fd8cbd09f400542fe35b41c22dcf3b6f42020a335.jpg" alt="query 62"><figcaption>query</figcaption><code class="hash" title="52be36a21fd5566080546b5fd8cbd09f400542fe35b41c22dcf3b6f42020a335">52be36a21fd5566080546b5fd8cbd09f400542fe35b41c22dcf3b6f42020a335</code></figure>
+            <figure><img loading="lazy" src="images/d67726f1310a43c21680ca576dab20efaeeeeb97af1da561592f44dc4f425aad.jpg" alt="target 62"><figcaption>target</figcaption><code class="hash" title="d67726f1310a43c21680ca576dab20efaeeeeb97af1da561592f44dc4f425aad">d67726f1310a43c21680ca576dab20efaeeeeb97af1da561592f44dc4f425aad</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does a close-up of the joints in this structure look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a rusty iron bolt and nut on a metal structure</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a balcony railing; the instruction asks for a detailed view of how it&#x27;s held together, leading to a close-up of the bolts and joints of a similar metal structure.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#81</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/07850871413a9c7f9f418b9240b943e0374aded2cd36c326243f8a6aa0d134f3.jpg" alt="query 81"><figcaption>query</figcaption><code class="hash" title="07850871413a9c7f9f418b9240b943e0374aded2cd36c326243f8a6aa0d134f3">07850871413a9c7f9f418b9240b943e0374aded2cd36c326243f8a6aa0d134f3</code></figure>
+            <figure><img loading="lazy" src="images/9e6a46604ff38d7b9779c79c5ee0d354f105d679b0f5d7fbbcdb75a0c523b123.jpg" alt="target 81"><figcaption>target</figcaption><code class="hash" title="9e6a46604ff38d7b9779c79c5ee0d354f105d679b0f5d7fbbcdb75a0c523b123">9e6a46604ff38d7b9779c79c5ee0d354f105d679b0f5d7fbbcdb75a0c523b123</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What might be awarded to someone who has served under this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a military medal on a fabric display case</div>
+            <div class="text rationale"><b>Rationale:</b> The query image contains a US flag, and the instruction asks for an award given to someone serving under that flag, leading to a military medal as a distinct, non-obvious complement.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#84</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/40ca817402be50a85ae8845abae2e932daa94f429baf0d322edbf39f5dca60b8.jpg" alt="query 84"><figcaption>query</figcaption><code class="hash" title="40ca817402be50a85ae8845abae2e932daa94f429baf0d322edbf39f5dca60b8">40ca817402be50a85ae8845abae2e932daa94f429baf0d322edbf39f5dca60b8</code></figure>
+            <figure><img loading="lazy" src="images/287503df5c2beebe91f7d88d6e9562a0481faa30239449cbee1cc8412e8764dd.jpg" alt="target 84"><figcaption>target</figcaption><code class="hash" title="287503df5c2beebe91f7d88d6e9562a0481faa30239449cbee1cc8412e8764dd">287503df5c2beebe91f7d88d6e9562a0481faa30239449cbee1cc8412e8764dd</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is required to access the contents of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a rusted antique iron key sitting on a tabletop</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a piece of antique furniture with multiple drawers and a locked cabinet; the natural reasoning is that these compartments require keys to be opened, and the target image provides those keys.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#90</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/c590ae6260004b5dfe87fe5af896e038af7de3ceea1326b775e36a9d690ce841.jpg" alt="query 90"><figcaption>query</figcaption><code class="hash" title="c590ae6260004b5dfe87fe5af896e038af7de3ceea1326b775e36a9d690ce841">c590ae6260004b5dfe87fe5af896e038af7de3ceea1326b775e36a9d690ce841</code></figure>
+            <figure><img loading="lazy" src="images/bcc252cbbe2b6b9362383ddcdce407676b0366b8b43daaa21c23e82f6cf9b48a.jpg" alt="target 90"><figcaption>target</figcaption><code class="hash" title="bcc252cbbe2b6b9362383ddcdce407676b0366b8b43daaa21c23e82f6cf9b48a">bcc252cbbe2b6b9362383ddcdce407676b0366b8b43daaa21c23e82f6cf9b48a</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where can I find the main ingredient needed to make these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A grocery store shelf stocked with various cartons of large white eggs</div>
+            <div class="text rationale"><b>Rationale:</b> The query images show various breakfast dishes (eggs benedict, poached eggs, pancakes) where eggs are a central component; the target image shows a grocery store shelf of eggs, providing the source/ingredient for the dishes.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#92</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/8c1d7715ea8180f4e10bd300eadca7112ef31115fbade521d07266963d911b36.jpg" alt="query 92"><figcaption>query</figcaption><code class="hash" title="8c1d7715ea8180f4e10bd300eadca7112ef31115fbade521d07266963d911b36">8c1d7715ea8180f4e10bd300eadca7112ef31115fbade521d07266963d911b36</code></figure>
+            <figure><img loading="lazy" src="images/b8ebc5a6c88406827661548f0d26b636e857d1ee6847f07d9fb1927ae93757da.jpg" alt="target 92"><figcaption>target</figcaption><code class="hash" title="b8ebc5a6c88406827661548f0d26b636e857d1ee6847f07d9fb1927ae93757da">b8ebc5a6c88406827661548f0d26b636e857d1ee6847f07d9fb1927ae93757da</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does it look like inside?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A view of the interior staircase and structural ironwork inside the Statue of Liberty</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows the exterior of the Statue of Liberty; the instruction asks for the internal view, leading to the image of the internal staircase, which is a concealed aspect of the same entity.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#97</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/daef41076ae2130b8e2ba6e0afff3b6d32b2651a36a48fe10acc34593fa61f37.jpg" alt="query 97"><figcaption>query</figcaption><code class="hash" title="daef41076ae2130b8e2ba6e0afff3b6d32b2651a36a48fe10acc34593fa61f37">daef41076ae2130b8e2ba6e0afff3b6d32b2651a36a48fe10acc34593fa61f37</code></figure>
+            <figure><img loading="lazy" src="images/8b9f82633b07489c075d5a5c8c237006de74d1d3b6398942a80c4cfe6dd056d7.jpg" alt="target 97"><figcaption>target</figcaption><code class="hash" title="8b9f82633b07489c075d5a5c8c237006de74d1d3b6398942a80c4cfe6dd056d7">8b9f82633b07489c075d5a5c8c237006de74d1d3b6398942a80c4cfe6dd056d7</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is inside the object hanging from his vest?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a pocket watch mechanism with gold gears and springs</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a person wearing a pocket watch chain; the instruction asks for the internal mechanism of the device that the chain is attached to, providing a &#x27;concealed aspect&#x27; reasoning bridge.</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-text_shortcut" class="category" style="--accent:#ad1457">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#ad1457"></span>Text shortcut
+        <span class="count-badge">7 / 100 &middot; 7.0%</span></h2>
+      <p class="cat-desc">Instruction leaks the answer or can be solved from text alone without the query image.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#11</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/19c6947b9cd0abca4a5fdab88847631762d29533c9c35f514fcb30e573edccf4.jpg" alt="query 11"><figcaption>query</figcaption><code class="hash" title="19c6947b9cd0abca4a5fdab88847631762d29533c9c35f514fcb30e573edccf4">19c6947b9cd0abca4a5fdab88847631762d29533c9c35f514fcb30e573edccf4</code></figure>
+            <figure><img loading="lazy" src="images/454e73b04552c553deabe28426f39b8d99360ca72025554457ef93553af1c63e.jpg" alt="target 11"><figcaption>target</figcaption><code class="hash" title="454e73b04552c553deabe28426f39b8d99360ca72025554457ef93553af1c63e">454e73b04552c553deabe28426f39b8d99360ca72025554457ef93553af1c63e</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to protect the skin while wearing this outfit in the sun?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A bottle of high-SPF sunscreen on a towel</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a person in summer attire (hat, sunglasses, shorts) outdoors, which naturally leads to the need for sun protection (sunscreen) to avoid burns, introducing a new product that is not in the original image.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#38</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/cd78c7f9c927aea8b9a307315a495dc3bb753403f04ca6b63f202a19a546e85d.jpg" alt="query 38"><figcaption>query</figcaption><code class="hash" title="cd78c7f9c927aea8b9a307315a495dc3bb753403f04ca6b63f202a19a546e85d">cd78c7f9c927aea8b9a307315a495dc3bb753403f04ca6b63f202a19a546e85d</code></figure>
+            <figure><img loading="lazy" src="images/3a3261bbee3999b08839d55041bd8e4dbb3e94d279bff32ce56f9b667bb6b875.jpg" alt="target 38"><figcaption>target</figcaption><code class="hash" title="3a3261bbee3999b08839d55041bd8e4dbb3e94d279bff32ce56f9b667bb6b875">3a3261bbee3999b08839d55041bd8e4dbb3e94d279bff32ce56f9b667bb6b875</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What should I take with me to pay for this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A high-angle shot of an open wallet with cash and credit cards</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a breakfast meal, and the instruction asks for the means of payment, leading to the target image of a wallet containing money and cards, which is a distinct functional complement to the meal.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#41</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/05e536ebb97230c64632236ce5d2cda6f43c49c0a4e0b8954cbfc0a20454561c.jpg" alt="query 41"><figcaption>query</figcaption><code class="hash" title="05e536ebb97230c64632236ce5d2cda6f43c49c0a4e0b8954cbfc0a20454561c">05e536ebb97230c64632236ce5d2cda6f43c49c0a4e0b8954cbfc0a20454561c</code></figure>
+            <figure><img loading="lazy" src="images/64feaa2a5ef8642470959cfb0978d9437b0d83c8402f1060b95294e3d7e424c0.jpg" alt="target 41"><figcaption>target</figcaption><code class="hash" title="64feaa2a5ef8642470959cfb0978d9437b0d83c8402f1060b95294e3d7e424c0">64feaa2a5ef8642470959cfb0978d9437b0d83c8402f1060b95294e3d7e424c0</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is needed to ensure the food served here is safe to eat?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A handheld digital thermometer measuring food temperature</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a set table ready for a meal, and the target is a food thermometer used to verify internal temperatures for safety, introducing a distinct tool for food preparation/serving.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#42</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/48e4d156317c0898aa681995bd82437fb7b441af6d95b1aa89b997449864aef0.jpg" alt="query 42"><figcaption>query</figcaption><code class="hash" title="48e4d156317c0898aa681995bd82437fb7b441af6d95b1aa89b997449864aef0">48e4d156317c0898aa681995bd82437fb7b441af6d95b1aa89b997449864aef0</code></figure>
+            <figure><img loading="lazy" src="images/bb76ca2d25d7a377c3ba6bd2e5e7f2db4ff94acbc1947f792052c6f5c2bc2f91.jpg" alt="target 42"><figcaption>target</figcaption><code class="hash" title="bb76ca2d25d7a377c3ba6bd2e5e7f2db4ff94acbc1947f792052c6f5c2bc2f91">bb76ca2d25d7a377c3ba6bd2e5e7f2db4ff94acbc1947f792052c6f5c2bc2f91</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where can I find the brand name for this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a zipper and inner lining on the back of a dress</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a garment, and the instruction asks for the brand; the target image provides a close-up of the brand label, which is a concealed detail of the item.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#69</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/0c934b278717888204ba35ebfa86357e6df751ec7784676e4113c6f0b35d0307.jpg" alt="query 69"><figcaption>query</figcaption><code class="hash" title="0c934b278717888204ba35ebfa86357e6df751ec7784676e4113c6f0b35d0307">0c934b278717888204ba35ebfa86357e6df751ec7784676e4113c6f0b35d0307</code></figure>
+            <figure><img loading="lazy" src="images/d3639ed3bc9683bd206de7cfe3c4210eeff53fe48009345437629cb301e30dd6.jpg" alt="target 69"><figcaption>target</figcaption><code class="hash" title="d3639ed3bc9683bd206de7cfe3c4210eeff53fe48009345437629cb301e30dd6">d3639ed3bc9683bd206de7cfe3c4210eeff53fe48009345437629cb301e30dd6</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would the people living here go to attend their classes?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A wide shot of a university lecture hall filled with students</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a university dorm room, which naturally implies that the residents are students; the target image is a lecture hall, which is the distinct location where those students would go for their education.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#73</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/261f9dbe769530802efec0702048e8486f8525cfceee2001665c9ec589107266.jpg" alt="query 73"><figcaption>query</figcaption><code class="hash" title="261f9dbe769530802efec0702048e8486f8525cfceee2001665c9ec589107266">261f9dbe769530802efec0702048e8486f8525cfceee2001665c9ec589107266</code></figure>
+            <figure><img loading="lazy" src="images/691934d949a073f604f79a660e35572935a2145bbe244acc2ce64483aefcee53.jpg" alt="target 73"><figcaption>target</figcaption><code class="hash" title="691934d949a073f604f79a660e35572935a2145bbe244acc2ce64483aefcee53">691934d949a073f604f79a660e35572935a2145bbe244acc2ce64483aefcee53</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where is the system that regulates the power for this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A detailed photo of a circuit breaker panel in a basement</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a large mansion, and the instruction asks for its power regulation system, leading to the electrical panel (target), which is a concealed functional aspect of the building&#x27;s infrastructure.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#96</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/d0c45955a8d09c2ed44b95cea964399e6075f78c7047f5fd508477f4c9d7b605.jpg" alt="query 96"><figcaption>query</figcaption><code class="hash" title="d0c45955a8d09c2ed44b95cea964399e6075f78c7047f5fd508477f4c9d7b605">d0c45955a8d09c2ed44b95cea964399e6075f78c7047f5fd508477f4c9d7b605</code></figure>
+            <figure><img loading="lazy" src="images/b933a6a0123a2294f24f6552674f86a4447e8744b5c7015630f4988ab9c60696.jpg" alt="target 96"><figcaption>target</figcaption><code class="hash" title="b933a6a0123a2294f24f6552674f86a4447e8744b5c7015630f4988ab9c60696">b933a6a0123a2294f24f6552674f86a4447e8744b5c7015630f4988ab9c60696</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What could be added to this space to help toddlers learn their letters?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a colorful alphabet block</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a preschool/classroom environment; adding alphabet blocks is a natural pedagogical progression for that specific setting to support literacy development.</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-complete_mismatch" class="category" style="--accent:#c62828">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#c62828"></span>Complete mismatch
+        <span class="count-badge">3 / 100 &middot; 3.0%</span></h2>
+      <p class="cat-desc">Query and target are unrelated; no plausible reasoning connects them.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#15</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/5b0f2599d4b41706df9a43ee036fb8f7738f29aa2c3010a1d210c500a35f61e8.jpg" alt="query 15"><figcaption>query</figcaption><code class="hash" title="5b0f2599d4b41706df9a43ee036fb8f7738f29aa2c3010a1d210c500a35f61e8">5b0f2599d4b41706df9a43ee036fb8f7738f29aa2c3010a1d210c500a35f61e8</code></figure>
+            <figure><img loading="lazy" src="images/286f02071b546ee13a717fdc3d5571b75fd14db783b6b0ec160b2ffb61419ba9.jpg" alt="target 15"><figcaption>target</figcaption><code class="hash" title="286f02071b546ee13a717fdc3d5571b75fd14db783b6b0ec160b2ffb61419ba9">286f02071b546ee13a717fdc3d5571b75fd14db783b6b0ec160b2ffb61419ba9</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What can be made using the symbols associated with the nature of this scene?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A detailed view of a canvas stretching frame and pliers</div>
+            <div class="text rationale"><b>Rationale:</b> The query image depicts a coastal cypress grove, which is strongly associated with maritime themes and anchors; the target image shows a tutorial for making an anchor bracelet, introducing a distinct new object (jewelry) via a con…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#47</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/5c0b8dfd36865dcec3cd35ea64d21aa8e10a55a2fcc2f84d50ba577288744413.jpg" alt="query 47"><figcaption>query</figcaption><code class="hash" title="5c0b8dfd36865dcec3cd35ea64d21aa8e10a55a2fcc2f84d50ba577288744413">5c0b8dfd36865dcec3cd35ea64d21aa8e10a55a2fcc2f84d50ba577288744413</code></figure>
+            <figure><img loading="lazy" src="images/caf74d44c71b0ab639b7ea4e3013921c287b56fd4d723a5d367b7e44f8a5d6e7.jpg" alt="target 47"><figcaption>target</figcaption><code class="hash" title="caf74d44c71b0ab639b7ea4e3013921c287b56fd4d723a5d367b7e44f8a5d6e7">caf74d44c71b0ab639b7ea4e3013921c287b56fd4d723a5d367b7e44f8a5d6e7</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is on the other side of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up of a safety pin clasp on the back of a piece of jewelry</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a decorative brooch from the front; the instruction asks for the opposite side, leading to the target image which shows the functional fastening mechanism (the clasp) on the back of the jewelry.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#65</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/d950ae73f91c0c16af378d888513e466619bb4b8f1c1947ebaa2cf90caf25a71.jpg" alt="query 65"><figcaption>query</figcaption><code class="hash" title="d950ae73f91c0c16af378d888513e466619bb4b8f1c1947ebaa2cf90caf25a71">d950ae73f91c0c16af378d888513e466619bb4b8f1c1947ebaa2cf90caf25a71</code></figure>
+            <figure><img loading="lazy" src="images/fc0cc2a5cb863b44a6662da525b647c83b6dd3972e620aaffa43074c522e8d6c.jpg" alt="target 65"><figcaption>target</figcaption><code class="hash" title="fc0cc2a5cb863b44a6662da525b647c83b6dd3972e620aaffa43074c522e8d6c">fc0cc2a5cb863b44a6662da525b647c83b6dd3972e620aaffa43074c522e8d6c</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What else could be hung from this same spot to attract attention?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> a variety of metal bird hooks and hanging wires</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a bird feeder hanging in a garden/outdoor area; the target image is a wind chime made of horseshoes, which is another distinct decorative object hung in the same type of location to create visual or auditory…</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-repetitive_pair" class="category" style="--accent:#00838f">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#00838f"></span>Repetitive pair
+        <span class="count-badge">1 / 100 &middot; 1.0%</span></h2>
+      <p class="cat-desc">Query and target are near-duplicates / the same content repeated.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#4</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/b9551387a685855e5bf7520239b48e71d7a7d025b2558e15952ec604e1c93402.jpg" alt="query 4"><figcaption>query</figcaption><code class="hash" title="b9551387a685855e5bf7520239b48e71d7a7d025b2558e15952ec604e1c93402">b9551387a685855e5bf7520239b48e71d7a7d025b2558e15952ec604e1c93402</code></figure>
+            <figure><img loading="lazy" src="images/5c15b66905a7a37840e3abf2950fe0b4ba6b43d274a2124c4e8b472948b8cac3.jpg" alt="target 4"><figcaption>target</figcaption><code class="hash" title="5c15b66905a7a37840e3abf2950fe0b4ba6b43d274a2124c4e8b472948b8cac3">5c15b66905a7a37840e3abf2950fe0b4ba6b43d274a2124c4e8b472948b8cac3</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is under the hood of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> A close-up photo of a high-performance V8 engine bay</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a car, and the instruction asks for the internal mechanical component (the engine) that powers it, which is a concealed aspect of the same entity.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+</div>
+<a class="top" href="#">&uarr; Top</a>
+<footer>Generated from the instruct_subset500 upload &middot; first 100 samples reviewed (0-indexed).</footer>
+</body>
+</html>
