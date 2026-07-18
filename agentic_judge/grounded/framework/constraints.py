@@ -111,6 +111,37 @@ class AllValuesLE(HardConstraint):
             "all within ceiling" if ok else f"violations: {violations[:5]}")
 
 
+class AllValuesGE(HardConstraint):
+    """Every numeric value at `list_path[*].sub_path` is >= floor."""
+    def __init__(self, list_path: str, sub_path: str, floor: float,
+                 name: str | None = None):
+        self.list_path, self.sub_path, self.floor = list_path, sub_path, floor
+        self.name = name or f"all({list_path}.*.{sub_path} >= {floor})"
+
+    def check(self, summary, ctx=None):
+        items = _get(summary, self.list_path, []) or []
+        if not isinstance(items, list):
+            return HardConstraintResult(self.name, False, f"{self.list_path} is not a list")
+        violations = []
+        for i, item in enumerate(items):
+            if not isinstance(item, dict):
+                continue
+            v = _get(item, self.sub_path) if "." in self.sub_path else item.get(self.sub_path)
+            if v is None:
+                violations.append(f"item[{i}].{self.sub_path} missing")
+                continue
+            try:
+                vn = float(v)
+            except (TypeError, ValueError):
+                violations.append(f"item[{i}].{self.sub_path}={v!r} not numeric")
+                continue
+            if vn < self.floor:
+                violations.append(f"item[{i}].{self.sub_path}={vn} < {self.floor}")
+        ok = not violations
+        return HardConstraintResult(self.name, ok,
+            "all at or above floor" if ok else f"violations: {violations[:5]}")
+
+
 class AllValuesBetween(HardConstraint):
     """Every numeric `list_path[*].sub_path` is in [low, high]."""
     def __init__(self, list_path: str, sub_path: str, low: float, high: float,
@@ -193,9 +224,15 @@ class AllURLsMatch(HardConstraint):
             return HardConstraintResult(self.name, False, f"{self.list_path} not a list")
         bad = []
         for i, item in enumerate(items):
-            u = (item or {}).get(self.url_field)
-            if not u or not self.pat.search(u):
-                bad.append(f"item[{i}].{self.url_field}={u!r}")
+            raw = (item or {}).get(self.url_field) if isinstance(item, dict) else None
+            # Field may be a single string OR a list of strings (e.g. source_urls).
+            candidates = raw if isinstance(raw, list) else [raw]
+            if not candidates:
+                bad.append(f"item[{i}].{self.url_field}=<empty>")
+                continue
+            for j, u in enumerate(candidates):
+                if not isinstance(u, str) or not self.pat.search(u):
+                    bad.append(f"item[{i}].{self.url_field}[{j}]={u!r}")
         ok = not bad
         return HardConstraintResult(self.name, ok,
             "all URLs match" if ok else f"non-matching: {bad[:3]}")

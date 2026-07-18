@@ -9,7 +9,7 @@ Deploy once:
   modal deploy harbor_modal_runner.py
 
 Trigger and disconnect:
-  python trigger_harbor.py --agent claude-code --tasks-dir tasks/real_118_refactored
+  python trigger_harbor.py --agent claude-code --tasks-dir tasks/real_118
   python trigger_harbor.py --agent claude-code --first-n 10
 
 Collect results later (no laptop needed):
@@ -992,7 +992,7 @@ async def _run_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
-    tasks_dir: str = "tasks/real_118_refactored",
+    tasks_dir: str = "tasks/real_118",
     skill_config: dict | None = None,
 ) -> dict:
     """
@@ -1393,7 +1393,7 @@ async def run_harbor_task(
     agent_kwargs: dict,
     run_tag: str,
     task_meta: dict,
-    tasks_dir: str = "tasks/real_118_refactored",
+    tasks_dir: str = "tasks/real_118",
     skill_config: dict | None = None,
 ) -> dict:
     """Run a single task with a Harbor agent. Used by run_harbor_experiment via starmap."""
@@ -1429,7 +1429,7 @@ async def run_harbor_experiment(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
-    tasks_dir: str = "tasks/real_118_refactored",
+    tasks_dir: str = "tasks/real_118",
     first_n: int = 0,
     task_names_csv: str = "",
     skill_config: dict | None = None,
@@ -1569,7 +1569,7 @@ async def run_harbor_skill_experiment(
     agent_name: str,
     agent_kwargs: dict,
     run_tag: str,
-    tasks_dir: str = "tasks/real_118_refactored",
+    tasks_dir: str = "tasks/real_118",
     first_n: int = 0,
     task_names_csv: str = "",
 ) -> dict:
