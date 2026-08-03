@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero-shot SFT Trajectories — 30 samples + statistics</title>
+<style>
+  html, body { margin:0; font-family:"Charter","Source Serif Pro",Georgia,"Times New Roman",serif;
+    background:#f6f6f4; color:#111827; line-height:1.55; font-size:16px; }
+  main { max-width:1000px; margin:48px auto; background:#fff; border:1px solid #d1d5db; padding:40px 48px; }
+  h1 { font-size:26px; margin:0 0 6px; font-weight:600; }
+  h2 { font-size:14px; margin:34px 0 10px; color:#4b5563; text-transform:uppercase;
+    letter-spacing:.05em; font-weight:600; font-family:-apple-system,Arial,sans-serif; }
+  p { margin:8px 0; color:#374151; }
+  .lede { color:#4b5563; }
+  code { background:#f3f4f6; padding:1px 5px; border-radius:3px; font-size:13px; }
+  /* stat tiles */
+  .tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0; }
+  .tile { border:1px solid #e5e7eb; border-left:3px solid #6d28d9; padding:14px 16px; background:#fafafa; }
+  .tile-v { font-size:24px; font-weight:700; color:#1f2937; }
+  .tile-l { font-size:12px; color:#6b7280; margin-top:2px; font-family:-apple-system,Arial,sans-serif; }
+  /* bars */
+  .bars { font-family:-apple-system,Arial,sans-serif; font-size:13px; margin:8px 0 4px; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin:4px 0; }
+  .bar-label { width:200px; color:#374151; text-align:right; }
+  .bar-track { flex:1; background:#f0f0ee; height:16px; border-radius:3px; overflow:hidden; }
+  .bar-fill { display:block; height:100%; background:#6d28d9; opacity:.85; }
+  .bar-val { width:110px; color:#6b7280; }
+  .bar-val em { font-style:normal; color:#9ca3af; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  /* cards */
+  .card { border:1px solid #d1d5db; border-radius:4px; padding:18px 20px; margin:16px 0; background:#fff; }
+  .q { font-family:-apple-system,Arial,sans-serif; font-size:12px; color:#9ca3af; }
+  .q .scene { color:#6d28d9; }
+  .question { font-size:18px; font-weight:600; margin:4px 0 12px; }
+  .strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; }
+  .strip figure { margin:0; flex:0 0 auto; }
+  .strip img { height:150px; border:1px solid #d1d5db; border-radius:3px; display:block; background:#000; }
+  .strip figcaption { font-size:11px; color:#9ca3af; text-align:center; margin-top:3px;
+    font-family:-apple-system,Arial,sans-serif; }
+  .steps { margin:12px 0; }
+  .step { border-left:2px solid #e5e7eb; padding:2px 0 2px 12px; margin:8px 0; }
+  .step-head { font-family:-apple-system,Arial,sans-serif; font-size:12px; margin-bottom:2px; }
+  .step-n { color:#9ca3af; margin-right:8px; }
+  .act { background:#ede9fe; color:#5b21b6; padding:1px 7px; border-radius:10px; font-weight:600; }
+  .think { color:#374151; font-size:15px; }
+  .ans { margin-top:10px; font-size:16px; }
+  .ans-model { font-weight:700; color:#065f46; }
+  .ans-gt { color:#6b7280; font-size:14px; }
+  .tags { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-family:-apple-system,Arial,sans-serif; font-size:11px; background:#f3f4f6;
+    color:#6b7280; padding:2px 8px; border-radius:10px; }
+  .tag.explore { background:#fef3c7; color:#92400e; }
+  .tag.ok { background:#dcfce7; color:#166534; }
+  footer { color:#6b7280; font-size:13px; margin-top:36px; border-top:1px solid #d1d5db;
+    padding-top:12px; font-family:-apple-system,Arial,sans-serif; }
+  a { color:#6d28d9; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Zero-shot SFT Trajectories</h1>
+  <p class="lede">GPT-5.4-mini exploring ScanNet 3D scenes through the thinking-in-space interactive
+  render pipeline, answering ScanQA <strong>training</strong> questions. Every trajectory is scored on
+  three gates and only the GOOD ones are banked. Below: bank-wide statistics, then 30 random samples
+  (frames + per-turn reasoning + action + answer). <em>Action mode; retry-until-pass, one GOOD per
+  question.</em></p>
+
+  <h2>Bank summary</h2>
+  <div class="tiles"><div class="tile"><div class="tile-v">3,639</div><div class="tile-l">GOOD trajectories</div></div>
+<div class="tile"><div class="tile-v">535</div><div class="tile-l">distinct scenes</div></div>
+<div class="tile"><div class="tile-v">3,639</div><div class="tile-l">distinct questions</div></div>
+<div class="tile"><div class="tile-v">2.11</div><div class="tile-l">mean rounds (views)</div></div>
+<div class="tile"><div class="tile-v">2.06</div><div class="tile-l">mean &lt;think&gt; blocks / traj</div></div>
+<div class="tile"><div class="tile-v">~39</div><div class="tile-l">mean &lt;think&gt; tokens / block</div></div>
+<div class="tile"><div class="tile-v">97.6%</div><div class="tile-l">turns with &lt;think&gt;</div></div>
+<div class="tile"><div class="tile-v">18.1%</div><div class="tile-l">explored-to-find</div></div></div>
+
+  <div class="two-col">
+    <div>
+      <h2>Rounds per trajectory</h2>
+      <div class="bars"><div class="bar-row"><span class="bar-label">2 views</span><span class="bar-track"><span class="bar-fill" style="width:100.0%"></span></span><span class="bar-val">3369 <em>(92.6%)</em></span></div>
+<div class="bar-row"><span class="bar-label">3 views</span><span class="bar-track"><span class="bar-fill" style="width:5.8%"></span></span><span class="bar-val">194 <em>(5.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">4 views</span><span class="bar-track"><span class="bar-fill" style="width:1.4%"></span></span><span class="bar-val">48 <em>(1.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">5 views</span><span class="bar-track"><span class="bar-fill" style="width:0.4%"></span></span><span class="bar-val">12 <em>(0.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">6 views</span><span class="bar-track"><span class="bar-fill" style="width:0.3%"></span></span><span class="bar-val">10 <em>(0.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">7 views</span><span class="bar-track"><span class="bar-fill" style="width:0.1%"></span></span><span class="bar-val">3 <em>(0.1%)</em></span></div>
+<div class="bar-row"><span class="bar-label">8 views</span><span class="bar-track"><span class="bar-fill" style="width:0.1%"></span></span><span class="bar-val">3 <em>(0.1%)</em></span></div></div>
+    </div>
+    <div>
+      <h2>Action mix</h2>
+      <div class="bars"><div class="bar-row"><span class="bar-label">turn_left</span><span class="bar-track"><span class="bar-fill" style="width:20.9%"></span></span><span class="bar-val">759 <em>(18.8%)</em></span></div>
+<div class="bar-row"><span class="bar-label">turn_right</span><span class="bar-track"><span class="bar-fill" style="width:48.1%"></span></span><span class="bar-val">1749 <em>(43.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">left</span><span class="bar-track"><span class="bar-fill" style="width:6.0%"></span></span><span class="bar-val">220 <em>(5.4%)</em></span></div>
+<div class="bar-row"><span class="bar-label">right</span><span class="bar-track"><span class="bar-fill" style="width:14.8%"></span></span><span class="bar-val">537 <em>(13.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">forward</span><span class="bar-track"><span class="bar-fill" style="width:20.0%"></span></span><span class="bar-val">726 <em>(18.0%)</em></span></div>
+<div class="bar-row"><span class="bar-label">backward</span><span class="bar-track"><span class="bar-fill" style="width:0.9%"></span></span><span class="bar-val">31 <em>(0.8%)</em></span></div>
+<div class="bar-row"><span class="bar-label">turn_up</span><span class="bar-track"><span class="bar-fill" style="width:0.1%"></span></span><span class="bar-val">3 <em>(0.1%)</em></span></div>
+<div class="bar-row"><span class="bar-label">turn_down</span><span class="bar-track"><span class="bar-fill" style="width:0.2%"></span></span><span class="bar-val">6 <em>(0.1%)</em></span></div>
+<div class="bar-row"><span class="bar-label">up</span><span class="bar-track"><span class="bar-fill" style="width:0.0%"></span></span><span class="bar-val">1 <em>(0.0%)</em></span></div>
+<div class="bar-row"><span class="bar-label">down</span><span class="bar-track"><span class="bar-fill" style="width:0.2%"></span></span><span class="bar-val">6 <em>(0.1%)</em></span></div></div>
+    </div>
+  </div>
+
+  <h2>Scoring funnel — all 75,099 action trajectories attempted</h2>
+  <p class="lede" style="font-size:14px">What fraction of <em>all</em> attempts clear each gate. GOOD
+  requires all three plus 1&lt;views≤8, non-degenerate, no buried views, no API failures.</p>
+  <div class="bars"><div class="bar-row"><span class="bar-label">grounded (object in final view)</span><span class="bar-track"><span class="bar-fill" style="width:100.0%"></span></span><span class="bar-val">37661 <em>(50.1%)</em></span></div>
+<div class="bar-row"><span class="bar-label">answer correct</span><span class="bar-track"><span class="bar-fill" style="width:56.2%"></span></span><span class="bar-val">21172 <em>(28.2%)</em></span></div>
+<div class="bar-row"><span class="bar-label">answerable from final frame</span><span class="bar-track"><span class="bar-fill" style="width:29.6%"></span></span><span class="bar-val">11156 <em>(14.9%)</em></span></div>
+<div class="bar-row"><span class="bar-label">GOOD (all gates)</span><span class="bar-track"><span class="bar-fill" style="width:10.2%"></span></span><span class="bar-val">3852 <em>(5.1%)</em></span></div></div>
+
+  <h2>30 random samples</h2>
+  
+  <div class="card">
+    <div class="q">Q153 · <span class="scene">scene0003_00</span></div>
+    <div class="question">What type of cabinet is in between a water cooler and a trash can?</div>
+    <div class="strip"><figure><img src="images/153_4_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/153_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">I need to inspect the scene better to identify the cabinet between the water cooler and the trash can, so I should move the camera first.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The water cooler is visible near the center-left, and the trash can is at the lower left. The cabinet between them appears to be a wooden kitchen cabinet / cupboard.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> wooden cabinet
+        <span class="ans-gt">· GT: wooden kitchen</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q488 · <span class="scene">scene0009_00</span></div>
+    <div class="question">What color soap dispenser is on the wall?</div>
+    <div class="strip"><figure><img src="images/488_1_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/488_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can already see a wall-mounted soap dispenser on the right side of the image, and it appears dark gray/black. I should confirm from a better angle before answering, but it is likely black.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The wall-mounted soap dispenser is now clearly visible near the mirror and sink area, and it is white/light-colored.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> white
+        <span class="ans-gt">· GT: white</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1634 · <span class="scene">scene0035_00</span></div>
+    <div class="question">What is the chair near?</div>
+    <div class="strip"><figure><img src="images/1634_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/1634_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can already see a chair in front of a wooden dresser, with a desk nearby. I need one move before answering, so I&#x27;ll adjust slightly to confirm the chair&#x27;s relation.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The chair is next to the desk/table and in front of the dresser.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> the desk
+        <span class="ans-gt">· GT: desk</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1639 · <span class="scene">scene0035_00</span></div>
+    <div class="question">What color is the office chair?</div>
+    <div class="strip"><figure><img src="images/1639_2_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/1639_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The office chair is not clearly visible in this initial view, so I should move to get a better look before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The office chair is now visible beside the desk, and it appears black/dark gray. The most likely color is black.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> black
+        <span class="ans-gt">· GT: black</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1894 · <span class="scene">scene0040_00</span></div>
+    <div class="question">Where is the blue waste basket located?</div>
+    <div class="strip"><figure><img src="images/1894_1_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/1894_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">The blue waste basket is likely near the desk, but I need a clearer view of the floor/desk area to locate it accurately. I’ll move slightly to the right to inspect around the desk and chair.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The blue waste basket appears to be under or beside the desk on the right side of the room, near the chair and beneath the tabletop.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> Under the desk on the right side, next to the chair.
+        <span class="ans-gt">· GT: under desk</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1936 · <span class="scene">scene0040_00</span></div>
+    <div class="question">What is mounted on a wall next to a desk?</div>
+    <div class="strip"><figure><img src="images/1936_4_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/1936_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can already see a whiteboard mounted on the wall next to the desk, but I should move once before answering per instructions. I’ll turn slightly to get a clearer view of the wall area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The wall next to the desk clearly has a whiteboard mounted on it, so that is the object asked about.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a whiteboard
+        <span class="ans-gt">· GT: white board</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q2492 · <span class="scene">scene0060_00</span></div>
+    <div class="question">What is placed next to the card machine?</div>
+    <div class="strip"><figure><img src="images/2492_3_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/2492_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I need a clearer view of the card machine and its surroundings before answering. A slight move forward or turn should help center the counter area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The card machine appears to be the small white terminal-like object on the right side of the copier area. Next to it is a printer/copier machine.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a printer/copier machine
+        <span class="ans-gt">· GT: copier</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q4041 · <span class="scene">scene0192_00</span></div>
+    <div class="question">What color is the chair?</div>
+    <div class="strip"><figure><img src="images/4041_2_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/4041_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The chairs visible on the left and right appear to be dark brown/black leather. I should confirm with a slightly better view before answering, but the color is already fairly clear.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The chair is visible in the new view and appears dark brown leather, with a very dark brown/black tone. I can answer now.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> dark brown
+        <span class="ans-gt">· GT: dark brown</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q4067 · <span class="scene">scene0194_00</span></div>
+    <div class="question">Where is the shelf located?</div>
+    <div class="strip"><figure><img src="images/4067_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/4067_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I need to move to get a clearer view of the room and locate the shelf before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The shelf is visible on the right side of the room, next to the doorway and beside the couch area.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the right side of the room, next to the doorway.
+        <span class="ans-gt">· GT: to right of door</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q4494 · <span class="scene">scene0232_00</span></div>
+    <div class="question">What is the picture hanging on the wall next to?</div>
+    <div class="strip"><figure><img src="images/4494_1_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/4494_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">I can see a framed picture on the right wall, but the question asks what it is hanging next to. From this view, it appears to be next to a window with blinds/curtain area, but I should move slightly to confirm the wall context and nearby object.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The picture is hanging next to the window/mirror area above the sink.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> the window/mirror area above the sink
+        <span class="ans-gt">· GT: next to mirror</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q5626 · <span class="scene">scene0289_00</span></div>
+    <div class="question">What color is the door in the corner of the room?</div>
+    <div class="strip"><figure><img src="images/5626_2_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/5626_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/5626_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/5626_2_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can partially see a doorway/opening near the corner, but the current view is cluttered and not ideal for color confirmation. I should move to get a clearer view of the corner door before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The turn_right view still doesn’t clearly show the corner door. I need a better angle, likely by turning or moving slightly to bring the room corner into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">The view now shows a wall and table, but the door in the corner is still not clearly visible. I need one more move, likely turning further to face the corner where the door is located.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">⟨answer⟩</span></div><div class="think">The door in the corner is now visible; it appears to be a medium brown/tan wooden door. I’m confident enough to answer.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> brown
+        <span class="ans-gt">· GT: brown door</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q6474 · <span class="scene">scene0330_00</span></div>
+    <div class="question">What color is the coffee table in front of two chairs?</div>
+    <div class="strip"><figure><img src="images/6474_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/6474_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">The coffee table in front of the two chairs appears to be light yellow / pale wood in the current view, but I need to move once before answering per instructions. I’ll step slightly closer/right to get a clearer look.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The coffee table in front of the two chairs looks light yellow / pale wood.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> light yellow
+        <span class="ans-gt">· GT: brownish yellow</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q6807 · <span class="scene">scene0336_00</span></div>
+    <div class="question">What is on the wall next to a shelf and under another picture?</div>
+    <div class="strip"><figure><img src="images/6807_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/6807_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">I can already see a shelf on the left wall with framed pictures adjacent to it. The question asks what is on the wall next to a shelf and under another picture, which appears to be a framed picture/photo on the wall. To be sure, I should move a bit to get a clearer look at that area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The wall area next to the shelf and beneath another picture shows a framed picture on the wall.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a framed picture
+        <span class="ans-gt">· GT: picture frame</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q7495 · <span class="scene">scene0362_00</span></div>
+    <div class="question">What is on the couch?</div>
+    <div class="strip"><figure><img src="images/7495_1_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/7495_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">forward</span></div><div class="think">I can already see the couch in the current view, but I need to inspect it more clearly to identify what’s on it. I&#x27;ll move slightly closer/adjust view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The couch is visible now, and there appears to be a pillow/cushion on it. I’ll answer based on that visible object.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> A pillow.
+        <span class="ans-gt">· GT: pillows</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q7691 · <span class="scene">scene0367_00</span></div>
+    <div class="question">What is next to the rectangular door?</div>
+    <div class="strip"><figure><img src="images/7691_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/7691_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">I can see part of a rectangular door on the left wall, but the question asks what is next to it. I should move slightly to get a clearer view of the door and nearby object(s), likely by turning toward it or stepping left.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The rectangular door is visible ahead on the far wall. Immediately next to it, on the right side, there is a black armchair. That appears to be the object beside the door.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> black armchair
+        <span class="ans-gt">· GT: chair</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q8144 · <span class="scene">scene0376_00</span></div>
+    <div class="question">What shape is the brown desk in front of a window?</div>
+    <div class="strip"><figure><img src="images/8144_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/8144_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">The current view shows a brown desk/cabinet in front of a window area, but the shape isn’t fully clear from this angle. I should move slightly to get a clearer look at the desk’s outline before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The brown desk in front of the window appears rectangular.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> rectangular
+        <span class="ans-gt">· GT: rectangular desk</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q8309 · <span class="scene">scene0392_00</span></div>
+    <div class="question">What runs along the wall with a sink in the top?</div>
+    <div class="strip"><figure><img src="images/8309_3_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/8309_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">left</span></div><div class="think">I can partially see a kitchen area, but the question asks what runs along the wall with a sink at the top, so I need a better view of that wall. I’ll move left to inspect the left side of the room and see the sink area more clearly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The sink is along the kitchen wall, and I can see a countertop running continuously along that wall. So what runs along the wall with the sink is a countertop.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> countertop
+        <span class="ans-gt">· GT: l shaped white counter</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q8482 · <span class="scene">scene0397_00</span></div>
+    <div class="question">What is next to the square white chair?</div>
+    <div class="strip"><figure><img src="images/8482_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/8482_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">I can already see a square white chair near the corner. It appears to be next to a floor lamp, so I’ll verify by moving slightly to get a clearer angle.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The square white chair is next to the floor lamp.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> floor lamp
+        <span class="ans-gt">· GT: lamp</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q8666 · <span class="scene">scene0402_00</span></div>
+    <div class="question">What color is the trash can on the floor?</div>
+    <div class="strip"><figure><img src="images/8666_4_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/8666_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is too partial and blurry to confidently identify the trash can on the floor. I should move to get a clearer angle, likely by turning or stepping slightly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">I can now see the trash can near the left side of the room, and it appears to be black/dark gray. The question asks for its color, so I’ll answer with the most visible color.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> black
+        <span class="ans-gt">· GT: black</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q8771 · <span class="scene">scene0404_00</span></div>
+    <div class="question">What is the shape of the brown wooden table?</div>
+    <div class="strip"><figure><img src="images/8771_1_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/8771_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can’t clearly see the brown wooden table shape from this starting view, so I should move to get a better angle. Turning right should bring more of the room and furniture into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The brown wooden table is now visible in the lower part of the view, and its top appears round rather than rectangular.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> round
+        <span class="ans-gt">· GT: half circle</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv1</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q9030 · <span class="scene">scene0416_00</span></div>
+    <div class="question">What type of chair has arms?</div>
+    <div class="strip"><figure><img src="images/9030_4_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/9030_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view shows beds and a chair-like object may be on the right, but the question asks what type of chair has arms. I need to move to inspect the chair more clearly before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The right side of the room is now visible, and there is an armchair/sofa-like seat near the curtains. The chair with arms is an armchair.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> armchair
+        <span class="ans-gt">· GT: brown sofa chair</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q10227 · <span class="scene">scene0464_00</span></div>
+    <div class="question">What picture is on the wall behind the monitor?</div>
+    <div class="strip"><figure><img src="images/10227_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/10227_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">The picture on the wall is too small and blurry from this starting view. I should move closer and adjust angle to inspect the wall behind the monitor more clearly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">I can now see the wall behind the monitor area. The picture appears to be a framed black-and-white portrait of a person.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> A framed black-and-white portrait of a person.
+        <span class="ans-gt">· GT: white and black picture behind monitor on wall</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q10543 · <span class="scene">scene0469_00</span></div>
+    <div class="question">Where is the trash can on the floor of the other bin?</div>
+    <div class="strip"><figure><img src="images/10543_3_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/10543_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">I can see a row of monitors and part of a room, but the trash can mentioned in the question is not clearly visible yet. I should move to get a better view of the floor area and the other bin.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The trash can appears to be on the floor near the right side of the desk area, next to the other bin. It is positioned to the right of the monitors.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the floor to the right of the desk, beside the other bin.
+        <span class="ans-gt">· GT: right beside</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q10747 · <span class="scene">scene0477_00</span></div>
+    <div class="question">What is on the floor of the bathroom vanity?</div>
+    <div class="strip"><figure><img src="images/10747_1_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/10747_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">forward</span></div><div class="think">I can partially see the bathroom vanity straight ahead, but the floor area under it is not clear enough from this starting view. I should move forward to get a better look at what’s on the vanity floor.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The vanity area is now clearer. On the bathroom vanity floor, I can see a small trash can.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> trash can
+        <span class="ans-gt">· GT: beige trashcan</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q10835 · <span class="scene">scene0479_00</span></div>
+    <div class="question">What shape is the toaster oven?</div>
+    <div class="strip"><figure><img src="images/10835_3_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/10835_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can already see the toaster oven on the right side of the counter. Its overall shape appears rectangular/box-like, but I should move once to confirm the view more clearly before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The toaster oven is clearly box-shaped and rectangular.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> rectangular
+        <span class="ans-gt">· GT: rectangular</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q13133 · <span class="scene">scene0555_00</span></div>
+    <div class="question">Where is the monitor located?</div>
+    <div class="strip"><figure><img src="images/13133_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/13133_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/13133_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think"><em>(no think)</em></div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The current view is still not clear enough to identify the monitor confidently, so I should move to get a better angle on the desk area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The monitor is visible on the desk area in the right side of the current view, so I can answer confidently now.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> The monitor is on the desk on the right side of the room.
+        <span class="ans-gt">· GT: on desk</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q14487 · <span class="scene">scene0604_00</span></div>
+    <div class="question">What is in front of the piano?</div>
+    <div class="strip"><figure><img src="images/14487_3_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/14487_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">The piano is on the right side of the current view, and there appears to be a small bench directly in front of it. I should confirm by moving slightly to get a clearer angle.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The piano is clearly visible on the right, and there is a small bench/stool placed directly in front of it.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a bench
+        <span class="ans-gt">· GT: piano bench</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q14803 · <span class="scene">scene0615_00</span></div>
+    <div class="question">What color is the chair in front of the computer?</div>
+    <div class="strip"><figure><img src="images/14803_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/14803_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can already see a desk with a computer and a wooden chair in front of it. The chair appears to be light brown/tan wood. I’ll move once to confirm the view more clearly before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The chair in front of the computer appears to be a light brown/wood color with a beige seat back cushion.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> Light brown
+        <span class="ans-gt">· GT: brown</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q15331 · <span class="scene">scene0635_00</span></div>
+    <div class="question">Where is the red file cabinet?</div>
+    <div class="strip"><figure><img src="images/15331_0_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/15331_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">The current view shows shelves and storage boxes, but no red file cabinet is clearly visible. I should move to get a broader or different angle, likely by turning to scan the room for the cabinet.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The red file cabinet is visible on the left side of the scene, partially in view beside the bookshelf.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the left side of the room, partially visible at the left edge of the view.
+        <span class="ans-gt">· GT: left to shelf</span></div>
+    <div class="tags"><span class="tag explore">explored-to-find</span><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q15691 · <span class="scene">scene0654_00</span></div>
+    <div class="question">What is also included in the range cooktop?</div>
+    <div class="strip"><figure><img src="images/15691_4_turn_00.png" loading="lazy" alt="turn"><figcaption>turn 0</figcaption></figure><figure><img src="images/15691_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The range cooktop is likely on the right side, but the current view is partially obscured. I should move to get a clearer look at what is on/included with the cooktop area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The range cooktop is visible now, and there appears to be a large hood/vent included above it. So the cooktop also includes a hood vent.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> hood vent
+        <span class="ans-gt">· GT: steel range hood</span></div>
+    <div class="tags"><span class="tag">gpt-5.4-mini-2026-03-17</span><span class="tag">rv2</span><span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+
+  <footer>
+    Generated from the in-progress zero-shot collection (<code>results_full</code>). Frames are the enhanced
+    tone-mapped collection renders. A separate gemini-2.5-pro pass is filling the questions gpt failed.
+    ScanNet-derived imagery.
+  </footer>
+</main>
+</body>
+</html>
