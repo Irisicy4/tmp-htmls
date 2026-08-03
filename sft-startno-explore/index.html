@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start-Not-Visible Exploration Trajectories</title>
+<style>
+  html,body{margin:0;font-family:"Charter","Source Serif Pro",Georgia,"Times New Roman",serif;
+    background:#f6f6f4;color:#111827;line-height:1.55;font-size:16px;}
+  main{max-width:1000px;margin:48px auto;background:#fff;border:1px solid #d1d5db;padding:40px 48px;}
+  h1{font-size:26px;margin:0 0 6px;font-weight:600;}
+  h2{font-size:14px;margin:34px 0 10px;color:#4b5563;text-transform:uppercase;letter-spacing:.05em;
+    font-weight:600;font-family:-apple-system,Arial,sans-serif;}
+  p{margin:8px 0;color:#374151;} .lede{color:#4b5563;}
+  code{background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:13px;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;}
+  .tile{border:1px solid #e5e7eb;border-left:3px solid #d97706;padding:14px 16px;background:#fafafa;}
+  .tile-v{font-size:24px;font-weight:700;color:#1f2937;}
+  .tile-l{font-size:12px;color:#6b7280;margin-top:2px;font-family:-apple-system,Arial,sans-serif;}
+  .bars{font-family:-apple-system,Arial,sans-serif;font-size:13px;margin:8px 0;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin:4px 0;}
+  .bar-label{width:90px;color:#374151;text-align:right;}
+  .bar-track{flex:1;background:#f0f0ee;height:16px;border-radius:3px;overflow:hidden;}
+  .bar-fill{display:block;height:100%;background:#d97706;opacity:.85;}
+  .bar-val{width:110px;color:#6b7280;} .bar-val em{font-style:normal;color:#9ca3af;}
+  table.cmp{border-collapse:collapse;font-family:-apple-system,Arial,sans-serif;font-size:14px;margin:6px 0;}
+  table.cmp td,table.cmp th{border:1px solid #e5e7eb;padding:6px 14px;text-align:left;}
+  table.cmp th{background:#faf7f2;color:#4b5563;}
+  .card{border:1px solid #d1d5db;border-radius:4px;padding:18px 20px;margin:16px 0;background:#fff;}
+  .q{font-family:-apple-system,Arial,sans-serif;font-size:12px;color:#9ca3af;}
+  .q .scene{color:#d97706;} .q .nsteps{color:#b45309;font-weight:600;}
+  .question{font-size:18px;font-weight:600;margin:4px 0 12px;}
+  .strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;}
+  .strip figure{margin:0;flex:0 0 auto;}
+  .strip img{height:150px;border:1px solid #d1d5db;border-radius:3px;display:block;background:#000;}
+  .strip figure:first-child img{border:2px solid #d97706;}
+  .strip figcaption{font-size:11px;color:#9ca3af;text-align:center;margin-top:3px;font-family:-apple-system,Arial,sans-serif;}
+  .steps{margin:12px 0;}
+  .step{border-left:2px solid #e5e7eb;padding:2px 0 2px 12px;margin:8px 0;}
+  .step-head{font-family:-apple-system,Arial,sans-serif;font-size:12px;margin-bottom:2px;}
+  .step-n{color:#9ca3af;margin-right:8px;}
+  .act{background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:10px;font-weight:600;}
+  .think{color:#374151;font-size:15px;}
+  .ans{margin-top:10px;font-size:16px;} .ans-model{font-weight:700;color:#065f46;}
+  .ans-gt{color:#6b7280;font-size:14px;}
+  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{font-family:-apple-system,Arial,sans-serif;font-size:11px;background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:10px;}
+  .tag.explore{background:#fef3c7;color:#92400e;} .tag.ok{background:#dcfce7;color:#166534;}
+  footer{color:#6b7280;font-size:13px;margin-top:36px;border-top:1px solid #d1d5db;padding-top:12px;font-family:-apple-system,Arial,sans-serif;}
+  a{color:#d97706;}
+</style>
+</head>
+<body>
+<main>
+  <h1>Start-Not-Visible Exploration Trajectories</h1>
+  <p class="lede">Same gpt-5.4-mini + thinking-in-space render pipeline, but each trajectory
+  <strong>starts from a free-space pose at a random yaw where the target object is off-frame</strong>
+  (occlusion-aware geometric check). The model must <strong>explore to find the object</strong> before
+  it can answer — so every GOOD trajectory here is explored-to-find by construction, unlike the plain
+  run where the object was usually already framed at the start. The first frame in each strip
+  (orange border) is the hidden start.</p>
+
+  <h2>Step statistics — GOOD bank</h2>
+  <div class="tiles"><div class="tile"><div class="tile-v">316</div><div class="tile-l">explore GOOD trajectories</div></div>
+<div class="tile"><div class="tile-v">68</div><div class="tile-l">distinct scenes</div></div>
+<div class="tile"><div class="tile-v">100%</div><div class="tile-l">explored-to-find (by design)</div></div>
+<div class="tile"><div class="tile-v">1.55</div><div class="tile-l">mean move-steps (GOOD)</div></div>
+<div class="tile"><div class="tile-v">2.07</div><div class="tile-l">mean move-steps (all attempts)</div></div>
+<div class="tile"><div class="tile-v">28%</div><div class="tile-l">GOOD using ≥3 views</div></div></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+    <div>
+      <h2>Views per GOOD trajectory</h2>
+      <div class="bars"><div class="bar-row"><span class="bar-label">2 views</span><span class="bar-track"><span class="bar-fill" style="width:100.0%"></span></span><span class="bar-val">228 <em>(72.2%)</em></span></div>
+<div class="bar-row"><span class="bar-label">3 views</span><span class="bar-track"><span class="bar-fill" style="width:20.6%"></span></span><span class="bar-val">47 <em>(14.9%)</em></span></div>
+<div class="bar-row"><span class="bar-label">4 views</span><span class="bar-track"><span class="bar-fill" style="width:7.5%"></span></span><span class="bar-val">17 <em>(5.4%)</em></span></div>
+<div class="bar-row"><span class="bar-label">5 views</span><span class="bar-track"><span class="bar-fill" style="width:4.8%"></span></span><span class="bar-val">11 <em>(3.5%)</em></span></div>
+<div class="bar-row"><span class="bar-label">6 views</span><span class="bar-track"><span class="bar-fill" style="width:3.1%"></span></span><span class="bar-val">7 <em>(2.2%)</em></span></div>
+<div class="bar-row"><span class="bar-label">7 views</span><span class="bar-track"><span class="bar-fill" style="width:1.8%"></span></span><span class="bar-val">4 <em>(1.3%)</em></span></div>
+<div class="bar-row"><span class="bar-label">8 views</span><span class="bar-track"><span class="bar-fill" style="width:0.9%"></span></span><span class="bar-val">2 <em>(0.6%)</em></span></div></div>
+    </div>
+    <div>
+      <h2>vs. visible-start bank</h2>
+      <table class="cmp"><tr><th></th><th>start-hidden</th><th>visible-start</th></tr>
+  <tr><td>mean views</td><td>2.55</td><td>2.11</td></tr>
+  <tr><td>mean move-steps</td><td><strong>1.55</strong></td><td>1.11</td></tr>
+  <tr><td>GOOD using ≥3 views</td><td><strong>27.8%</strong></td><td>7.4%</td></tr>
+  <tr><td>start object visible</td><td><strong>0%</strong> (hidden)</td><td>~50%</td></tr></table>
+      <p class="lede" style="font-size:13px">Hidden starts add ~40% more move-steps in the GOOD bank
+      (1.55 vs 1.11); the full attempt set averages
+      2.07 steps with a real tail hitting the 8-view cap.</p>
+    </div>
+  </div>
+
+  <h2>30 examples (multi-step first)</h2>
+  
+  <div class="card">
+    <div class="q">Q733 · <span class="scene">scene0012_00</span>
+      · <span class="nsteps">6 move-step(s)</span></div>
+    <div class="question">How many chairs are kept near the coffee table?</div>
+    <div class="strip"><figure><img src="images/733_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/733_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/733_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/733_2_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure><figure><img src="images/733_2_turn_04.png" loading="lazy" alt="turn"><figcaption>turn 4</figcaption></figure><figure><img src="images/733_2_turn_05.png" loading="lazy" alt="turn"><figcaption>turn 5</figcaption></figure><figure><img src="images/733_2_turn_06.png" loading="lazy" alt="turn"><figcaption>turn 6</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can’t reliably see the coffee table or any chairs from this starting view, so I need to move to get a better angle before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The current view shows a wall, projector screen, and closet, but no coffee table or chairs. I should move to a different viewpoint to locate the seating area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">This view still only shows closets and a wall; the coffee table and chairs are not visible. I need to rotate further toward the seating area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">turn_right</span></div><div class="think">The camera is still facing the closets, not the coffee table. I need a different direction, likely continuing the turn, to find the seating area with the table and chairs.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 4</span><span class="act">turn_right</span></div><div class="think">The view still does not show the coffee table, but this room seems to have a seating area elsewhere. I should continue turning to locate the table and chairs directly before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 5</span><span class="act">turn_right</span></div><div class="think">This view shows the corner with shelving and a chair/sofa arm, but still not the coffee table area clearly. Since the question asks for chairs near the coffee table, I need to locate the table itself, likely by turning further right or moving slightly to bring the living area into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 6</span><span class="act">⟨answer⟩</span></div><div class="think">The coffee table is still not visible, but I can see two chairs in the frame. Since the question asks how many chairs are kept near the coffee table, and this appears to be the seating area around it, the likely count is two chairs.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> 2
+        <span class="ans-gt">· GT: 2</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1899 · <span class="scene">scene0040_00</span>
+      · <span class="nsteps">5 move-step(s)</span></div>
+    <div class="question">What kind of handles are on the door?</div>
+    <div class="strip"><figure><img src="images/1899_1_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1899_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1899_1_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/1899_1_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure><figure><img src="images/1899_1_turn_04.png" loading="lazy" alt="turn"><figcaption>turn 4</figcaption></figure><figure><img src="images/1899_1_turn_05.png" loading="lazy" alt="turn"><figcaption>turn 5</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The door is not clearly visible in this starting view, so I should move to get a better look at the room and door area before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The door is still not visible; I need to keep exploring. Turning further right may bring the door into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">I can see an office-like scene, but the door is still not in view. I need to move or turn further to locate the door and inspect its handle type.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">turn_right</span></div><div class="think">The door still isn’t visible, but this view shows an office wall and furniture; I need to keep searching for the door before I can identify its handle.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 4</span><span class="act">turn_right</span></div><div class="think">I still don’t see a door here; this view shows a desk and shelves. I need to keep turning to locate the door and inspect its handle.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 5</span><span class="act">⟨answer⟩</span></div><div class="think">The door is now visible. It has a metallic lever-style handle, not a knob.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> metal lever handle
+        <span class="ans-gt">· GT: metal handles</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q264 · <span class="scene">scene0006_00</span>
+      · <span class="nsteps">4 move-step(s)</span></div>
+    <div class="question">What is next to the little table?</div>
+    <div class="strip"><figure><img src="images/264_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/264_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/264_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/264_0_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure><figure><img src="images/264_0_turn_04.png" loading="lazy" alt="turn"><figcaption>turn 4</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view only shows part of a bed and wall; the little table is not visible yet. I need to move to get a better view of the room and locate the table and what is next to it.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The new view still mostly shows the bed, curtain, and wall; the little table is not clearly visible yet. I should keep turning to bring more of the room into view, especially near the bed where a little table is likely placed.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">The view is still dominated by curtain and a washed-out bright area, so the little table is not yet visible. I should turn further to find the table and what is beside it.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">turn_right</span></div><div class="think">The view is now overexposed and only partially useful, but I can make out the bed edge and curtains; the little table still isn’t clearly visible. I need a better angle, so I’ll keep turning to bring the bedside area into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 4</span><span class="act">⟨answer⟩</span></div><div class="think">Now the little round table is visible, and next to it I can see a chair. The most obvious object beside the little table is the chair.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> chair
+        <span class="ans-gt">· GT: chairs</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q2447 · <span class="scene">scene0056_00</span>
+      · <span class="nsteps">4 move-step(s)</span></div>
+    <div class="question">How many desktop computers are on the smallest table?</div>
+    <div class="strip"><figure><img src="images/2447_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/2447_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/2447_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/2447_2_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure><figure><img src="images/2447_2_turn_04.png" loading="lazy" alt="turn"><figcaption>turn 4</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is partially blocked, and the smallest table is likely on the right side. I need a clearer look at the desktops, so I should move to improve the view. Turning right may reveal the smaller table better.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">forward</span></div><div class="think">The view now shows part of a desk/table area, but the smallest table and its desktop computers are still not clearly visible enough. I should move closer/adjust to get a better angle on the tables, likely by moving forward.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_left</span></div><div class="think">The new view shows wall boards and no tables, so I still can&#x27;t directly count the desktop computers on the smallest table. I need to adjust toward the furniture area, likely by turning left to bring the tables into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">turn_left</span></div><div class="think">I can now see a desk area with a computer monitor on the left. However, the question asks about the smallest table, and the full table arrangement is still not clearly visible. I should continue moving/turning to inspect the furniture cluster and identify the smallest table and how many desktop computers are on it.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 4</span><span class="act">⟨answer⟩</span></div><div class="think">The view now clearly shows a table with multiple desktop monitors. The smallest table appears to be the small desk in the foreground/right area, and I can see one desktop computer on it. Therefore the answer is 1.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> 1
+        <span class="ans-gt">· GT: 1</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1018 · <span class="scene">scene0024_00</span>
+      · <span class="nsteps">4 move-step(s)</span></div>
+    <div class="question">Where is the picture of an outdoor scene in a gold frame?</div>
+    <div class="strip"><figure><img src="images/1018_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1018_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1018_4_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/1018_4_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure><figure><img src="images/1018_4_turn_04.png" loading="lazy" alt="turn"><figcaption>turn 4</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">The gold-framed outdoor picture is likely on the right side near the mantel/fireplace, but the current view is partially obscured. I should move right to get a clearer view of that wall area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">right</span></div><div class="think">I can see a wall-mounted picture to the right of the fireplace area, but the gold frame isn&#x27;t clearly visible yet. I should move a bit closer/right again to inspect that wall.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_left</span></div><div class="think">The gold-framed outdoor picture is not clearly visible from this angle, and the coverage is worse. I should stop moving sideways and instead turn left a bit to face the wall near the fireplace more directly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">turn_left</span></div><div class="think">The turn left shows the fireplace/right wall area more clearly, but the specific gold-framed outdoor picture still isn&#x27;t fully visible. I should keep turning left a bit to bring that wall into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 4</span><span class="act">⟨answer⟩</span></div><div class="think">The picture is now visible: it is the gold-framed landscape hanging on the wall above the brown couch, on the left side of the room near the center of the current view. I can answer confidently.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> Above the brown couch on the left side of the room.
+        <span class="ans-gt">· GT: wall above couch</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1422 · <span class="scene">scene0031_00</span>
+      · <span class="nsteps">3 move-step(s)</span></div>
+    <div class="question">Where is the gray square ottoman located?</div>
+    <div class="strip"><figure><img src="images/1422_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1422_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1422_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/1422_2_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">backward</span></div><div class="think">The current view is too close to a wall/objects and doesn&#x27;t clearly show the gray square ottoman. I should move to get a wider, more informative view of the room.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">I now have a wider view, but the gray square ottoman still isn&#x27;t visible clearly. I need to change viewpoint further to locate it, likely by turning toward the room interior.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">The ottoman is not clearly visible yet, but I can see a seating area on the right side; the gray square ottoman is likely beside the chair/sofa in that corner. I should continue turning a bit to bring that area into view more directly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">⟨answer⟩</span></div><div class="think">The right side seating area is now visible. I can see a tan sofa, an armchair, and a low square gray ottoman/table in front of the armchair near the wall. So the gray square ottoman is beside the armchair and next to the sofa in the seating area.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> The gray square ottoman is in the seating area, next to the armchair and in front of the sofa, against the wall on the right side of the room.
+        <span class="ans-gt">· GT: beside couch</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1221 · <span class="scene">scene0027_00</span>
+      · <span class="nsteps">3 move-step(s)</span></div>
+    <div class="question">The music stand is next to what?</div>
+    <div class="strip"><figure><img src="images/1221_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1221_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1221_4_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/1221_4_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can’t clearly see the music stand from this initial view, so I should move to get a better angle before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The new view still doesn’t clearly show a music stand. I can see some furniture, but the likely object is not centered. I should keep exploring with another turn to bring more of the room into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">The music stand is likely near the chairs/benches on the right side, but it still isn’t clearly visible. I need one more move to get a clearer view of that area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">⟨answer⟩</span></div><div class="think">The music stand is now visible on the right side, next to the chair/bench seating. Since the question asks what it is next to, the clearest adjacent object is the chair.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> the chair
+        <span class="ans-gt">· GT: chair</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1630 · <span class="scene">scene0035_00</span>
+      · <span class="nsteps">3 move-step(s)</span></div>
+    <div class="question">Where is the bed?</div>
+    <div class="strip"><figure><img src="images/1630_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1630_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1630_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure><figure><img src="images/1630_0_turn_03.png" loading="lazy" alt="turn"><figcaption>turn 3</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can see furniture and a chair, but not the bed yet. I should move to get a broader view of the room, likely by turning to scan the space first.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The current view still shows mostly a desk and chair, with no bed visible. I need a different angle, likely moving forward or turning further to reveal more of the room. I&#x27;ll turn right again to scan farther across the space.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">turn_right</span></div><div class="think">The view still shows the desk and chair by the window, but not the bed. The bed is likely elsewhere in the room, probably to the left or behind me relative to this current view, so I should keep rotating to find it.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 3</span><span class="act">⟨answer⟩</span></div><div class="think">The bed is now visible on the right side of the view, next to the window. I can answer confidently based on this view.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> The bed is on the right side of the room, next to the window.
+        <span class="ans-gt">· GT: in front of window / right of night stand</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q235 · <span class="scene">scene0005_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">How many chairs is the brown desk facing?</div>
+    <div class="strip"><figure><img src="images/235_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/235_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/235_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">backward</span></div><div class="think">The current view is too close and mostly occluded, so I need to move to get a better look at the desk and nearby chairs. I’ll step backward first.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The brown desk is visible, but the chairs are still not clearly in frame. I need a better angle, likely by turning to face the desk and seating area more directly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The view now clearly shows the brown desk at right, and I can identify two chairs facing it: one in the center/back and one on the left foreground. So the desk is facing 2 chairs.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> 2
+        <span class="ans-gt">· GT: 2</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q210 · <span class="scene">scene0005_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">Where is the green chair next to another green chair?</div>
+    <div class="strip"><figure><img src="images/210_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/210_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/210_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">The current view is too close/rotated and the chair is only partially visible on the left. I should move to get a clearer look at the chair cluster and determine where the green chair is relative to another green chair.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_left</span></div><div class="think">I can now see a pair of green chairs near the colorful stacked chairs area, but the view is still not centered on them. Turning slightly more left should bring the chairs into clearer view so I can answer their location accurately.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The green chair pair is now clearly visible on the left side of the view, next to each other by the table. The question asks where the green chair next to another green chair is, so its location is on the left side of the scene, beside the table.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the left side of the scene, next to the table.
+        <span class="ans-gt">· GT: at brown table</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q866 · <span class="scene">scene0022_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">What color is the round table on the carpet?</div>
+    <div class="strip"><figure><img src="images/866_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/866_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/866_4_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can partially see a table and chairs, but the round table on the carpet is not clearly visible from this starting angle. I should move to get a better view before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The turn-right view shows a tabletop and chairs, but not the round table on the carpet clearly enough. I should adjust further to bring more of the room and floor area into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The round table visible on the left appears to have a light wood/tan top. The question asks for the color of the round table on the carpet, so the answer is tan/brown.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> light wood brown
+        <span class="ans-gt">· GT: brown / brown</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1225 · <span class="scene">scene0027_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">Where are the chairs located?</div>
+    <div class="strip"><figure><img src="images/1225_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1225_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1225_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is dominated by a couch and wall, and chairs are not visible yet. I should move/turn to explore the room and locate them before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The turn-right view still mostly shows the couch and a dark chair-like object at the right edge, but the chairs are not fully clear. I should keep exploring to get a better, more centered view of the seating area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The chairs are now visible: two chairs are placed side by side near the wall, on the right side of the seating area.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> They are side by side against the wall on the right side of the room.
+        <span class="ans-gt">· GT: against wall</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q559 · <span class="scene">scene0010_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">What is placed under the working desk?</div>
+    <div class="strip"><figure><img src="images/559_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/559_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/559_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">forward</span></div><div class="think">I can see a desk with office chairs and computer monitors, but the area under the desk is not clearly visible from this starting view. I should move to get a better look under the working desk.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_down</span></div><div class="think">The desk surface is visible but the view is still partly occluded and under-desk area is not clear. I should adjust viewpoint further, likely turning to inspect beneath the desk.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">Now the under-desk area is visible. I can see a black drawer cabinet or pedestal placed beneath the working desk on the left side.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a black drawer cabinet
+        <span class="ans-gt">· GT: file cabinet</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q2229 · <span class="scene">scene0047_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">Where is the chair placed in the center of the room?</div>
+    <div class="strip"><figure><img src="images/2229_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/2229_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/2229_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">backward</span></div><div class="think">The current view shows mostly the kitchen area, but the chair in the center of the room is not visible. I need to move to get a broader view of the room, likely by stepping backward or turning to find the chair.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">left</span></div><div class="think">The new view is still focused on the kitchen and part of a table on the left, but it does not clearly show the chair in the center of the room. I should turn to look more toward the room’s center.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The chair is now visible near the center area, tucked by the table in the middle of the room. It appears placed beside the table, facing into the room.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> It is placed next to the table in the center of the room.
+        <span class="ans-gt">· GT: at table</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1045 · <span class="scene">scene0024_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">What color are the back cushions of the couch?</div>
+    <div class="strip"><figure><img src="images/1045_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1045_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1045_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can’t clearly see the couch or its back cushions from this starting view, so I need to move the camera to get a better view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The current view is mostly a window and wall, and the couch/back cushions are still not visible. I should move again to locate the couch.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The couch is now visible. The back cushions appear to be dark brown, matching the couch upholstery.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> Dark brown
+        <span class="ans-gt">· GT: brown / brown</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1332 · <span class="scene">scene0029_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">What is hanging on the door of the tub?</div>
+    <div class="strip"><figure><img src="images/1332_3_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1332_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1332_3_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">I can’t clearly see the tub door or what is hanging on it from this starting view, so I need to move to get a better angle.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_left</span></div><div class="think">I still don’t have a clear view of the tub door or the hanging object, so I should adjust again to bring the bathroom fixtures into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The view now clearly shows a light-colored towel or cloth hanging on the door of the tub. I can answer confidently.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> towel
+        <span class="ans-gt">· GT: towel</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1501 · <span class="scene">scene0033_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">What shape is the coffee table?</div>
+    <div class="strip"><figure><img src="images/1501_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1501_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1501_4_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">backward</span></div><div class="think">The current view is too close and obscured to identify the coffee table shape. I should move to get a clearer view of the living area and the table.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_left</span></div><div class="think">The view is still not clear enough to distinguish the coffee table shape. I need a better angle, likely by turning toward the seating area/table.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The coffee table in the foreground appears round/oval. I can answer confidently from this view.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> round
+        <span class="ans-gt">· GT: round</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q101 · <span class="scene">scene0003_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">What color is the paper box above the sink?</div>
+    <div class="strip"><figure><img src="images/101_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/101_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/101_2_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">left</span></div><div class="think">I can see a black refrigerator and part of the sink area, but the paper box above the sink is not clearly visible from this starting view. I should move to get a better angle on the sink/counter area.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_left</span></div><div class="think">The sink area is now visible, but the paper box above it is still not clearly in frame. I should adjust slightly to center the wall above the sink.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think"><em>(no think)</em></div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> The paper box above the sink is black.
+        <span class="ans-gt">· GT: black</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q928 · <span class="scene">scene0022_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">Where is the large black sofa chair located?</div>
+    <div class="strip"><figure><img src="images/928_0_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/928_0_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/928_0_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is mostly a wall and doesn&#x27;t show the sofa chair. I should move/turn to search the room and locate the large black sofa chair before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">The view now shows a dining area with tables and chairs, but not the large black sofa chair yet. I should keep exploring in the direction of the room, likely moving forward or turning further to reveal adjacent seating.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The black sofa chair is visible on the right side of the current view, placed along the right wall near the seating area and beside the low table. Since it is clearly in frame now, I can answer.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the right side of the room, along the wall next to the table.
+        <span class="ans-gt">· GT: right of black couch</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1203 · <span class="scene">scene0027_00</span>
+      · <span class="nsteps">2 move-step(s)</span></div>
+    <div class="question">On what side of the room is the chair located?</div>
+    <div class="strip"><figure><img src="images/1203_1_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1203_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure><figure><img src="images/1203_1_turn_02.png" loading="lazy" alt="turn"><figcaption>turn 2</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is too close and mostly shows a wall/sofa edge, so I need to move to get better spatial context and locate the chair.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">turn_right</span></div><div class="think">This view still mostly shows the couch and wall, but I can see a chair-like object partly on the right side. I need a bit more rightward turn to confirm its position in the room.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 2</span><span class="act">⟨answer⟩</span></div><div class="think">The chair is now visible on the right side of the room, near the couch.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> Right side of the room.
+        <span class="ans-gt">· GT: right</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1366 · <span class="scene">scene0029_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">Where is the white towel hanging?</div>
+    <div class="strip"><figure><img src="images/1366_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1366_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">right</span></div><div class="think">The white towel is only partially visible at the far right edge, so I need a slightly different viewpoint to confirm its location relative to nearby fixtures. I’ll move right to bring that side into view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The white towel is hanging on the wall-mounted towel rack/rod in the bathroom, on the right side of the scene.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the wall-mounted towel rack/rod on the right side of the bathroom.
+        <span class="ans-gt">· GT: above toilet</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1295 · <span class="scene">scene0029_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">What color is the shower curtain?</div>
+    <div class="strip"><figure><img src="images/1295_1_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1295_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_left</span></div><div class="think">The current view already shows the shower curtain on the left side, and it appears to be off-white/cream. I should move slightly to confirm, since I’m required to explore first.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think"><em>(no think)</em></div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> The shower curtain is beige/cream.
+        <span class="ans-gt">· GT: tan / tan</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q960 · <span class="scene">scene0023_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">What color office chair is pushed against a wooden table?</div>
+    <div class="strip"><figure><img src="images/960_3_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/960_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is too obscured to identify the chair color confidently. I should move to get a clearer view of the table and chair area, likely by turning right toward the visible office furniture.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The view now clearly shows a wooden table with an office chair pushed against it. The chair appears dark gray/black in color. I’m confident enough to answer.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> black
+        <span class="ans-gt">· GT: black office chair / black</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1365 · <span class="scene">scene0029_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">What is hanging on a white door?</div>
+    <div class="strip"><figure><img src="images/1365_3_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1365_3_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can already see a bathroom-like scene with towels hanging on a rack, but the question asks what is hanging on a white door. I should move to get a clearer view of the white door area and confirm the object.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The white door is visible on the right, and there is a towel hanging on it.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a towel
+        <span class="ans-gt">· GT: towel</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q2106 · <span class="scene">scene0044_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">What is attached or built in on the wall?</div>
+    <div class="strip"><figure><img src="images/2106_1_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/2106_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is blurry and only partially shows the wall and a wooden door. The question asks what is attached or built in on the wall, so I need a clearer look at the wall fixtures. I should move/turn to inspect the wall more directly.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The wall fixture is now visible: there is a wall-mounted lamp/light attached to the wall. That is the built-in/attached object being asked about.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a wall lamp
+        <span class="ans-gt">· GT: light</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1464 · <span class="scene">scene0032_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">What color is the chair with arms?</div>
+    <div class="strip"><figure><img src="images/1464_1_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1464_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I can see a window and walls, but no chair with arms is visible yet. I should move to get a better view of the room contents, likely turning toward the interior.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The chair with arms is now visible on the right side of the view, and it appears to be black/dark-colored.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> black
+        <span class="ans-gt">· GT: black / black</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q1784 · <span class="scene">scene0038_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">Which side of the table has 3 chairs?</div>
+    <div class="strip"><figure><img src="images/1784_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/1784_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I need to inspect the scene from another angle before answering, since the current view only partially shows the table and chairs.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The table is on the right, and I can see three chairs associated with the table on its far/right side from this viewpoint. Therefore, the side with 3 chairs is the right side.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> right side
+        <span class="ans-gt">· GT: right side</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q42 · <span class="scene">scene0002_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">What is the black microwave on top of?</div>
+    <div class="strip"><figure><img src="images/42_4_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/42_4_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is too unclear to identify the microwave and what it rests on, so I should move to get a better angle before answering.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The black microwave is visible on the black appliance stack, and it appears to be sitting on top of a gray mini-fridge or small refrigerator.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> a gray mini-fridge
+        <span class="ans-gt">· GT: mini fridge</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q643 · <span class="scene">scene0010_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">Where is the black speaker located?</div>
+    <div class="strip"><figure><img src="images/643_1_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/643_1_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">I need to inspect the scene to locate the black speaker before answering, so I&#x27;ll move to get a clearer view.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The black speaker is visible on the desk to the right of the monitor, so it is located on the right side of the desk next to the computer screen.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> On the right side of the desk, next to the monitor.
+        <span class="ans-gt">· GT: right of monitor / on desk</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+  <div class="card">
+    <div class="q">Q114 · <span class="scene">scene0003_00</span>
+      · <span class="nsteps">1 move-step(s)</span></div>
+    <div class="question">Where are beige wooden cabinets placed?</div>
+    <div class="strip"><figure><img src="images/114_2_turn_00.png" loading="lazy" alt="turn"><figcaption>start (object off-frame)</figcaption></figure><figure><img src="images/114_2_turn_01.png" loading="lazy" alt="turn"><figcaption>turn 1</figcaption></figure></div>
+    <div class="steps"><div class="step"><div class="step-head"><span class="step-n">turn 0</span><span class="act">turn_right</span></div><div class="think">The current view is too partial, but beige wooden cabinets are visible ahead/right. I should move to get a clearer sense of their placement relative to the room, likely by turning toward them.</div></div><div class="step"><div class="step-head"><span class="step-n">turn 1</span><span class="act">⟨answer⟩</span></div><div class="think">The beige wooden cabinets are mounted on the kitchen wall above the countertop and sink, with additional matching lower cabinets below the counter near the refrigerator.</div></div></div>
+    <div class="ans"><span class="ans-model">answer:</span> They are in the kitchen, mounted along the wall above the sink/countertop, with matching lower cabinets beneath the counter.
+        <span class="ans-gt">· GT: above kitchen counter</span></div>
+    <div class="tags"><span class="tag explore">start hidden → found</span>
+        <span class="tag">gpt-5.4-mini-2026-03-17</span>
+        <span class="tag ok">grounded · correct · last-frame ✓</span></div>
+  </div>
+
+  <footer>
+    In-progress collection (<code>results_gpt_startno</code>, 316 GOOD so far). Samples biased toward multi-step
+    trajectories so the exploration is visible; the bank overall skews to 2 views (see the chart).
+    Enhanced tone-mapped renders. ScanNet-derived imagery.
+  </footer>
+</main>
+</body>
+</html>
