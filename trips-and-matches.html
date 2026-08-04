@@ -129,9 +129,9 @@ const FLIGHTS = [
 /* big tags: anchor = venue lat/lon, box = tuned position in viewBox coords.
    Fixtures researched from the passes' match numbers/dates (verified Aug 2026). */
 const TAGS = [
-  {kind:'wc',  kicker:'WORLD CUP · MATCH 23 · GROUP L', title:'GHA 1–0 PAN', iconL:{flag:'GHA'}, iconR:{flag:'PAN'},
-   meta1:'Jun 17 · BMO Field, Toronto · ×2', meta2:'Yirenkyi wins it in 90+5′',
-   anchor:[43.633,-79.418], x:560, y:46, w:206},
+  {kind:'wc',  kicker:'WORLD CUP · MATCH 23 · GROUP K', title:'POR 1–1 COD', iconL:{flag:'POR'}, iconR:{flag:'COD'},
+   meta1:'Jun 17 · NRG Stadium, Houston · ×2', meta2:'Group K opener ends all square',
+   anchor:[29.6847,-95.4107], x:560, y:320, w:206},
   {kind:'wc',  kicker:'WORLD CUP · MATCH 74 · RD OF 32', title:'GER 1–1 PAR', iconL:{flag:'GER'}, iconR:{flag:'PAR'},
    meta1:'Jun 29 · Gillette Stadium, Boston · ×2', meta2:'Paraguay through 4–3 on penalties',
    anchor:[42.091,-71.264], x:788, y:36, w:206},
@@ -154,8 +154,8 @@ const TAGS = [
 
 /* team icons: simplified national flags + NBA team-color chips */
 const FLAGS = {
-  GHA: {type:'h', bands:['#CE1126','#FCD116','#006B3F'], star:'#000000'},
-  PAN: {type:'quarters'},
+  POR: {type:'por'},
+  COD: {type:'cod'},
   GER: {type:'h', bands:['#000000','#DD0000','#FFCE00']},
   PAR: {type:'h', bands:['#D52B1E','#FFFFFF','#0038A8']},
   FRA: {type:'v', bands:['#0055A4','#FFFFFF','#EF4135']},
@@ -256,13 +256,21 @@ function drawFlag(parent, x, y, code, w, h) {
     el('rect', {x:x+w*0.3, y, width:w*0.16, height:h, fill:f.cross}, g);
     el('rect', {x, y:y+h*0.4, width:w, height:h*0.2, fill:f.cross}, g);
   }
-  if (f.type === 'quarters') {
-    el('rect', {x, y, width:w/2, height:h/2, fill:'#FFFFFF'}, g);
-    el('rect', {x:x+w/2, y, width:w/2, height:h/2, fill:'#D21034'}, g);
-    el('rect', {x, y:y+h/2, width:w/2, height:h/2, fill:'#005293'}, g);
-    el('rect', {x:x+w/2, y:y+h/2, width:w/2, height:h/2, fill:'#FFFFFF'}, g);
-    el('circle', {cx:x+w/4, cy:y+h/4, r:1.3, fill:'#005293'}, g);
-    el('circle', {cx:x+w*0.75, cy:y+h*0.75, r:1.3, fill:'#D21034'}, g);
+  if (f.type === 'por') {
+    el('rect', {x, y, width:w*0.4, height:h, fill:'#046A38'}, g);
+    el('rect', {x:x+w*0.4, y, width:w*0.6, height:h, fill:'#DA291C'}, g);
+    el('circle', {cx:x+w*0.4, cy:y+h/2, r:2.6, fill:'#FFE900'}, g);
+    el('circle', {cx:x+w*0.4, cy:y+h/2, r:1.2, fill:'#DA291C'}, g);
+  }
+  if (f.type === 'cod') {
+    el('rect', {x, y, width:w, height:h, fill:'#007FFF'}, g);
+    el('line', {x1:x, y1:y+h, x2:x+w, y2:y, stroke:'#F7D618', 'stroke-width':5.5}, g);
+    el('line', {x1:x, y1:y+h, x2:x+w, y2:y, stroke:'#CE1021', 'stroke-width':3.5}, g);
+    const st = txt(x+4.5, y+6.5, '', '★');
+    st.setAttribute('text-anchor', 'middle');
+    st.setAttribute('font-size', '5.5');
+    st.setAttribute('fill', '#F7D618');
+    g.appendChild(st);
   }
   if (f.star) {
     const s = txt(x+w/2, y+h/2+2.6, '', '★');
