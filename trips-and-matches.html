@@ -17,6 +17,7 @@
     --route:     #4da3ff;
     --wc:        #f4762e;
     --nba:      #9d8cff;
+    --gig:      #e87ba4;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
@@ -56,6 +57,7 @@
   .tag-box    { fill: rgba(13,17,24,0.88); stroke-width: 1.2; rx: 9px; }
   .tag-box.wc  { stroke: var(--wc); }
   .tag-box.nba { stroke: var(--nba); }
+  .tag-box.gig { stroke: var(--gig); }
   .tag-kicker { fill: var(--ink-2); font-size: 7.5px; font-weight: 750; letter-spacing: 0.1em; }
   .tag-title  { fill: var(--ink); font-size: 14px; font-weight: 800; }
   .tag-meta   { fill: var(--ink-2); font-size: 8.5px; }
@@ -63,8 +65,10 @@
   .leader { fill: none; stroke-width: 1; opacity: 0.55; stroke-dasharray: 3 3; }
   .leader.wc  { stroke: var(--wc); }
   .leader.nba { stroke: var(--nba); }
+  .leader.gig { stroke: var(--gig); }
   .anchor.wc  { fill: var(--wc); }
   .anchor.nba { fill: var(--nba); }
+  .anchor.gig { fill: var(--gig); }
 
   .foot { fill: var(--muted); font-size: 8px; }
 
@@ -136,10 +140,16 @@ const TAGS = [
    anchor:[40.813,-74.074], x:788, y:330, w:206},
   {kind:'nba', kicker:'NBA · WEST SEMIS · GAME 4', title:'OKC @ LAKERS', iconL:{chip:'OKC'}, iconR:{chip:'LAL'},
    meta1:'May 11 · Crypto.com Arena · Sec 116 · ×2', meta2:'OKC complete the 4–0 sweep',
-   anchor:[34.043,-118.267], x:290, y:252, w:206},
+   anchor:[34.043,-118.267], x:180, y:246, w:206},
   {kind:'nba', kicker:'NBA · EAST FINALS · GAME 4', title:'KNICKS @ CAVS', iconL:{chip:'NYK'}, iconR:{chip:'CLE'},
    meta1:'May 25 · watched at Cosm, Inglewood · ×2', meta2:'Won 130–93 — swept into the Finals',
-   anchor:[33.961,-118.342], x:290, y:322, w:206}
+   anchor:[33.961,-118.342], x:180, y:316, w:206},
+  {kind:'nba', kicker:'NBA · REGULAR SEASON', title:'LAC 103–88 LAL', iconL:{chip:'LAC'}, iconR:{chip:'LAL'},
+   meta1:'Dec 20, 2025 · Intuit Dome, Inglewood', meta2:'Kawhi 32 · LeBron 36 in defeat',
+   anchor:[33.945,-118.341], x:180, y:386, w:206},
+  {kind:'gig', kicker:'CONCERT · THE FREEDOM TOUR', title:'KESHA', iconL:{note:true},
+   meta1:'May 24, 2026 · Kia Forum, Inglewood', meta2:'Night before the flight back to SEA',
+   anchor:[33.958,-118.342], x:396, y:386, w:206}
 ];
 
 /* team icons: simplified national flags + NBA team-color chips */
@@ -151,7 +161,7 @@ const FLAGS = {
   FRA: {type:'v', bands:['#0055A4','#FFFFFF','#EF4135']},
   SWE: {type:'nordic', field:'#006AA7', cross:'#FECC02'}
 };
-const CHIPS = { OKC:['#007AC1','#EF3B24'], LAL:['#552583','#FDB927'], NYK:['#006BB6','#F58426'], CLE:['#860038','#FDBB30'] };
+const CHIPS = { OKC:['#007AC1','#EF3B24'], LAL:['#552583','#FDB927'], NYK:['#006BB6','#F58426'], CLE:['#860038','#FDBB30'], LAC:['#C8102E','#1D428A'] };
 
 /* ---- helpers ---- */
 const NS='http://www.w3.org/2000/svg';
@@ -285,8 +295,19 @@ for (const t of TAGS) {
   el('rect', {x:bx, y:by, width:bw, height:bh, rx:9, class:'tag-box '+t.kind}, gTags);
   txt(bx+12, by+15, 'tag-kicker', t.kicker);
   const iw = t.iconL.flag ? 22 : 15, ih = 14, iy = by + 21;
-  if (t.iconL.flag) drawFlag(gTags, bx+12, iy, t.iconL.flag, iw, ih); else drawChip(gTags, bx+12, iy, t.iconL.chip, iw, ih);
-  if (t.iconR.flag) drawFlag(gTags, bx+bw-12-iw, iy, t.iconR.flag, iw, ih); else drawChip(gTags, bx+bw-12-iw, iy, t.iconR.chip, iw, ih);
+  const drawIcon = (icon, x) => {
+    if (icon.flag) drawFlag(gTags, x, iy, icon.flag, iw, ih);
+    else if (icon.chip) drawChip(gTags, x, iy, icon.chip, iw, ih);
+    else if (icon.note) {
+      el('rect', {x, y:iy, width:iw, height:ih, rx:3, fill:'var(--gig)'}, gTags);
+      const n = txt(x+iw/2, iy+10.5, '', '♪', 'middle');
+      n.setAttribute('font-size', '10'); n.setAttribute('fill', '#0d1118'); n.setAttribute('font-weight', '700');
+      gTags.appendChild(n);
+      el('rect', {x, y:iy, width:iw, height:ih, rx:3, class:'icon-ring'}, gTags);
+    }
+  };
+  drawIcon(t.iconL, bx+12);
+  if (t.iconR) drawIcon(t.iconR, bx+bw-12-iw);
   const title = txt(bx+bw/2, by+32.5, 'tag-title', t.title);
   title.setAttribute('text-anchor', 'middle');
   txt(bx+12, by+46, 'tag-meta', t.meta1);
@@ -298,13 +319,13 @@ const totalMi = Math.round(FLIGHTS.reduce((s,[,f,t]) => s + haversineMi(AIRPORTS
 txt(42, 68, 'title-kicker', 'OCT 2025 — JUL 2026');
 txt(40, 112, 'title-big', 'TRIPS &');
 txt(40, 154, 'title-big', 'MATCH WATCHING');
-txt(42, 178, 'title-sub', 'Every flight & match from 51 Apple Wallet passes');
+txt(42, 178, 'title-sub', 'From Apple Wallet & Ticketmaster passes');
 
 const stats = [
   [String(FLIGHTS.length), 'FLIGHTS'],
   [(totalMi/1000).toFixed(1)+'K', 'MILES'],
   [String(Object.keys(AIRPORTS).length), 'AIRPORTS'],
-  ['5', 'MATCHES']
+  ['6', 'MATCHES']
 ];
 stats.forEach((s, i) => {
   const x = 42 + i*86;
@@ -313,7 +334,7 @@ stats.forEach((s, i) => {
 });
 
 txt(996, 464, 'foot',
-  'Dedup: screenshot-edge repeats removed · duplicate passes merged (×2) · undated EWR–ATL plotted late June · Lakers pass dated May 12 = Game 4 (played May 11) · results verified Aug 2026',
+  'Dedup: screenshot-edge repeats & duplicate passes merged (×2) · Ticketmaster “W Conf Semis Hm Gm 2” = the wallet Lakers pass (Game 4, played May 11) · undated EWR–ATL plotted late June · results verified Aug 2026',
   'end');
 </script>
 </body>
