@@ -85,7 +85,7 @@
 </head>
 <body>
 <div id="stage">
-  <svg id="map" viewBox="0 0 1000 470" preserveAspectRatio="xMidYMid meet"
+  <svg id="map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"
        role="img" aria-label="Poster map of US flight routes Oct 2025 to Jul 2026 with tags marking matches attended"></svg>
 </div>
 <div id="tip"></div>
@@ -108,10 +108,12 @@ const AIRPORTS = {
   ATL:[33.6407,-84.4277], PHX:[33.4343,-112.0116], SJC:[37.3639,-121.9289],
   SFO:[37.6213,-122.3790], SEA:[47.4502,-122.3088], SAN:[32.7338,-117.1933],
   DEN:[39.8561,-104.6737], OGG:[20.8986,-156.4305], IAD:[38.9531,-77.4565],
+  HNL:[21.3187,-157.9224], ITO:[19.7203,-155.0485],
   MCO:[28.4312,-81.3081], AUS:[30.1975,-97.6664], DFW:[32.8998,-97.0403],
   PDX:[45.5898,-122.5951]
 };
 const FLIGHTS = [
+  ['2025-10-21','HNL','ITO'],
   ['2025-10-31','PDX','EWR'], ['2025-11-22','EWR','SEA'], ['2025-12-07','EWR','SAN'],
   ['2025-12-21','EWR','DFW'], ['2025-12-21','DFW','SAN'], ['2026-01-09','SAN','JFK'],
   ['2026-01-19','EWR','SAN'], ['2026-02-13','EWR','IAD'], ['2026-02-13','IAD','DEN'],
@@ -131,31 +133,31 @@ const FLIGHTS = [
 const TAGS = [
   {kind:'wc',  kicker:'WORLD CUP · MATCH 23 · GROUP K', title:'POR 1–1 COD', iconL:{flag:'POR'}, iconR:{flag:'COD'},
    meta1:'Jun 17 · NRG Stadium, Houston · ×2', meta2:'Group K opener ends all square',
-   anchor:[29.6847,-95.4107], x:620, y:322, w:206},
+   anchor:[29.6847,-95.4107], x:397, y:610, w:206},
   {kind:'wc',  kicker:'WORLD CUP · MATCH 74 · RD OF 32', title:'GER 1–1 PAR', iconL:{flag:'GER'}, iconR:{flag:'PAR'},
    meta1:'Jun 29 · Gillette Stadium, Boston · ×2', meta2:'Paraguay through 4–3 on penalties',
-   anchor:[42.091,-71.264], x:788, y:36, w:206},
+   anchor:[42.091,-71.264], x:698, y:610, w:206},
   {kind:'wc',  kicker:'WORLD CUP · MATCH 77 · RD OF 32', title:'FRA 3–0 SWE', iconL:{flag:'FRA'}, iconR:{flag:'SWE'},
    meta1:'Jun 30 · MetLife Stadium, NY/NJ', meta2:'Mbappé brace sinks Sweden',
-   anchor:[40.813,-74.074], x:788, y:392, w:206},
+   anchor:[40.813,-74.074], x:698, y:470, w:206},
   {kind:'nba', kicker:'NBA CUP · GROUP PLAY', title:'BUCKS @ KNICKS', iconL:{chip:'MIL'}, iconR:{chip:'NYK'},
    meta1:'Nov 28, 2025 · Madison Sq Garden · ×4', meta2:'Won 118–109 · Brunson 37, Giannis 30',
-   anchor:[40.7505,-73.9934], x:560, y:46, w:206},
+   anchor:[40.7505,-73.9934], x:698, y:540, w:206},
   {kind:'nba', kicker:'NBA · WEST SEMIS · GAME 4', title:'OKC @ LAKERS', iconL:{chip:'OKC'}, iconR:{chip:'LAL'},
    meta1:'May 11 · Crypto.com Arena · Sec 116 · ×2', meta2:'OKC complete the 4–0 sweep',
-   anchor:[34.043,-118.267], x:180, y:246, w:206},
+   anchor:[34.043,-118.267], x:96, y:470, w:206},
   {kind:'nba', kicker:'EAST FINALS · G4 · WATCH PARTY', title:'KNICKS @ CAVS', iconL:{chip:'NYK'}, iconR:{chip:'CLE'},
    meta1:'May 25 · Cosm watch party, Inglewood · ×2', meta2:'Won 130–93 — swept into the Finals',
-   anchor:[33.961,-118.342], x:180, y:316, w:206},
+   anchor:[33.961,-118.342], x:96, y:540, w:206},
   {kind:'nba', kicker:'NBA · REGULAR SEASON', title:'LAC 103–88 LAL', iconL:{chip:'LAC'}, iconR:{chip:'LAL'},
    meta1:'Dec 20, 2025 · Intuit Dome, Inglewood', meta2:'Kawhi 32 · LeBron 36 in defeat',
-   anchor:[33.945,-118.341], x:180, y:386, w:206},
+   anchor:[33.945,-118.341], x:96, y:610, w:206},
   {kind:'nba', kicker:'NBA · CHRISTMAS DAY', title:'HOU 119–96 LAL', iconL:{chip:'HOU'}, iconR:{chip:'LAL'},
    meta1:'Dec 25, 2025 · Crypto.com Arena', meta2:'Amen Thompson 26 · KD 25 · Luka 25',
-   anchor:[34.043,-118.267], x:396, y:316, w:206},
+   anchor:[34.043,-118.267], x:397, y:470, w:206},
   {kind:'gig', kicker:'CONCERT · THE FREEDOM TOUR', title:'KESHA', iconL:{note:true},
    meta1:'May 24, 2026 · Kia Forum, Inglewood', meta2:'Night before the flight back to SEA',
-   anchor:[33.958,-118.342], x:396, y:386, w:206}
+   anchor:[33.958,-118.342], x:397, y:540, w:206}
 ];
 
 /* team icons: simplified national flags + NBA team-color chips */
@@ -245,6 +247,8 @@ for (const c in AIRPORTS) {
   if (c==='SFO') { ly = y+10; }
   if (c==='SJC') { ly = y-4; }
   if (c==='MCO') { lx = x-r-4; anchor = 'end'; }
+  if (c==='HNL') { ly = y-6; }
+  if (c==='ITO') { ly = y+8; }
   txt(lx, ly, 'ap-label', c, anchor);
 }
 
@@ -352,7 +356,7 @@ stats.forEach((s, i) => {
   txt(x, 232, 'stat-label', s[1]);
 });
 
-txt(996, 464, 'foot',
+txt(996, 688, 'foot',
   'Dedup: edge repeats & duplicate passes merged · TM “Hm Gm 2” = wallet Lakers pass (played May 11) · wallet’s Nov 29 Ticketmaster passes = the Nov 28 NBA Cup game · undated EWR–ATL plotted late June · results verified Aug 2026',
   'end');
 </script>
