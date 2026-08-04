@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filter Subset QC Review (n=100)</title>
+<style>
+  :root { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+  body { margin:0; background:#f7f8fa; color:#1a1a1a; }
+  header { background:#0b3d91; color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:22px; }
+  header p { margin:0; opacity:.85; font-size:13px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 32px 60px; }
+  .summary { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start;
+              background:#fff; border:1px solid #e3e6ea; border-radius:10px; padding:20px 24px; margin-bottom:24px; }
+  .legend { display:flex; flex-direction:column; gap:2px; min-width:320px; }
+  .legend-row { display:grid; grid-template-columns:14px 1fr 44px 56px; align-items:center; gap:10px;
+                 text-decoration:none; color:inherit; padding:4px 6px; border-radius:6px; }
+  a.legend-row:hover { background:#f0f3f8; }
+  .legend-row.is-good { font-weight:700; background:#eaf6ec; border-radius:6px; }
+  .legend-row.remaining { color:#8a8f96; font-style:italic; }
+  .legend-row.legend-subtotal { font-weight:700; border-top:1px dashed #d8dbe0; margin-top:2px; padding-top:6px; }
+  .legend-groupdiv { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:#9aa0a6;
+                       margin:8px 2px 2px; font-weight:700; }
+  .swatch { width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .lcount { text-align:right; font-weight:600; }
+  .lpct { text-align:right; color:#666; font-size:12.5px; }
+  .lname { font-size:13.5px; }
+  .chipgroup { margin-top:14px; }
+  .chipgroup-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:#9aa0a6;
+                       font-weight:700; margin:0 0 6px 2px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1.5px solid #ccc; border-radius:999px; padding:5px 12px; font-size:12.5px;
+           text-decoration:none; color:#1a1a1a; display:inline-flex; align-items:center; gap:6px; background:#fff; }
+  .chip .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .chip:hover { background:#f0f3f8; }
+  .chip-good { background:#eaf6ec; font-weight:700; }
+  section.category { background:#fff; border:1px solid #e3e6ea; border-left:6px solid var(--accent);
+                       border-radius:10px; padding:18px 22px 22px; margin-bottom:22px; scroll-margin-top:14px; }
+  section.category-good { background:#f3fbf4; }
+  .eyebrow { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  .eyebrow-good { color:#2e7d32; }
+  .eyebrow-issue { color:#a1440f; }
+  section.category h2 { font-size:16.5px; margin:0 0 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .count-badge { font-size:12px; font-weight:400; color:#666; background:#f0f2f5; padding:2px 9px; border-radius:999px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+  .card { border:1px solid #e6e8eb; border-radius:8px; padding:12px; background:#fbfbfc; }
+  .card-id { font-size:11px; color:#999; font-weight:600; margin-bottom:6px; }
+  .thumbs { display:flex; gap:8px; margin-bottom:8px; }
+  .thumbs figure { margin:0; flex:1; text-align:center; }
+  .thumbs img { width:100%; height:110px; object-fit:cover; border-radius:6px; border:1px solid #ddd; background:#eee; }
+  .thumbs figcaption { font-size:10.5px; color:#999; margin-top:2px; text-transform:uppercase; letter-spacing:.03em; }
+  .text { font-size:12.5px; line-height:1.45; margin-bottom:6px; color:#333; }
+  .text b { color:#111; }
+  .rationale { color:#666; }
+  details.more { margin-top:4px; }
+  details.more summary { cursor:pointer; font-size:11.5px; color:#0b5fa5; font-weight:600; list-style:none; }
+  details.more summary::-webkit-details-marker { display:none; }
+  details.more summary::before { content:"▸ "; }
+  details.more[open] summary::before { content:"▾ "; }
+  details.more .text { margin-top:8px; }
+  footer { text-align:center; color:#9aa0a6; font-size:12px; padding:20px 0 40px; }
+  a.top { position:fixed; right:20px; bottom:20px; background:#0b3d91; color:#fff; text-decoration:none;
+           padding:9px 14px; border-radius:999px; font-size:12.5px; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+  .cat-desc { font-size:12.5px; color:#667; margin:-6px 0 14px; max-width:70ch; }
+  .thumbs .hash { display:block; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:8.5px; line-height:1.25; color:#8a8f96; word-break:break-all; margin-top:3px; user-select:all; cursor:text; }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Filter Subset &mdash; Megapairs QC Review</h1>
+  <p>filter_03_subset500 (6d369a00-03_filter) &middot; first 100 samples manually tagged &middot; 31 good, 26 issue items across 7 types, 43 not flagged &middot; note: #6 is double-tagged (shown in both), so tags sum to 58 over 57 flagged items</p>
+</header>
+<div class="wrap">
+  <div class="summary">
+    <div><svg viewBox="0 0 300 300" width="320" height="320"><path d="M 150,150 L 150.00,20.00 A 130,130 0 0 1 271.77,195.52 Z" fill="#2e7d32" stroke="#fff" stroke-width="1.5"><title>Good: 31 (30.7%)</title></path><path d="M 150,150 L 271.77,195.52 A 130,130 0 0 1 252.00,230.60 Z" fill="#ef6c00" stroke="#fff" stroke-width="1.5"><title>Non-identifiable: 5 (5.0%)</title></path><path d="M 150,150 L 252.00,230.60 A 130,130 0 0 1 215.58,262.24 Z" fill="#6a1b9a" stroke="#fff" stroke-width="1.5"><title>Spec mismatch: 6 (5.9%)</title></path><path d="M 150,150 L 215.58,262.24 A 130,130 0 0 1 201.15,269.52 Z" fill="#ad1457" stroke="#fff" stroke-width="1.5"><title>Text shortcut: 2 (2.0%)</title></path><path d="M 150,150 L 201.15,269.52 A 130,130 0 0 1 178.08,276.93 Z" fill="#c62828" stroke="#fff" stroke-width="1.5"><title>Complete mismatch: 3 (3.0%)</title></path><path d="M 150,150 L 178.08,276.93 A 130,130 0 0 1 145.96,279.94 Z" fill="#00838f" stroke="#fff" stroke-width="1.5"><title>Repetitive pair: 4 (4.0%)</title></path><path d="M 150,150 L 145.96,279.94 A 130,130 0 0 1 98.85,269.52 Z" fill="#455a64" stroke="#fff" stroke-width="1.5"><title>General &#x27;another&#x27;: 6 (5.9%)</title></path><path d="M 150,150 L 98.85,269.52 A 130,130 0 0 1 91.52,266.10 Z" fill="#6d4c41" stroke="#fff" stroke-width="1.5"><title>Instruction language: 1 (1.0%)</title></path><path d="M 150,150 L 91.52,266.10 A 130,130 0 0 1 150.00,20.00 Z" fill="#cfd8dc" stroke="#fff" stroke-width="1.5"><title>Not flagged: 43 (42.6%)</title></path></svg></div>
+    <div class="legend"><a href="#cat-good" class="legend-row is-good"><span class="swatch" style="background:#2e7d32"></span><span class="lname">Good</span><span class="lcount">31</span><span class="lpct">31.0%</span></a><div class="legend-groupdiv">Issue types</div><a href="#cat-non_identifiable" class="legend-row"><span class="swatch" style="background:#ef6c00"></span><span class="lname">Non-identifiable</span><span class="lcount">5</span><span class="lpct">5.0%</span></a><a href="#cat-spec_mismatch" class="legend-row"><span class="swatch" style="background:#6a1b9a"></span><span class="lname">Spec mismatch</span><span class="lcount">6</span><span class="lpct">6.0%</span></a><a href="#cat-text_shortcut" class="legend-row"><span class="swatch" style="background:#ad1457"></span><span class="lname">Text shortcut</span><span class="lcount">2</span><span class="lpct">2.0%</span></a><a href="#cat-complete_mismatch" class="legend-row"><span class="swatch" style="background:#c62828"></span><span class="lname">Complete mismatch</span><span class="lcount">3</span><span class="lpct">3.0%</span></a><a href="#cat-repetitive_pair" class="legend-row"><span class="swatch" style="background:#00838f"></span><span class="lname">Repetitive pair</span><span class="lcount">4</span><span class="lpct">4.0%</span></a><a href="#cat-general_another" class="legend-row"><span class="swatch" style="background:#455a64"></span><span class="lname">General &#x27;another&#x27;</span><span class="lcount">6</span><span class="lpct">6.0%</span></a><a href="#cat-instruction_language" class="legend-row"><span class="swatch" style="background:#6d4c41"></span><span class="lname">Instruction language</span><span class="lcount">1</span><span class="lpct">1.0%</span></a><div class="legend-row legend-subtotal"><span class="swatch" style="background:transparent"></span><span class="lname">Total issues</span><span class="lcount">27</span><span class="lpct">27.0%</span></div><div class="legend-row remaining"><span class="swatch" style="background:#cfd8dc"></span><span class="lname">Not flagged</span><span class="lcount">43</span><span class="lpct">43.0%</span></div></div>
+  </div>
+  <div class="chipgroup"><div class="chips"><a href="#cat-good" class="chip chip-good" style="border-color:#2e7d32"><span class="dot" style="background:#2e7d32"></span>Good (31)</a></div></div>
+  <div class="chipgroup">
+    <div class="chipgroup-label">Issue types &mdash; 27 tag-instances</div>
+    <div class="chips"><a href="#cat-non_identifiable" class="chip chip-issue" style="border-color:#ef6c00"><span class="dot" style="background:#ef6c00"></span>Non-identifiable (5)</a>
+<a href="#cat-spec_mismatch" class="chip chip-issue" style="border-color:#6a1b9a"><span class="dot" style="background:#6a1b9a"></span>Spec mismatch (6)</a>
+<a href="#cat-text_shortcut" class="chip chip-issue" style="border-color:#ad1457"><span class="dot" style="background:#ad1457"></span>Text shortcut (2)</a>
+<a href="#cat-complete_mismatch" class="chip chip-issue" style="border-color:#c62828"><span class="dot" style="background:#c62828"></span>Complete mismatch (3)</a>
+<a href="#cat-repetitive_pair" class="chip chip-issue" style="border-color:#00838f"><span class="dot" style="background:#00838f"></span>Repetitive pair (4)</a>
+<a href="#cat-general_another" class="chip chip-issue" style="border-color:#455a64"><span class="dot" style="background:#455a64"></span>General &#x27;another&#x27; (6)</a>
+<a href="#cat-instruction_language" class="chip chip-issue" style="border-color:#6d4c41"><span class="dot" style="background:#6d4c41"></span>Instruction language (1)</a></div>
+  </div>
+
+    <section id="cat-good" class="category category-good" style="--accent:#2e7d32">
+      <div class="eyebrow eyebrow-good">&#10003; Positive example</div>
+      <h2><span class="swatch" style="background:#2e7d32"></span>Good
+        <span class="count-badge">31 / 100 &middot; 31.0%</span></h2>
+      <p class="cat-desc">Instruction requires genuine reasoning; target is a correct, non-trivial answer.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#4</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00447__004472645.jpg" alt="query 4"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00447__004472645">train-00100-to-00199__00447__004472645</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02094__020943330.jpg" alt="target 4"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02094__020943330">train-00100-to-00199__02094__020943330</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would this look like if it were completely mashed?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Mashed potatoes with herbs on a dark blue plate.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a potato salad with distinct chunks of potato; the instruction asks for the resulting state if those chunks were processed into a mash, leading to the target image of mashed potatoes.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#9</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00443__004433175.jpg" alt="query 9"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00443__004433175">train-00100-to-00199__00443__004433175</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02843__028438138.jpg" alt="target 9"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02843__028438138">train-00100-to-00199__02843__028438138</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would these look like as they get older?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Similar owl nest with a parent and two chicks.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows young owlets in a nest; the instruction asks for their future state, leading to the target image of an older, more developed owl in a similar environment.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#10</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01453__014539823.jpg" alt="query 10"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01453__014539823">train-00100-to-00199__01453__014539823</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02158__021585379.jpg" alt="target 10"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02158__021585379">train-00100-to-00199__02158__021585379</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where can more of these be seen?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar log cabin in a more isolated and rustic setting.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a historical log cabin in a specific setting; the instruction asks for a location with more similar structures, leading to the target image which depicts another building in the same historical village or mus…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#12</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00262__002629848.jpg" alt="query 12"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00262__002629848">train-00100-to-00199__00262__002629848</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00767__007675602.jpg" alt="target 12"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00767__007675602">train-00100-to-00199__00767__007675602</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would a more detailed version of this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar map of a ski area with more detailed information.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a simplified, low-fidelity map of a ski area; the instruction asks for a more detailed version, leading to the target image which is a professional, high-resolution topographical map of a different ski resort, e…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#13</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03376__033768821.jpg" alt="query 13"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03376__033768821">train-00100-to-00199__03376__033768821</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03000__030001850.jpg" alt="target 13"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03000__030001850">train-00100-to-00199__03000__030001850</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would a different flavor of this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find jars filled with honey but with a different color and formation.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows jars of honey (yellow/amber); by asking for a different flavor, the reasoning shifts from one specific preserve to another, leading to the target image of red jam/preserve jars.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#20</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01447__014472823.jpg" alt="query 20"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01447__014472823">train-00100-to-00199__01447__014472823</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02368__023680974.jpg" alt="target 20"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02368__023680974">train-00100-to-00199__02368__023680974</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would this scene look like during the holiday season?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar scene but with a more casual atmosphere and Christmas decorations.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a formal gathering in a banquet hall; the instruction asks for the seasonal adaptation of that specific scene, leading to the target image which features the same event type but with festive Christmas decorations (…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#22</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02906__029062684.jpg" alt="query 22"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02906__029062684">train-00100-to-00199__02906__029062684</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03370__033702521.jpg" alt="target 22"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03370__033702521">train-00100-to-00199__03370__033702521</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is a typical finished product made using this tool?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a door with a raised panel design and recessed central panel.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a router bit (a woodworking tool), and the target image shows a cabinet door with decorative molding; the reasoning link is the tool-to-finished-product relationship, as the router bit is used to create the p…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#23</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03385__033851612.jpg" alt="query 23"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03385__033851612">train-00100-to-00199__03385__033851612</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03125__031251902.jpg" alt="target 23"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03125__031251902">train-00100-to-00199__03125__031251902</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is a slightly more formal alternative to these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Three men in polo shirts with hands by their sides.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows casual henley t-shirts; the target shows polo shirts, which are a common step up in formality while remaining casual, creating a reasoning link based on dress code progression.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#26</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01104__011043115.jpg" alt="query 26"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01104__011043115">train-00100-to-00199__01104__011043115</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00423__004236708.jpg" alt="target 26"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00423__004236708">train-00100-to-00199__00423__004236708</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which larger containers would be used to store the bulk supply of these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find empty plastic bottles with various colored caps and spray pumps.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows small dropper bottles typically used for dispensing concentrated liquids; the target image shows larger bulk storage bottles with various dispensing caps, establishing a size-based supply-to-dispenser reasoni…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#28</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01088__010888393.jpg" alt="query 28"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01088__010888393">train-00100-to-00199__01088__010888393</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00660__006600603.jpg" alt="target 28"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00660__006600603">train-00100-to-00199__00660__006600603</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would attract this bird to a garden?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find an image of a hummingbird with its face forward</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a hummingbird; since hummingbirds are attracted to nectar, the instruction prompts for a source of food, leading to the target image of a bird feeder.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#35</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01643__016433737.jpg" alt="query 35"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01643__016433737">train-00100-to-00199__01643__016433737</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01430__014302403.jpg" alt="target 35"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01430__014302403">train-00100-to-00199__01430__014302403</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does the rest of this place look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find an aquarium scene without a person interacting with a shark.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a person interacting with a fish in a specific aquarium tunnel, and the instruction asks for a wider view of the environment, leading to the target image which shows a larger, open tank scene within the same…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#36</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00803__008034439.jpg" alt="query 36"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00803__008034439">train-00100-to-00199__00803__008034439</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00238__002382122.jpg" alt="target 36"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00238__002382122">train-00100-to-00199__00238__002382122</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Can you find another layout similar to this one?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar template with a lighter theme.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a specific HTML5 website template layout; by asking for another similar layout, the user is seeking an alternative design template (the target) that follows the same structural logic (header, hero section, fe…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#37</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01714__017145977.jpg" alt="query 37"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01714__017145977">train-00100-to-00199__01714__017145977</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02662__026623301.jpg" alt="target 37"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02662__026623301">train-00100-to-00199__02662__026623301</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Show me a more recent example of this type of event.</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Wedding scene with a military figure</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a mid-century royal wedding; the instruction asks for a more recent instance of that specific high-profile ceremony, leading to the target image of Princess Diana&#x27;s wedding.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#41</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01877__018774578.jpg" alt="query 41"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01877__018774578">train-00100-to-00199__01877__018774578</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02695__026951817.jpg" alt="target 41"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02695__026951817">train-00100-to-00199__02695__026951817</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which other version of this is better for outdoor survival?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar knife with a rope wrapped around the handle and set against a blurred outdoor background.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a tactical axe in a workshop setting; the instruction prompts for a version suited for survival, leading to the target image which features a paracord-wrapped handle, a distinct modification for outdoor utili…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#42</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00195__001958605.jpg" alt="query 42"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00195__001958605">train-00100-to-00199__00195__001958605</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03449__034499947.jpg" alt="target 42"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03449__034499947">train-00100-to-00199__03449__034499947</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does this look like when it is being used?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a vacuum cleaner in a cluttered room with debris on the floor.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a vacuum cleaner in a static, brand-new state (next to its box), and the instruction asks for its functional state, leading to the target image which depicts vacuum cleaners in active use cleaning a floor.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#47</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01360__013603185.jpg" alt="query 47"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01360__013603185">train-00100-to-00199__01360__013603185</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00752__007527164.jpg" alt="target 47"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00752__007527164">train-00100-to-00199__00752__007527164</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> How can I significantly increase the output of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Small subwoofers arranged in a grid</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a single subwoofer in a box; to increase the sound output, one would need a larger array of subwoofers in a custom enclosure, which is exactly what the target image depicts.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#48</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03397__033977307.jpg" alt="query 48"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03397__033977307">train-00100-to-00199__03397__033977307</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00898__008988438.jpg" alt="target 48"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00898__008988438">train-00100-to-00199__00898__008988438</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does this scene look like at night?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar scene at night with a person standing at the end of the pier</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a wooden pier and a person in a daylight landscape; the instruction asks for the temporal transition to night, leading to the target image which depicts the same scene under a night sky.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#52</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03065__030654542.jpg" alt="query 52"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03065__030654542">train-00100-to-00199__03065__030654542</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01082__010820983.jpg" alt="target 52"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01082__010820983">train-00100-to-00199__01082__010820983</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What do I need to get these started in a pot?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find an image with a different gardener</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a child watering plants in a garden; the instruction asks for the necessary material to transition these plants to a container, reasoning from a garden setting to the requirement of potting soil shown in the target…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#54</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02017__020178607.jpg" alt="query 54"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02017__020178607">train-00100-to-00199__02017__020178607</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01663__016634136.jpg" alt="target 54"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01663__016634136">train-00100-to-00199__01663__016634136</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is the view from the ground level in this area?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Wider view of the Gateway Arch and Old Courthouse with additional buildings and a fountain.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows an aerial perspective of the Gateway Arch and surrounding buildings in St. Louis; the instruction asks for the ground-level perspective of the same location, leading to the target image which provides a stree…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#63</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00050__000505461.jpg" alt="query 63"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00050__000505461">train-00100-to-00199__00050__000505461</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00545__005457377.jpg" alt="target 63"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00545__005457377">train-00100-to-00199__00545__005457377</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would this look like during the day?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar concert scene but during twilight with a cool blue lighting.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a concert stage at night; the instruction asks for the same scene under different lighting conditions, leading to a daytime version of a concert venue.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#64</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00471__004719193.jpg" alt="query 64"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00471__004719193">train-00100-to-00199__00471__004719193</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03204__032048967.jpg" alt="target 64"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03204__032048967">train-00100-to-00199__03204__032048967</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What structures are traditionally associated with these figures?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a simplified drawing of an Egyptian artifact without a pharaoh&#x27;s head</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows Egyptian pharaohs; the instruction asks for associated structures, leading to the target image of pyramids, which are the iconic architectural counterparts to pharaohs.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#68</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02953__029532271.jpg" alt="query 68"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02953__029532271">train-00100-to-00199__02953__029532271</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02191__021913276.jpg" alt="target 68"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02191__021913276">train-00100-to-00199__02191__021913276</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would this likely keep close for comfort?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a German Shepherd on a couch with a toy.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a dog resting in a bed; the instruction asks for a comforting object a dog typically possesses, leading to the target image of the dog with a plush toy.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#69</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03191__031912619.jpg" alt="query 69"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03191__031912619">train-00100-to-00199__03191__031912619</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00411__004118433.jpg" alt="target 69"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00411__004118433">train-00100-to-00199__00411__004118433</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What could I buy to have this in my living room?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Close-up of a bald eagle&#x27;s face on a decorative item</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a bald eagle&#x27;s face; the instruction asks for a way to bring that specific image into a home decor setting, reasoning from a digital image to a physical product like the eagle-printed throw pillow in the targ…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#70</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01361__013610873.jpg" alt="query 70"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01361__013610873">train-00100-to-00199__01361__013610873</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03045__030451991.jpg" alt="target 70"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03045__030451991">train-00100-to-00199__03045__030451991</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which version of this is better for high-pressure situations?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar product with a different color scheme.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a standard &#x27;Black &amp; White&#x27; antiperspirant; the instruction asks for a version suited for high-pressure/stressful moments, which reasons to the &#x27;Stress Protect&#x27; variant in the target image.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#73</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02456__024568131.jpg" alt="query 73"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02456__024568131">train-00100-to-00199__02456__024568131</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01685__016853675.jpg" alt="target 73"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01685__016853675">train-00100-to-00199__01685__016853675</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What else is needed to apply for higher education?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find similar texts on writing, but about college admission essays.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image provides a guide for creating a resume, which is a professional document; since the instruction asks for additional requirements for higher education applications, the target image (college admission essay samples)…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#75</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02691__026917190.jpg" alt="query 75"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02691__026917190">train-00100-to-00199__02691__026917190</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02154__021541384.jpg" alt="target 75"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02154__021541384">train-00100-to-00199__02154__021541384</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What should I wear if I&#x27;m going on a rugged outdoor adventure instead of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a smartwatch with a different design and features compared to the given image.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a sleek, urban smartwatch designed for daily use. The instruction creates a scenario (rugged outdoor adventure) that necessitates a more durable, specialized tool, reasoning from a lifestyle watch to a heavy-…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#80</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02481__024818464.jpg" alt="query 80"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02481__024818464">train-00100-to-00199__02481__024818464</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00681__006812899.jpg" alt="target 80"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00681__006812899">train-00100-to-00199__00681__006812899</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would I wear over this for a game?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find red shorts with a small logo on the left leg.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows tight athletic compression shorts; since these are typically worn as a base layer, the instruction asks for the outer garment required for a match, leading to the looser athletic shorts in the target image.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#81</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02452__024525344.jpg" alt="query 81"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02452__024525344">train-00100-to-00199__02452__024525344</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02037__020375394.jpg" alt="target 81"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02037__020375394">train-00100-to-00199__02037__020375394</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does the final result of this design look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a real-life image of the same truck without decals or modifications.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a conceptual sketch and a digital illustration of a custom truck; the target image shows a real-world photograph of a completed vehicle based on those designs, bridging the gap from concept to physical realit…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#88</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01908__019083342.jpg" alt="query 88"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01908__019083342">train-00100-to-00199__01908__019083342</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01685__016853430.jpg" alt="target 88"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01685__016853430">train-00100-to-00199__01685__016853430</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What happens when this situation escalates?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Peaceful gathering with police presence</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a tense but peaceful standoff between protesters and police; the instruction asks for the outcome of escalation, leading to the target image which depicts a violent clash and active physical confrontation between t…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#89</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00803__008039279.jpg" alt="query 89"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00803__008039279">train-00100-to-00199__00803__008039279</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01650__016504338.jpg" alt="target 89"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01650__016504338">train-00100-to-00199__01650__016504338</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would a more upscale version of this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar home, but larger and with multiple stories</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a modest, single-story brick house; the instruction asks for a more &#x27;upscale&#x27; version, leading to the target image which depicts a larger, more ornate two-story brick residence.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#90</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02101__021017477.jpg" alt="query 90"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02101__021017477">train-00100-to-00199__02101__021017477</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01238__012381835.jpg" alt="target 90"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01238__012381835">train-00100-to-00199__01238__012381835</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would be a modern architectural contrast to this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a modern hotel building with a minimalist design.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a traditional, classical European building with ornate balconies and a red facade; by asking for a modern architectural contrast, the reasoning leads to the target image, which depicts a minimalist, white, ge…</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-non_identifiable" class="category" style="--accent:#ef6c00">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#ef6c00"></span>Non-identifiable
+        <span class="count-badge">5 / 100 &middot; 5.0%</span></h2>
+      <p class="cat-desc">Query subject can&#x27;t be reliably identified, so the reasoning link is unverifiable.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#56</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00665__006652796.jpg" alt="query 56"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00665__006652796">train-00100-to-00199__00665__006652796</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01088__010883003.jpg" alt="target 56"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01088__010883003">train-00100-to-00199__01088__010883003</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does the exterior of this building look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a hotel lobby with a modern interior, but not this specific one.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows the interior lobby of a hotel; by asking for the exterior, the reasoning moves from the inside of the building to the outside, resulting in the target image of the hotel&#x27;s facade.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#66</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02129__021291085.jpg" alt="query 66"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02129__021291085">train-00100-to-00199__02129__021291085</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02893__028939959.jpg" alt="target 66"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02893__028939959">train-00100-to-00199__02893__028939959</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which of these would work better as a fabric print?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar pattern with a high-contrast color scheme.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a sharp, geometric digital graphic; the target image is a repetitive, organic pattern suitable for textile application, creating a reasoning link based on the suitability of a design for a physical material.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#78</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01069__010694578.jpg" alt="query 78"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01069__010694578">train-00100-to-00199__01069__010694578</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01643__016439772.jpg" alt="target 78"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01643__016439772">train-00100-to-00199__01643__016439772</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What will this look like once it is finished?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Remove the countdown timer and placeholder</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a &#x27;coming soon&#x27; landing page for a company website; the target image shows a functional internal dashboard of a completed website, representing the final state of the project indicated by the countdown.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#91</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02981__029813356.jpg" alt="query 91"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02981__029813356">train-00100-to-00199__02981__029813356</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02486__024860829.jpg" alt="target 91"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02486__024860829">train-00100-to-00199__02486__024860829</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is a more versatile version of this for different weather conditions?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Same jacket, but with a vibrant red and blue color scheme and green and white stripes.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a heavy fleece pullover; the target is a full-zip hoodie, which offers more versatility in layering and temperature control, moving from a specific heavy material to a more adaptable garment type.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#94</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03317__033174975.jpg" alt="query 94"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03317__033174975">train-00100-to-00199__03317__033174975</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03245__032452066.jpg" alt="target 94"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03245__032452066">train-00100-to-00199__03245__032452066</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is the full version of this emblem?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find an embroidered patch with a vibrant color scheme and the full name of the Marine Corps.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a simplified, monochromatic version of the Eagle, Globe, and Anchor symbol; the instruction asks for the complete version, which leads to the target image containing the full emblem surrounded by the official…</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-spec_mismatch" class="category" style="--accent:#6a1b9a">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#6a1b9a"></span>Spec mismatch
+        <span class="count-badge">6 / 100 &middot; 6.0%</span></h2>
+      <p class="cat-desc">Query and target differ in scale / level of detail / texture in a way that breaks the pair.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#5</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01821__018214494.jpg" alt="query 5"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01821__018214494">train-00100-to-00199__01821__018214494</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01528__015280366.jpg" alt="target 5"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01528__015280366">train-00100-to-00199__01528__015280366</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What does it look like from the inside?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a peaceful scene without a boat.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows the exterior of a boat on the water; the instruction asks for the interior perspective, leading to the target image which shows the inside of a boat&#x27;s hull/cockpit.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#6 <span class="count-badge">also: Repetitive pair</span></div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00135__001355291.jpg" alt="query 6"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00135__001355291">train-00100-to-00199__00135__001355291</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03401__034017002.jpg" alt="target 6"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03401__034017002">train-00100-to-00199__03401__034017002</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which of these would be a more subtle choice?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar car but with a silver color and an Audi logo.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a bright, eye-catching yellow car; the instruction asks for a &#x27;more subtle choice,&#x27; which leads the user to reason toward a car with a neutral or muted color (like the champagne/gold car in the target image),…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#32</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01300__013007522.jpg" alt="query 32"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01300__013007522">train-00100-to-00199__01300__013007522</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00414__004146686.jpg" alt="target 32"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00414__004146686">train-00100-to-00199__00414__004146686</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would a more modern update to this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a modern dining room with similar furniture but different decor.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a traditional, dated dining set; the instruction asks for a modern version, leading to the target image which features a contemporary dining set with similar function but updated design and aesthetics.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#77</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02222__022225661.jpg" alt="query 77"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02222__022225661">train-00100-to-00199__02222__022225661</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00913__009133395.jpg" alt="target 77"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00913__009133395">train-00100-to-00199__00913__009133395</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What is the structural base needed to attach these to a head?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a wavy hair extension with a full lace closure.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows individual hair extensions (wefts/strands); to retrieve the target image showing a lace frontal wig, the instruction asks for the foundation (the lace/cap) required to integrate such hair into a full wearable…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#79</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01945__019452915.jpg" alt="query 79"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01945__019452915">train-00100-to-00199__01945__019452915</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02893__028938781.jpg" alt="target 79"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02893__028938781">train-00100-to-00199__02893__028938781</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which place in this city would I go to for entertainment?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar scene in black and white.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a generic commercial street with shops and cars. To retrieve the target image, which depicts the &#x27;Colonial&#x27; theatre, the instruction asks for a venue for entertainment, bridging the general city scene to a sp…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#97</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01486__014863908.jpg" alt="query 97"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01486__014863908">train-00100-to-00199__01486__014863908</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02139__021397230.jpg" alt="target 97"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02139__021397230">train-00100-to-00199__02139__021397230</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which of these would be a more modern alternative?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Similar cargo van, but with a sloped roof and a single door.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a vintage-style blue van; by asking for a modern alternative, the user reasons from the old vehicle design to a newer, contemporary cargo van model as seen in the target.</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-text_shortcut" class="category" style="--accent:#ad1457">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#ad1457"></span>Text shortcut
+        <span class="count-badge">2 / 100 &middot; 2.0%</span></h2>
+      <p class="cat-desc">Instruction leaks the answer or can be solved from text alone without the query image.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#2</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03302__033027711.jpg" alt="query 2"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03302__033027711">train-00100-to-00199__03302__033027711</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02906__029064462.jpg" alt="target 2"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02906__029064462">train-00100-to-00199__02906__029064462</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What can be used instead of these to scrub a surface?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find gloves with a different color scheme</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows rubber gloves used for cleaning, and the instruction asks for an alternative tool for the action of scrubbing, leading to the target image of silicone scrubbing gloves which perform a similar function but with a di…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#14</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02011__020113915.jpg" alt="query 14"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02011__020113915">train-00100-to-00199__02011__020113915</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03197__031971998.jpg" alt="target 14"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03197__031971998">train-00100-to-00199__03197__031971998</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would I use to keep track of the time if I wanted to carry it with me?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Same watch with a black dial and metallic band</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a stationary alarm clock, and the instruction asks for a portable version of a time-keeping device, reasoning from a fixed object to its wearable counterpart (a wristwatch).</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-complete_mismatch" class="category" style="--accent:#c62828">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#c62828"></span>Complete mismatch
+        <span class="count-badge">3 / 100 &middot; 3.0%</span></h2>
+      <p class="cat-desc">Query and target are unrelated; no plausible reasoning connects them.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#27</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00048__000482629.jpg" alt="query 27"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00048__000482629">train-00100-to-00199__00048__000482629</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02280__022805826.jpg" alt="target 27"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02280__022805826">train-00100-to-00199__02280__022805826</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> How can I make this more creamy?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a coffee cup with a more intricate latte art design</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a plain black espresso; adding cream or steamed milk (resulting in the latte art seen in the target image) is the natural reasoning step to achieve a &#x27;creamy&#x27; texture.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#34</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00142__001422460.jpg" alt="query 34"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00142__001422460">train-00100-to-00199__00142__001422460</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00142__001425269.jpg" alt="target 34"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00142__001425269">train-00100-to-00199__00142__001425269</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What could I hire to improve the look of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a single-story house with a large garage door and a landscaped yard with a clear view of the ocean.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a house with a plain, outdated garage; the target shows a professional garage door installation service (a truck and a modern door), creating a service-provider-to-problem reasoning link.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#44</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01300__013005470.jpg" alt="query 44"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01300__013005470">train-00100-to-00199__01300__013005470</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01610__016104732.jpg" alt="target 44"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01610__016104732">train-00100-to-00199__01610__016104732</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What evidence would be used to fill out the root cause section of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar report without placeholders and with specific data on contaminants</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a quality assurance report with a specific section for &#x27;Root Cause Analysis&#x27;; the target is a data table listing toxic materials found in soil and water, which serves as the empirical evidence or findings that woul…</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-repetitive_pair" class="category" style="--accent:#00838f">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#00838f"></span>Repetitive pair
+        <span class="count-badge">4 / 100 &middot; 4.0%</span></h2>
+      <p class="cat-desc">Query and target are near-duplicates / the same content repeated.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#6 <span class="count-badge">also: Spec mismatch</span></div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00135__001355291.jpg" alt="query 6"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00135__001355291">train-00100-to-00199__00135__001355291</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03401__034017002.jpg" alt="target 6"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__03401__034017002">train-00100-to-00199__03401__034017002</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which of these would be a more subtle choice?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar car but with a silver color and an Audi logo.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a bright, eye-catching yellow car; the instruction asks for a &#x27;more subtle choice,&#x27; which leads the user to reason toward a car with a neutral or muted color (like the champagne/gold car in the target image),…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#7</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01744__017443806.jpg" alt="query 7"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01744__017443806">train-00100-to-00199__01744__017443806</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02303__023033100.jpg" alt="target 7"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02303__023033100">train-00100-to-00199__02303__023033100</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would a practical, everyday version of this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a more conventional car with standard design elements.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a futuristic, high-concept electric prototype; the target shows a standard, production-model passenger car from the same brand, representing the transition from a conceptual vision to a usable real-world vehicle.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#18</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00866__008664085.jpg" alt="query 18"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00866__008664085">train-00100-to-00199__00866__008664085</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02979__029792876.jpg" alt="target 18"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02979__029792876">train-00100-to-00199__02979__029792876</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Show me a more modern and high-performance version of this.</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a convertible sports car in a studio setting without external elements.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows an older, mid-range convertible car; the instruction asks for a modern, high-performance evolution of that body style, leading to the luxury supercar convertible in the target image.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#24</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02456__024560052.jpg" alt="query 24"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02456__024560052">train-00100-to-00199__02456__024560052</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00303__003036113.jpg" alt="target 24"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00303__003036113">train-00100-to-00199__00303__003036113</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Is there a more spacious version of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar car with a different license plate.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a compact sedan/hatchback; the instruction asks for a more spacious version, which leads to the target image of an SUV/wagon from the same brand/dealership, moving from a small vehicle to a larger body style.</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-general_another" class="category" style="--accent:#455a64">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#455a64"></span>General &#x27;another&#x27;
+        <span class="count-badge">6 / 100 &middot; 6.0%</span></h2>
+      <p class="cat-desc">Instruction is a generic &#x27;another/other one like this&#x27; with no specific reasoning.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#46</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02134__021341674.jpg" alt="query 46"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02134__021341674">train-00100-to-00199__02134__021341674</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01908__019089185.jpg" alt="target 46"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01908__019089185">train-00100-to-00199__01908__019089185</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Which of these is the counterpart to this one?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a robotic figure with a red chest.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows a white and black mecha figure from a specific franchise; the instruction asks for its counterpart, leading to the target image which depicts the opposing faction&#x27;s corresponding mecha figure.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#50</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02955__029550725.jpg" alt="query 50"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02955__029550725">train-00100-to-00199__02955__029550725</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00360__003602512.jpg" alt="target 50"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00360__003602512">train-00100-to-00199__00360__003602512</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would you find more of these?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Similar car race with different colored cars</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows a race car on a track; the instruction asks for the location where others of its kind are found, leading to the target image of a racing circuit featuring multiple stock cars.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#82</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00236__002362994.jpg" alt="query 82"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00236__002362994">train-00100-to-00199__00236__002362994</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00238__002386796.jpg" alt="target 82"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__00238__002386796">train-00100-to-00199__00238__002386796</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Show me more examples of this style of clothing.</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Similar hand-knitted fingerless gloves but with a brown and cream pattern.</div>
+            <div class="text rationale"><b>Rationale:</b> The query shows fingerless gloves/wrist warmers; the instruction asks for more of the same style, leading to the target image which shows a different pair of fingerless gloves, maintaining the garment category while changing the p…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#85</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01921__019214580.jpg" alt="query 85"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__01921__019214580">train-00100-to-00199__01921__019214580</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02392__023920890.jpg" alt="target 85"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__02392__023920890">train-00100-to-00199__02392__023920890</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What would another example of this look like?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Replace the technical certifications with personal skills.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image is a resume; the instruction asks for another example of the same document type, leading to the target image which is a differently formatted resume for a different person.</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#92</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__03382__033826998.jpg" alt="query 92"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__03382__033826998">train-00100-to-00199__03382__033826998</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01216__012160890.jpg" alt="target 92"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01216__012160890">train-00100-to-00199__01216__012160890</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> What other motif fits this aesthetic?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find an image with a more unified theme.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image features a colorful, psychedelic 1960s-style floral pattern; the instruction asks for another motif that shares this specific visual style, leading to the target image which applies the same bright, whimsical aesth…</div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-id">#96</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__00135__001351071.jpg" alt="query 96"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__00135__001351071">train-00100-to-00199__00135__001351071</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01857__018570518.jpg" alt="target 96"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01857__018570518">train-00100-to-00199__01857__018570518</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Can you show me a different variety of this?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Similar flowers, but with a colorful background.</div>
+            <div class="text rationale"><b>Rationale:</b> The query image depicts a specific type of flower (dahlia); the instruction asks for a different variety of that general category, leading to the target image which shows a distinct type of flower (amaryllis).</div>
+          </details>
+        </div>
+      </div>
+    </section>    <section id="cat-instruction_language" class="category" style="--accent:#6d4c41">
+      <div class="eyebrow eyebrow-issue">&#9888; Issue</div>
+      <h2><span class="swatch" style="background:#6d4c41"></span>Instruction language
+        <span class="count-badge">1 / 100 &middot; 1.0%</span></h2>
+      <p class="cat-desc">Instruction has a language / phrasing problem (non-English, grammar, malformed).</p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-id">#0</div>
+          <div class="thumbs">
+            <figure><img loading="lazy" src="images/train-00100-to-00199__02186__021866854.jpg" alt="query 0"><figcaption>query</figcaption><code class="hash" title="train-00100-to-00199__02186__021866854">train-00100-to-00199__02186__021866854</code></figure>
+            <figure><img loading="lazy" src="images/train-00100-to-00199__01045__010456067.jpg" alt="target 0"><figcaption>target</figcaption><code class="hash" title="train-00100-to-00199__01045__010456067">train-00100-to-00199__01045__010456067</code></figure>
+          </div>
+          <div class="text"><b>Instruction:</b> Where would you go to follow the directions on this sign?</div>
+          <details class="more">
+            <summary>Target caption &amp; rationale</summary>
+            <div class="text"><b>Target caption:</b> Find a similar airport scene with flight numbers and social distancing sign</div>
+            <div class="text rationale"><b>Rationale:</b> The query image shows an airport directional sign pointing toward &#x27;Check-in&#x27;; the target image shows the actual check-in counters and queue, establishing a directional-to-destination reasoning link.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+</div>
+<a class="top" href="#">&uarr; Top</a>
+<footer>Generated from the filter_03_subset500 upload &middot; first 100 samples reviewed (0-indexed).</footer>
+</body>
+</html>
