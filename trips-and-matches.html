@@ -138,6 +138,9 @@ const TAGS = [
   {kind:'wc',  kicker:'WORLD CUP · MATCH 77 · RD OF 32', title:'FRA 3–0 SWE', iconL:{flag:'FRA'}, iconR:{flag:'SWE'},
    meta1:'Jun 30 · MetLife Stadium, NY/NJ', meta2:'Mbappé brace sinks Sweden',
    anchor:[40.813,-74.074], x:788, y:330, w:206},
+  {kind:'nba', kicker:'NBA CUP · GROUP PLAY', title:'BUCKS @ KNICKS', iconL:{chip:'MIL'}, iconR:{chip:'NYK'},
+   meta1:'Nov 28, 2025 · Madison Sq Garden · ×4', meta2:'Won 118–109 · Brunson 37, Giannis 30',
+   anchor:[40.7505,-73.9934], x:560, y:46, w:206},
   {kind:'nba', kicker:'NBA · WEST SEMIS · GAME 4', title:'OKC @ LAKERS', iconL:{chip:'OKC'}, iconR:{chip:'LAL'},
    meta1:'May 11 · Crypto.com Arena · Sec 116 · ×2', meta2:'OKC complete the 4–0 sweep',
    anchor:[34.043,-118.267], x:180, y:246, w:206},
@@ -161,7 +164,7 @@ const FLAGS = {
   FRA: {type:'v', bands:['#0055A4','#FFFFFF','#EF4135']},
   SWE: {type:'nordic', field:'#006AA7', cross:'#FECC02'}
 };
-const CHIPS = { OKC:['#007AC1','#EF3B24'], LAL:['#552583','#FDB927'], NYK:['#006BB6','#F58426'], CLE:['#860038','#FDBB30'], LAC:['#C8102E','#1D428A'] };
+const CHIPS = { OKC:['#007AC1','#EF3B24'], LAL:['#552583','#FDB927'], NYK:['#006BB6','#F58426'], CLE:['#860038','#FDBB30'], LAC:['#C8102E','#1D428A'], MIL:['#00471B','#EEE1C6'] };
 
 /* ---- helpers ---- */
 const NS='http://www.w3.org/2000/svg';
@@ -333,7 +336,7 @@ const stats = [
   [String(FLIGHTS.length), 'FLIGHTS'],
   [(totalMi/1000).toFixed(1)+'K', 'MILES'],
   [String(Object.keys(AIRPORTS).length), 'AIRPORTS'],
-  ['6', 'MATCHES']
+  ['7', 'MATCHES']
 ];
 stats.forEach((s, i) => {
   const x = 42 + i*86;
@@ -342,7 +345,7 @@ stats.forEach((s, i) => {
 });
 
 txt(996, 464, 'foot',
-  'Dedup: screenshot-edge repeats & duplicate passes merged (×2) · Ticketmaster “W Conf Semis Hm Gm 2” = the wallet Lakers pass (Game 4, played May 11) · undated EWR–ATL plotted late June · results verified Aug 2026',
+  'Dedup: edge repeats & duplicate passes merged · TM “Hm Gm 2” = wallet Lakers pass (played May 11) · wallet’s Nov 29 Ticketmaster passes = the Nov 28 NBA Cup game · undated EWR–ATL plotted late June · results verified Aug 2026',
   'end');
 </script>
 </body>
