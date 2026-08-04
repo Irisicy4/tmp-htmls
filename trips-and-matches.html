@@ -131,13 +131,13 @@ const FLIGHTS = [
 const TAGS = [
   {kind:'wc',  kicker:'WORLD CUP · MATCH 23 · GROUP K', title:'POR 1–1 COD', iconL:{flag:'POR'}, iconR:{flag:'COD'},
    meta1:'Jun 17 · NRG Stadium, Houston · ×2', meta2:'Group K opener ends all square',
-   anchor:[29.6847,-95.4107], x:560, y:320, w:206},
+   anchor:[29.6847,-95.4107], x:620, y:322, w:206},
   {kind:'wc',  kicker:'WORLD CUP · MATCH 74 · RD OF 32', title:'GER 1–1 PAR', iconL:{flag:'GER'}, iconR:{flag:'PAR'},
    meta1:'Jun 29 · Gillette Stadium, Boston · ×2', meta2:'Paraguay through 4–3 on penalties',
    anchor:[42.091,-71.264], x:788, y:36, w:206},
   {kind:'wc',  kicker:'WORLD CUP · MATCH 77 · RD OF 32', title:'FRA 3–0 SWE', iconL:{flag:'FRA'}, iconR:{flag:'SWE'},
    meta1:'Jun 30 · MetLife Stadium, NY/NJ', meta2:'Mbappé brace sinks Sweden',
-   anchor:[40.813,-74.074], x:788, y:330, w:206},
+   anchor:[40.813,-74.074], x:788, y:392, w:206},
   {kind:'nba', kicker:'NBA CUP · GROUP PLAY', title:'BUCKS @ KNICKS', iconL:{chip:'MIL'}, iconR:{chip:'NYK'},
    meta1:'Nov 28, 2025 · Madison Sq Garden · ×4', meta2:'Won 118–109 · Brunson 37, Giannis 30',
    anchor:[40.7505,-73.9934], x:560, y:46, w:206},
@@ -150,6 +150,9 @@ const TAGS = [
   {kind:'nba', kicker:'NBA · REGULAR SEASON', title:'LAC 103–88 LAL', iconL:{chip:'LAC'}, iconR:{chip:'LAL'},
    meta1:'Dec 20, 2025 · Intuit Dome, Inglewood', meta2:'Kawhi 32 · LeBron 36 in defeat',
    anchor:[33.945,-118.341], x:180, y:386, w:206},
+  {kind:'nba', kicker:'NBA · CHRISTMAS DAY', title:'HOU 119–96 LAL', iconL:{chip:'HOU'}, iconR:{chip:'LAL'},
+   meta1:'Dec 25, 2025 · Crypto.com Arena', meta2:'Amen Thompson 26 · KD 25 · Luka 25',
+   anchor:[34.043,-118.267], x:396, y:316, w:206},
   {kind:'gig', kicker:'CONCERT · THE FREEDOM TOUR', title:'KESHA', iconL:{note:true},
    meta1:'May 24, 2026 · Kia Forum, Inglewood', meta2:'Night before the flight back to SEA',
    anchor:[33.958,-118.342], x:396, y:386, w:206}
@@ -164,7 +167,7 @@ const FLAGS = {
   FRA: {type:'v', bands:['#0055A4','#FFFFFF','#EF4135']},
   SWE: {type:'nordic', field:'#006AA7', cross:'#FECC02'}
 };
-const CHIPS = { OKC:['#007AC1','#EF3B24'], LAL:['#552583','#FDB927'], NYK:['#006BB6','#F58426'], CLE:['#860038','#FDBB30'], LAC:['#C8102E','#1D428A'], MIL:['#00471B','#EEE1C6'] };
+const CHIPS = { OKC:['#007AC1','#EF3B24'], LAL:['#552583','#FDB927'], NYK:['#006BB6','#F58426'], CLE:['#860038','#FDBB30'], LAC:['#C8102E','#1D428A'], MIL:['#00471B','#EEE1C6'], HOU:['#CE1141','#C4CED4'] };
 
 /* ---- helpers ---- */
 const NS='http://www.w3.org/2000/svg';
@@ -294,6 +297,7 @@ function drawChip(parent, x, y, code, w, h) {
   el('rect', {x, y, width:w, height:h, rx:3, class:'icon-ring'}, parent);
 }
 const gTags = el('g', {});
+/* pass 1: anchors + leaders, so every leader runs under every card */
 for (const t of TAGS) {
   const [ax,ay] = px(...t.anchor);
   el('circle', {cx:ax, cy:ay, r:2.6, class:'anchor '+t.kind}, gTags);
@@ -303,6 +307,10 @@ for (const t of TAGS) {
   const ey = ay < by ? by : (ay > by+bh ? by+bh : ay);
   const mx=(ex+ax)/2, my=(ey+ay)/2 - 10;
   el('path', {d:`M${ex},${ey} Q${mx},${my} ${ax},${ay}`, class:'leader '+t.kind}, gTags);
+}
+/* pass 2: cards */
+for (const t of TAGS) {
+  const bx=t.x, by=t.y, bw=t.w, bh=60;
   el('rect', {x:bx, y:by, width:bw, height:bh, rx:9, class:'tag-box '+t.kind}, gTags);
   txt(bx+12, by+15, 'tag-kicker', t.kicker);
   const iw = t.iconL.flag ? 22 : 15, ih = 14, iy = by + 21;
@@ -336,7 +344,7 @@ const stats = [
   [String(FLIGHTS.length), 'FLIGHTS'],
   [(totalMi/1000).toFixed(1)+'K', 'MILES'],
   [String(Object.keys(AIRPORTS).length), 'AIRPORTS'],
-  ['7', 'MATCHES']
+  ['8', 'MATCHES']
 ];
 stats.forEach((s, i) => {
   const x = 42 + i*86;
