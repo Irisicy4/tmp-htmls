@@ -342,7 +342,6 @@ const totalMi = Math.round(FLIGHTS.reduce((s,[,f,t]) => s + haversineMi(AIRPORTS
 txt(42, 68, 'title-kicker', 'OCT 2025 — JUL 2026');
 txt(40, 112, 'title-big', 'TRIPS &');
 txt(40, 154, 'title-big', 'MATCH WATCHING');
-txt(42, 178, 'title-sub', 'From Apple Wallet & Ticketmaster passes');
 
 const stats = [
   [String(FLIGHTS.length), 'FLIGHTS'],
@@ -356,9 +355,6 @@ stats.forEach((s, i) => {
   txt(x, 232, 'stat-label', s[1]);
 });
 
-txt(996, 508, 'foot',
-  'Dedup: edge repeats & duplicate passes merged · TM “Hm Gm 2” = wallet Lakers pass (played May 11) · wallet’s Nov 29 Ticketmaster passes = the Nov 28 NBA Cup game · undated EWR–ATL plotted late June · results verified Aug 2026',
-  'end');
 </script>
 </body>
 </html>
