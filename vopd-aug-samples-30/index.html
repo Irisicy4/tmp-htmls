@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision-OPD 6K augmented training samples (30)</title>
+<style>
+ body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; background:#fafafa; color:#222; }
+ h1 { font-size: 1.4em; }
+ .note { background:#fff7e0; border:1px solid #e5d9a8; padding:10px 14px; border-radius:8px; max-width:70em; }
+ .card { background:#fff; border:1px solid #ddd; border-radius:10px; padding:14px 18px; margin:18px 0; }
+ .q { max-width: 75em; } .gt { color:#0a7; font-weight:600; }
+ .panels { display:flex; gap:20px; overflow-x:auto; align-items:flex-start; }
+ figure { margin:0; } figcaption { font-size:12px; color:#666; margin-bottom:4px; }
+ img { border:1px solid #ccc; background:#fff; max-width:none; }
+</style></head><body>
+<h1>Vision-OPD 6K · augmented training samples (seed-42, 30 samples)</h1>
+<p class="note"><b>Setup:</b> Vision-OPD 6K perception corpus (train_bbox.parquet; clean width median ~2250px — high-res natural images, unlike ViRL39K whose median is 305px).
+<b>best recipe</b> = champion <code>cls1_dsc_noise_p10.json</code> (downscale U(0.3,0.6) no resize-back + DDPM-200 noise p0.5) at coverage p=1.0 — <b>76.05</b> avg.
+<b>worst recipe</b> = <code>cls2_croproi_hard_p10.json</code> (ROI-aware crop, min_scale 0.3) at p=1.0 — <b>65.22</b> avg, below symmetric distillation.
+All panels shown at 0.5× true size with relative scale preserved; the augmented view is exactly what the student policy saw. Red box on clean = the question ROI.
+Companion page: <a href="../virl-aug-samples-30/index.html">ViRL39K version</a>.</p>
+<section class="card">
+      <h3>#204 · red box = ROI</h3>
+      <p class="q">What material is the bench made of?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. plastic
+B. wood
+C. metal
+D. stone
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2209×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/204_clean.jpg" width="1104" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 847×575px (shown 0.5×)</figcaption>
+        <img src="imgs/204_best.jpg" width="423" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2209×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/204_worst.jpg" width="1104" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#217 · red box = ROI</h3>
+      <p class="q">What brand name is written in large letters on the label?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. Valentino Studio
+B. Valentino Roma
+C. Valentino Garavani
+D. Valentino
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2214×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/217_clean.jpg" width="1107" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 732×496px (shown 0.5×)</figcaption>
+        <img src="imgs/217_best.jpg" width="366" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2214×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/217_worst.jpg" width="1107" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#244 · red box = ROI</h3>
+      <p class="q">What is the dominant color of the building&#x27;s facade?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. gray
+B. blue
+C. green
+D. white
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/244_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 931×620px (shown 0.5×)</figcaption>
+        <img src="imgs/244_best.jpg" width="465" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/244_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#260 · red box = ROI</h3>
+      <p class="q">What is the material of the large container shown in the image?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. concrete
+B. plastic
+C. ceramic
+D. stone
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 1500×2244px (shown 0.5×)</figcaption>
+        <img src="imgs/260_clean.jpg" width="750" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 893×1336px (shown 0.5×)</figcaption>
+        <img src="imgs/260_best.jpg" width="446" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 1500×2244px (shown 0.5×)</figcaption>
+        <img src="imgs/260_worst.jpg" width="750" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#712 · red box = ROI</h3>
+      <p class="q">How many plates of snacks are arranged on the wooden table?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. 6
+B. 12
+C. 10
+D. 8
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/712_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1127×752px (shown 0.5×)</figcaption>
+        <img src="imgs/712_best.jpg" width="563" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/712_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#767 · red box = ROI</h3>
+      <p class="q">What is the shape of the top edge of the metallic object?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. rounded
+B. curved
+C. flat
+D. pointed
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/767_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1343×895px (shown 0.5×)</figcaption>
+        <img src="imgs/767_best.jpg" width="671" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/767_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#839 · red box = ROI</h3>
+      <p class="q">What color is the dog&#x27;s muzzle?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. black
+B. white
+C. brown
+D. gray
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 2248×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/839_clean.jpg" width="1124" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 719×480px (shown 0.5×)</figcaption>
+        <img src="imgs/839_best.jpg" width="359" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2248×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/839_worst.jpg" width="1124" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#912 · red box = ROI</h3>
+      <p class="q">What is the color of the rectangular frame in the foreground?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. gray
+B. black
+C. beige
+D. green
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · true 2265×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/912_clean.jpg" width="1132" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 859×569px (shown 0.5×)</figcaption>
+        <img src="imgs/912_best.jpg" width="429" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2265×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/912_worst.jpg" width="1132" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1143 · red box = ROI</h3>
+      <p class="q">What type of architectural element is the black metal fixture attached to the wall?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. post
+B. bracket
+C. sconce
+D. lamp
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/1143_clean.jpg" width="750" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 512×768px (shown 0.5×)</figcaption>
+        <img src="imgs/1143_best.jpg" width="256" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/1143_worst.jpg" width="750" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1628 · red box = ROI</h3>
+      <p class="q">What type of object is being held in the hand?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. smartphone
+B. wallet
+C. pocket knife
+D. train ticket
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/1628_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1077×718px (shown 0.5×)</figcaption>
+        <img src="imgs/1628_best.jpg" width="538" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/1628_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1791 · red box = ROI</h3>
+      <p class="q">What animal is depicted in the logo on the trash can?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. lion
+B. eagle
+C. bear
+D. dog
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/1791_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 873×582px (shown 0.5×)</figcaption>
+        <img src="imgs/1791_best.jpg" width="436" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/1791_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1828 · red box = ROI</h3>
+      <p class="q">What type of numerals are displayed on the clock face?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. Roman
+B. Egyptian
+C. Mayan
+D. Arabic
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/1828_clean.jpg" width="750" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 731×1097px (shown 0.5×)</figcaption>
+        <img src="imgs/1828_best.jpg" width="365" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/1828_worst.jpg" width="750" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1905 · red box = ROI</h3>
+      <p class="q">What is the color of the fixture?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. green
+B. black
+C. white
+D. gray
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2600×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/1905_clean.jpg" width="1300" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1496×863px (shown 0.5×)</figcaption>
+        <img src="imgs/1905_best.jpg" width="748" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2600×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/1905_worst.jpg" width="1300" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#2006 · red box = ROI</h3>
+      <p class="q">How many horizontal bars are visible inside the arched frame?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. 2
+B. 3
+C. 5
+D. 4
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 1500×2000px (shown 0.5×)</figcaption>
+        <img src="imgs/2006_clean.jpg" width="750" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 485×647px (shown 0.5×)</figcaption>
+        <img src="imgs/2006_best.jpg" width="242" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 1500×2000px (shown 0.5×)</figcaption>
+        <img src="imgs/2006_worst.jpg" width="750" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#2253 · red box = ROI</h3>
+      <p class="q">What type of lighting is prominently visible beneath the overpass?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. neon signage
+B. street lighting
+C. floodlighting
+D. vehicle headlights
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/2253_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1084×723px (shown 0.5×)</figcaption>
+        <img src="imgs/2253_best.jpg" width="542" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/2253_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#3456 · red box = ROI</h3>
+      <p class="q">What is the primary color of the Arabic text written at the top of the signboard?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. green
+B. black
+C. red
+D. blue
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/3456_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 971×647px (shown 0.5×)</figcaption>
+        <img src="imgs/3456_best.jpg" width="485" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/3456_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#4139 · red box = ROI</h3>
+      <p class="q">What object is sitting on the bench next to the person on the left?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. bag
+B. phone
+C. book
+D. bottle
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 2396×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4139_clean.jpg" width="1198" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1172×734px (shown 0.5×)</figcaption>
+        <img src="imgs/4139_best.jpg" width="586" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2396×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4139_worst.jpg" width="1198" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#4464 · red box = ROI</h3>
+      <p class="q">What symbol is painted in orange on the front wall of the structure?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. Tika
+B. Swastika
+C. Trishula
+D. Om
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4464_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1306×871px (shown 0.5×)</figcaption>
+        <img src="imgs/4464_best.jpg" width="653" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4464_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#4467 · red box = ROI</h3>
+      <p class="q">What is the primary color of the canopy on the boat?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. blue
+B. red
+C. yellow
+D. white
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2375×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4467_clean.jpg" width="1187" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1005×635px (shown 0.5×)</figcaption>
+        <img src="imgs/4467_best.jpg" width="502" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2375×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4467_worst.jpg" width="1187" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#4597 · red box = ROI</h3>
+      <p class="q">What color is the band of the fitness tracker shown in the image?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. pink
+B. purple
+C. blue
+D. black
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4597_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 749×499px (shown 0.5×)</figcaption>
+        <img src="imgs/4597_best.jpg" width="374" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4597_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#4837 · red box = ROI</h3>
+      <p class="q">What color is the main shaft of the pole shown in the image?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. gold
+B. silver
+C. maroon
+D. bronze
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · true 2247×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4837_clean.jpg" width="1123" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1219×814px (shown 0.5×)</figcaption>
+        <img src="imgs/4837_best.jpg" width="609" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2247×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4837_worst.jpg" width="1123" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#4931 · red box = ROI</h3>
+      <p class="q">What type of person is visible on the left side of the bridge?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. walker
+B. jogger
+C. pedestrian
+D. cyclist
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2665×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4931_clean.jpg" width="1332" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 970×546px (shown 0.5×)</figcaption>
+        <img src="imgs/4931_best.jpg" width="485" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2665×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/4931_worst.jpg" width="1332" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#5238 · red box = ROI</h3>
+      <p class="q">What brand name is printed on the lower basket of the stroller?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. Baby Trend
+B. Chicco
+C. Graco
+D. Joovy
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/5238_clean.jpg" width="750" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 898×1347px (shown 0.5×)</figcaption>
+        <img src="imgs/5238_best.jpg" width="449" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/5238_worst.jpg" width="750" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#5323 · red box = ROI</h3>
+      <p class="q">What material is the balcony primarily made of?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. concrete
+B. metal
+C. wood
+D. glass
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 2000×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/5323_clean.jpg" width="1000" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 951×713px (shown 0.5×)</figcaption>
+        <img src="imgs/5323_best.jpg" width="475" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2000×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/5323_worst.jpg" width="1000" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#5543 · red box = ROI</h3>
+      <p class="q">What is the number written in red near the top of the sail?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. 5
+B. 11
+C. 55
+D. 50
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/5543_clean.jpg" width="1125" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 834×556px (shown 0.5×)</figcaption>
+        <img src="imgs/5543_best.jpg" width="417" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2250×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/5543_worst.jpg" width="1125" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#5745 · red box = ROI</h3>
+      <p class="q">How many yellow chevrons are visible on the sign?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. 3
+B. 4
+C. 5
+D. 6
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2000×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/5745_clean.jpg" width="1000" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 914×685px (shown 0.5×)</figcaption>
+        <img src="imgs/5745_best.jpg" width="457" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2000×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/5745_worst.jpg" width="1000" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#5865 · red box = ROI</h3>
+      <p class="q">What pattern is on the person&#x27;s skirt?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. floral
+B. striped
+C. polka dot
+D. checkered
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/5865_clean.jpg" width="750" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 592×888px (shown 0.5×)</figcaption>
+        <img src="imgs/5865_best.jpg" width="296" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 1500×2250px (shown 0.5×)</figcaption>
+        <img src="imgs/5865_worst.jpg" width="750" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#6033 · red box = ROI</h3>
+      <p class="q">What country&#x27;s flag is depicted in the image?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. Belarus
+B. Kazakhstan
+C. Ukraine
+D. Russia
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2005×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/6033_clean.jpg" width="1002" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 811×607px (shown 0.5×)</figcaption>
+        <img src="imgs/6033_best.jpg" width="405" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2005×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/6033_worst.jpg" width="1002" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#6067 · red box = ROI</h3>
+      <p class="q">What tool is depicted in the center of the winged emblem?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. gear
+B. sickle
+C. compass
+D. hammer
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · true 2849×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/6067_clean.jpg" width="1424" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 1553×818px (shown 0.5×)</figcaption>
+        <img src="imgs/6067_best.jpg" width="776" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2849×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/6067_worst.jpg" width="1424" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#6074 · red box = ROI</h3>
+      <p class="q">What type of structure spans over the road in the image?
+
+Only focus on the objects inside the red bounding box in the image to answer this question.
+
+A. viaduct
+B. bridge
+C. overpass
+D. tunnel
+
+Answer with the option&#x27;s letter from the given choices.</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · true 2248×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/6074_clean.jpg" width="1124" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=1.0) — 76.05 · true 858×573px (shown 0.5×)</figcaption>
+        <img src="imgs/6074_best.jpg" width="429" loading="lazy"></figure><figure><figcaption>worst-recipe aug (crop_roi min_scale 0.3, p=1.0) — 65.22 · true 2248×1500px (shown 0.5×)</figcaption>
+        <img src="imgs/6074_worst.jpg" width="1124" loading="lazy"></figure></div>
+    </section>
+</body></html>

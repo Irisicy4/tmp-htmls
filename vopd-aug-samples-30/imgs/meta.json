@@ -1,0 +1,542 @@
+[
+ {
+  "idx": 204,
+  "q": "<image>\nWhat material is the bench made of?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. plastic\nB. wood\nC. metal\nD. stone\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2209,
+   1500
+  ],
+  "best": [
+   847,
+   575
+  ],
+  "worst": [
+   2209,
+   1500
+  ]
+ },
+ {
+  "idx": 217,
+  "q": "<image>\nWhat brand name is written in large letters on the label?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. Valentino Studio\nB. Valentino Roma\nC. Valentino Garavani\nD. Valentino\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2214,
+   1500
+  ],
+  "best": [
+   732,
+   496
+  ],
+  "worst": [
+   2214,
+   1500
+  ]
+ },
+ {
+  "idx": 244,
+  "q": "<image>\nWhat is the dominant color of the building's facade?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. gray\nB. blue\nC. green\nD. white\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   931,
+   620
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 260,
+  "q": "<image>\nWhat is the material of the large container shown in the image?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. concrete\nB. plastic\nC. ceramic\nD. stone\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   1500,
+   2244
+  ],
+  "best": [
+   893,
+   1336
+  ],
+  "worst": [
+   1500,
+   2244
+  ]
+ },
+ {
+  "idx": 712,
+  "q": "<image>\nHow many plates of snacks are arranged on the wooden table?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. 6\nB. 12\nC. 10\nD. 8\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   1127,
+   752
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 767,
+  "q": "<image>\nWhat is the shape of the top edge of the metallic object?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. rounded\nB. curved\nC. flat\nD. pointed\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   1343,
+   895
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 839,
+  "q": "<image>\nWhat color is the dog's muzzle?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. black\nB. white\nC. brown\nD. gray\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   2248,
+   1500
+  ],
+  "best": [
+   719,
+   480
+  ],
+  "worst": [
+   2248,
+   1500
+  ]
+ },
+ {
+  "idx": 912,
+  "q": "<image>\nWhat is the color of the rectangular frame in the foreground?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. gray\nB. black\nC. beige\nD. green\n\nAnswer with the option's letter from the given choices.",
+  "gt": "C",
+  "roi": true,
+  "clean": [
+   2265,
+   1500
+  ],
+  "best": [
+   859,
+   569
+  ],
+  "worst": [
+   2265,
+   1500
+  ]
+ },
+ {
+  "idx": 1143,
+  "q": "<image>\nWhat type of architectural element is the black metal fixture attached to the wall?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. post\nB. bracket\nC. sconce\nD. lamp\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   1500,
+   2250
+  ],
+  "best": [
+   512,
+   768
+  ],
+  "worst": [
+   1500,
+   2250
+  ]
+ },
+ {
+  "idx": 1628,
+  "q": "<image>\nWhat type of object is being held in the hand?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. smartphone\nB. wallet\nC. pocket knife\nD. train ticket\n\nAnswer with the option's letter from the given choices.",
+  "gt": "C",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   1077,
+   718
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 1791,
+  "q": "<image>\nWhat animal is depicted in the logo on the trash can?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. lion\nB. eagle\nC. bear\nD. dog\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   873,
+   582
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 1828,
+  "q": "<image>\nWhat type of numerals are displayed on the clock face?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. Roman\nB. Egyptian\nC. Mayan\nD. Arabic\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   1500,
+   2250
+  ],
+  "best": [
+   731,
+   1097
+  ],
+  "worst": [
+   1500,
+   2250
+  ]
+ },
+ {
+  "idx": 1905,
+  "q": "<image>\nWhat is the color of the fixture?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. green\nB. black\nC. white\nD. gray\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2600,
+   1500
+  ],
+  "best": [
+   1496,
+   863
+  ],
+  "worst": [
+   2600,
+   1500
+  ]
+ },
+ {
+  "idx": 2006,
+  "q": "<image>\nHow many horizontal bars are visible inside the arched frame?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. 2\nB. 3\nC. 5\nD. 4\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   1500,
+   2000
+  ],
+  "best": [
+   485,
+   647
+  ],
+  "worst": [
+   1500,
+   2000
+  ]
+ },
+ {
+  "idx": 2253,
+  "q": "<image>\nWhat type of lighting is prominently visible beneath the overpass?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. neon signage\nB. street lighting\nC. floodlighting\nD. vehicle headlights\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   1084,
+   723
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 3456,
+  "q": "<image>\nWhat is the primary color of the Arabic text written at the top of the signboard?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. green\nB. black\nC. red\nD. blue\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   971,
+   647
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 4139,
+  "q": "<image>\nWhat object is sitting on the bench next to the person on the left?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. bag\nB. phone\nC. book\nD. bottle\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   2396,
+   1500
+  ],
+  "best": [
+   1172,
+   734
+  ],
+  "worst": [
+   2396,
+   1500
+  ]
+ },
+ {
+  "idx": 4464,
+  "q": "<image>\nWhat symbol is painted in orange on the front wall of the structure?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. Tika\nB. Swastika\nC. Trishula\nD. Om\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   1306,
+   871
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 4467,
+  "q": "<image>\nWhat is the primary color of the canopy on the boat?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. blue\nB. red\nC. yellow\nD. white\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2375,
+   1500
+  ],
+  "best": [
+   1005,
+   635
+  ],
+  "worst": [
+   2375,
+   1500
+  ]
+ },
+ {
+  "idx": 4597,
+  "q": "<image>\nWhat color is the band of the fitness tracker shown in the image?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. pink\nB. purple\nC. blue\nD. black\n\nAnswer with the option's letter from the given choices.",
+  "gt": "C",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   749,
+   499
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 4837,
+  "q": "<image>\nWhat color is the main shaft of the pole shown in the image?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. gold\nB. silver\nC. maroon\nD. bronze\n\nAnswer with the option's letter from the given choices.",
+  "gt": "C",
+  "roi": true,
+  "clean": [
+   2247,
+   1500
+  ],
+  "best": [
+   1219,
+   814
+  ],
+  "worst": [
+   2247,
+   1500
+  ]
+ },
+ {
+  "idx": 4931,
+  "q": "<image>\nWhat type of person is visible on the left side of the bridge?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. walker\nB. jogger\nC. pedestrian\nD. cyclist\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2665,
+   1500
+  ],
+  "best": [
+   970,
+   546
+  ],
+  "worst": [
+   2665,
+   1500
+  ]
+ },
+ {
+  "idx": 5238,
+  "q": "<image>\nWhat brand name is printed on the lower basket of the stroller?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. Baby Trend\nB. Chicco\nC. Graco\nD. Joovy\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   1500,
+   2250
+  ],
+  "best": [
+   898,
+   1347
+  ],
+  "worst": [
+   1500,
+   2250
+  ]
+ },
+ {
+  "idx": 5323,
+  "q": "<image>\nWhat material is the balcony primarily made of?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. concrete\nB. metal\nC. wood\nD. glass\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   2000,
+   1500
+  ],
+  "best": [
+   951,
+   713
+  ],
+  "worst": [
+   2000,
+   1500
+  ]
+ },
+ {
+  "idx": 5543,
+  "q": "<image>\nWhat is the number written in red near the top of the sail?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. 5\nB. 11\nC. 55\nD. 50\n\nAnswer with the option's letter from the given choices.",
+  "gt": "C",
+  "roi": true,
+  "clean": [
+   2250,
+   1500
+  ],
+  "best": [
+   834,
+   556
+  ],
+  "worst": [
+   2250,
+   1500
+  ]
+ },
+ {
+  "idx": 5745,
+  "q": "<image>\nHow many yellow chevrons are visible on the sign?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. 3\nB. 4\nC. 5\nD. 6\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2000,
+   1500
+  ],
+  "best": [
+   914,
+   685
+  ],
+  "worst": [
+   2000,
+   1500
+  ]
+ },
+ {
+  "idx": 5865,
+  "q": "<image>\nWhat pattern is on the person's skirt?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. floral\nB. striped\nC. polka dot\nD. checkered\n\nAnswer with the option's letter from the given choices.",
+  "gt": "A",
+  "roi": true,
+  "clean": [
+   1500,
+   2250
+  ],
+  "best": [
+   592,
+   888
+  ],
+  "worst": [
+   1500,
+   2250
+  ]
+ },
+ {
+  "idx": 6033,
+  "q": "<image>\nWhat country's flag is depicted in the image?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. Belarus\nB. Kazakhstan\nC. Ukraine\nD. Russia\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2005,
+   1500
+  ],
+  "best": [
+   811,
+   607
+  ],
+  "worst": [
+   2005,
+   1500
+  ]
+ },
+ {
+  "idx": 6067,
+  "q": "<image>\nWhat tool is depicted in the center of the winged emblem?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. gear\nB. sickle\nC. compass\nD. hammer\n\nAnswer with the option's letter from the given choices.",
+  "gt": "D",
+  "roi": true,
+  "clean": [
+   2849,
+   1500
+  ],
+  "best": [
+   1553,
+   818
+  ],
+  "worst": [
+   2849,
+   1500
+  ]
+ },
+ {
+  "idx": 6074,
+  "q": "<image>\nWhat type of structure spans over the road in the image?\n\nOnly focus on the objects inside the red bounding box in the image to answer this question.\n\nA. viaduct\nB. bridge\nC. overpass\nD. tunnel\n\nAnswer with the option's letter from the given choices.",
+  "gt": "B",
+  "roi": true,
+  "clean": [
+   2248,
+   1500
+  ],
+  "best": [
+   858,
+   573
+  ],
+  "worst": [
+   2248,
+   1500
+  ]
+ }
+]
