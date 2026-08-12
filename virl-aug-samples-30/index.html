@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViRL39K augmented training samples (30)</title>
+<style>
+ body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; background:#fafafa; color:#222; }
+ h1 { font-size: 1.4em; } h2 { font-size: 1.15em; margin-top: 2em; }
+ .note { background:#fff7e0; border:1px solid #e5d9a8; padding:10px 14px; border-radius:8px; max-width:70em; }
+ .card { background:#fff; border:1px solid #ddd; border-radius:10px; padding:14px 18px; margin:18px 0; }
+ .q { max-width: 75em; } .gt { color:#0a7; font-weight:600; }
+ .panels { display:flex; gap:20px; overflow-x:auto; align-items:flex-start; }
+ figure { margin:0; } figcaption { font-size:12px; color:#666; margin-bottom:4px; }
+ img { border:1px solid #ccc; background:#fff; max-width:none; }
+ .strip { overflow-x:auto; margin:14px 0; } .strip img { display:block; }
+</style></head><body>
+<h1>ViRL39K · augmented training samples (seed-42, 30 samples)</h1>
+<p class="note"><b>Setup:</b> ViRL39K corpus (38,870 prompts; image width median 305px, p10 121px, p90 940px).
+<b>best recipe</b> = champion <code>cls1_dsc_noise_p10.json</code> (downscale U(0.3,0.6) no resize-back + DDPM-200 noise p0.5) at coverage p=0.9 — 72.91 avg (150 steps).
+<b>worst recipe</b> = <code>only_downscale_02_06.json</code> (downscale U(0.2,0.6) only) at p=1.0 — 71.88 avg.
+All images shown at native pixel size; the augmented view is exactly what the student policy saw.</p>
+<h2>Fixed-scale legibility strips (clean → 0.6/0.4/0.3/0.2×)</h2>
+<p>For judging at which downscale text/labels stop being readable, independent of the sampled strength.</p>
+<figure class="strip"><figcaption>legib_425: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_425.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_1639: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_1639.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_1739: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_1739.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_1952: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_1952.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_2082: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_2082.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_5697: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_5697.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_6140: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_6140.jpg" loading="lazy"></figure><figure class="strip"><figcaption>legib_6717: clean | 0.6× | 0.4× | 0.3× | 0.2× (all at native pixels)</figcaption><img src="legib/legib_6717.jpg" loading="lazy"></figure>
+<h2>30 training samples: question + clean vs augmented</h2>
+<section class="card">
+      <h3>#425</h3>
+      <p class="q">What percentage of the total votes did Linda receive from the seventh grade, and how many more votes did she receive from the seventh grade compared to the eighth grade?</p><p class="gt">GT: 47.40% and 360</p>
+      <div class="panels"><figure><figcaption>clean · 251×156px</figcaption>
+        <img src="imgs/425_clean.jpg" width="251" height="156" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 133×83px</figcaption>
+        <img src="imgs/425_best.jpg" width="133" height="83" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 85×53px</figcaption>
+        <img src="imgs/425_worst.jpg" width="85" height="53" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1639</h3>
+      <p class="q">In the given diagram, C and D are two points on the circle O with diameter AB (located on either side of AB), CD = AD, and ∠ABC = 70°. What is the degree measure of ∠BAD?
+Choices:
+(A) 30°
+(B) 35°
+(C) 45°
+(D) 50°</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · 138×117px</figcaption>
+        <img src="imgs/1639_clean.jpg" width="138" height="117" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 60×51px</figcaption>
+        <img src="imgs/1639_best.jpg" width="60" height="51" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 44×37px</figcaption>
+        <img src="imgs/1639_worst.jpg" width="44" height="37" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1739</h3>
+      <p class="q">By how many times is Jupiter&#x27;s volume larger than the combined volume of Uranus and Neptune?</p><p class="gt">GT: 10.9</p>
+      <div class="panels"><figure><figcaption>clean · 355×307px</figcaption>
+        <img src="imgs/1739_clean.jpg" width="355" height="307" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 145×125px</figcaption>
+        <img src="imgs/1739_best.jpg" width="145" height="125" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 181×156px</figcaption>
+        <img src="imgs/1739_worst.jpg" width="181" height="156" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#1952</h3>
+      <p class="q">Determine the value of C D if A B = 6, A F = 8, B C = x, C D = y, D E = 2 y - 3, and F E = x + \frac { 10 } { 3 }.
+Choices:
+(A) 9
+(B) 10
+(C) 12
+(D) 15</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · 346×269px</figcaption>
+        <img src="imgs/1952_clean.jpg" width="346" height="269" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 346×269px</figcaption>
+        <img src="imgs/1952_best.jpg" width="346" height="269" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 122×95px</figcaption>
+        <img src="imgs/1952_worst.jpg" width="122" height="95" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#2082</h3>
+      <p class="q">Does the Maroon line ever go below the Cornflower line?</p><p class="gt">GT: No</p>
+      <div class="panels"><figure><figcaption>clean · 631×400px</figcaption>
+        <img src="imgs/2082_clean.jpg" width="631" height="400" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 220×140px</figcaption>
+        <img src="imgs/2082_best.jpg" width="220" height="140" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 299×189px</figcaption>
+        <img src="imgs/2082_worst.jpg" width="299" height="189" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#5697</h3>
+      <p class="q">The diagram below shows three identical 1.0 L containers filled with the indicated amounts of gas. The stopcocks connecting the containers are originally closed and the gases are all at 25°C. Assume ideal behavior. Which gas exerts the greatest pressure?
+A. He
+B. Ne
+C. NO
+D. All gases exert the same amount of pressure.</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · 648×171px</figcaption>
+        <img src="imgs/5697_clean.jpg" width="648" height="171" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 298×79px</figcaption>
+        <img src="imgs/5697_best.jpg" width="298" height="79" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 369×97px</figcaption>
+        <img src="imgs/5697_worst.jpg" width="369" height="97" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#6140</h3>
+      <p class="q">Question: Who won the singing contest?
+Choices:
+A. Ara B. Benito C. Chien D. Dennis</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · 1113×1152px</figcaption>
+        <img src="imgs/6140_clean.jpg" width="1113" height="1152" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 442×458px</figcaption>
+        <img src="imgs/6140_best.jpg" width="442" height="458" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 581×601px</figcaption>
+        <img src="imgs/6140_worst.jpg" width="581" height="601" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#6717</h3>
+      <p class="q">As shown in the figure, the four corners of the rectangular paper $ABCD$ are folded inward to precisely form a quadrilateral $EFGH$ with no gaps and no overlaps. If $EH=3$ and $EF=4$, what is the length of side $BC$?</p><p class="gt">GT: 5</p>
+      <div class="panels"><figure><figcaption>clean · 393×399px</figcaption>
+        <img src="imgs/6717_clean.jpg" width="393" height="399" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 226×229px</figcaption>
+        <img src="imgs/6717_best.jpg" width="226" height="229" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 157×159px</figcaption>
+        <img src="imgs/6717_worst.jpg" width="157" height="159" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#7296</h3>
+      <p class="q">As shown in the diagram, the perimeter of parallelogram $ABCD$ is $20$. The diagonals $AC$ and $BD$ intersect at point $O$. Point $E$ is the midpoint of $CD$, and $BD = 6$. What is the perimeter of $\triangle DOE$?</p><p class="gt">GT: 8</p>
+      <div class="panels"><figure><figcaption>clean · 172×96px</figcaption>
+        <img src="imgs/7296_clean.jpg" width="172" height="96" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 59×33px</figcaption>
+        <img src="imgs/7296_best.jpg" width="59" height="33" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 86×48px</figcaption>
+        <img src="imgs/7296_worst.jpg" width="86" height="48" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#9144</h3>
+      <p class="q">As shown in the figure, quadrilateral $ABCD$ is a rhombus, and point $E$ is on the extension line of $AC$, $\angle ACD = \angle ABE$. $\triangle ABC \sim \triangle AEB$; when $AD = 4$ and $AC = 3$, what is the length of $AE$?</p><p class="gt">GT: \frac{16}{3}</p>
+      <div class="panels"><figure><figcaption>clean · 563×482px</figcaption>
+        <img src="imgs/9144_clean.jpg" width="563" height="482" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 230×197px</figcaption>
+        <img src="imgs/9144_best.jpg" width="230" height="197" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 283×242px</figcaption>
+        <img src="imgs/9144_worst.jpg" width="283" height="242" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#10463</h3>
+      <p class="q">As shown in Figure 1, this is a hexagonal ruler used in woodworking table saws, providing common angle measurements. In the hexagonal ruler diagram in Figure 2, the value of $x$ is ( )
+
+&lt;image_1&gt;
+
+Figure 1
+
+&lt;image_2&gt;
+
+Figure 2
+A. $135^{\circ}$
+B. $120^{\circ}$
+C. $112.5^{\circ}$
+D. $112^{\circ}$</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · 308×272px</figcaption>
+        <img src="imgs/10463_clean.jpg" width="308" height="272" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 107×95px</figcaption>
+        <img src="imgs/10463_best.jpg" width="107" height="95" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 135×119px</figcaption>
+        <img src="imgs/10463_worst.jpg" width="135" height="119" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#13031</h3>
+      <p class="q">Which continent is highlighted?
+A. Europe
+B. Antarctica
+C. Africa
+D. South America</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · 704×358px</figcaption>
+        <img src="imgs/13031_clean.jpg" width="704" height="358" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 328×167px</figcaption>
+        <img src="imgs/13031_best.jpg" width="328" height="167" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 390×198px</figcaption>
+        <img src="imgs/13031_worst.jpg" width="390" height="198" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#14328</h3>
+      <p class="q">As shown in the figure, fold triangle ABC along line DE so that point C coincides with point A. Given that AB = 7 and BC = 6, the perimeter of triangle BCD is ___.</p><p class="gt">GT: 13</p>
+      <div class="panels"><figure><figcaption>clean · 127×109px</figcaption>
+        <img src="imgs/14328_clean.jpg" width="127" height="109" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 51×44px</figcaption>
+        <img src="imgs/14328_best.jpg" width="51" height="44" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 62×53px</figcaption>
+        <img src="imgs/14328_worst.jpg" width="62" height="53" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#14446</h3>
+      <p class="q">As shown in the figure, in △ABC, ∠A = 90°, point D is on side AC, DE ∥ BC. If ∠1 = 145°, then the measure of ∠B is ( )
+A. 35°
+B. 25°
+C. 45°
+D. 55°</p><p class="gt">GT: D</p>
+      <div class="panels"><figure><figcaption>clean · 128×115px</figcaption>
+        <img src="imgs/14446_clean.jpg" width="128" height="115" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 68×61px</figcaption>
+        <img src="imgs/14446_best.jpg" width="68" height="61" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 69×62px</figcaption>
+        <img src="imgs/14446_worst.jpg" width="69" height="62" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#14628</h3>
+      <p class="q">As shown in the figure, starting from ||bc, be bisects ∠abc. If ∠1 = 68°, then the degree measure of ∠cbe is ( ).
+A. 34°
+B. 32°
+C. 22°
+D. 56°</p><p class="gt">GT: A</p>
+      <div class="panels"><figure><figcaption>clean · 180×120px</figcaption>
+        <img src="imgs/14628_clean.jpg" width="180" height="120" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 74×49px</figcaption>
+        <img src="imgs/14628_best.jpg" width="74" height="49" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 102×68px</figcaption>
+        <img src="imgs/14628_worst.jpg" width="102" height="68" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#15247</h3>
+      <p class="q">In the right triangle ABC, ∠ACB = 90°, D is the midpoint of the hypotenuse AB, AC = 6 cm, and BC = 8 cm. The length of CD is cm.</p><p class="gt">GT: 5</p>
+      <div class="panels"><figure><figcaption>clean · 150×105px</figcaption>
+        <img src="imgs/15247_clean.jpg" width="150" height="105" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 50×35px</figcaption>
+        <img src="imgs/15247_best.jpg" width="50" height="35" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 44×31px</figcaption>
+        <img src="imgs/15247_worst.jpg" width="44" height="31" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#16049</h3>
+      <p class="q">Find the correct molecular name based on the legend.
+A. The given choices are misleading.
+B. Option C in the image
+C. Option B in the image
+D. Option A in the image</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · 800×300px</figcaption>
+        <img src="imgs/16049_clean.jpg" width="800" height="300" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 259×97px</figcaption>
+        <img src="imgs/16049_best.jpg" width="259" height="97" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 330×124px</figcaption>
+        <img src="imgs/16049_worst.jpg" width="330" height="124" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#18024</h3>
+      <p class="q">Two magnets are placed as shown.
+
+Hint: Magnets that attract pull together. Magnets that repel push apart.
+Will these magnets attract or repel each other?
+A. repel
+B. attract</p><p class="gt">GT: B</p>
+      <div class="panels"><figure><figcaption>clean · 447×53px</figcaption>
+        <img src="imgs/18024_clean.jpg" width="447" height="53" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 261×31px</figcaption>
+        <img src="imgs/18024_best.jpg" width="261" height="31" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 262×31px</figcaption>
+        <img src="imgs/18024_worst.jpg" width="262" height="31" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#18231</h3>
+      <p class="q">/nBased on the given images, answer the following question.
+
+In the Cartesian coordinate system, the parabola \( y = x^2 + mx \) intersects the negative half of the x-axis at point A. Point B is located on the positive half of the y-axis, and the symmetric point of A with respect to B, denoted as \( A&#x27; \), falls on the parabola. A line parallel to the x-axis passes through \( A&#x27; \) and intersects the parabola at another point C. If the x-coordinate of \( A&#x27; \) is 1, what is the length of \( A&#x27;C \)?</p><p class="gt">GT: 3</p>
+      <div class="panels"><figure><figcaption>clean · 460×440px</figcaption>
+        <img src="imgs/18231_clean.jpg" width="460" height="440" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 460×440px</figcaption>
+        <img src="imgs/18231_best.jpg" width="460" height="440" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 223×213px</figcaption>
+        <img src="imgs/18231_worst.jpg" width="223" height="213" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#22298</h3>
+      <p class="q">As shown in the figure, in △ABC, DE∥BC. If the ratio of the area of △ADE to the area of △BDE is 1:2, and DE=4, then the length of BC is ( ).</p><p class="gt">GT: 12</p>
+      <div class="panels"><figure><figcaption>clean · 154×154px</figcaption>
+        <img src="imgs/22298_clean.jpg" width="154" height="154" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 63×63px</figcaption>
+        <img src="imgs/22298_best.jpg" width="63" height="63" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 35×35px</figcaption>
+        <img src="imgs/22298_worst.jpg" width="35" height="35" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#27493</h3>
+      <p class="q">As shown in the figure, quadrilateral $$ABCD$$ is a rhombus, and circle $$⊙O$$ passes through points $$A$$, $$C$$, and $$D$$, intersecting $$BC$$ at point $$E$$. Connect $$AC$$ and $$AE$$. If $$\angle D=78^{\circ}$$, then $$\angle EAC=$$ ___$$^{\circ}$$.</p><p class="gt">GT: 27</p>
+      <div class="panels"><figure><figcaption>clean · 125×126px</figcaption>
+        <img src="imgs/27493_clean.jpg" width="125" height="126" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 60×60px</figcaption>
+        <img src="imgs/27493_best.jpg" width="60" height="60" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 28×29px</figcaption>
+        <img src="imgs/27493_worst.jpg" width="28" height="29" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#27651</h3>
+      <p class="q">As shown in the figure, in an equilateral triangle $$ABC$$ with side length $$a$$, $$E$$ and $$F$$ are the midpoints of sides $$BC$$ and $$AC$$, respectively. Then |$$\overrightarrow{EF}|$$ = ___.</p><p class="gt">GT: \dfrac{a}{2}</p>
+      <div class="panels"><figure><figcaption>clean · 136×114px</figcaption>
+        <img src="imgs/27651_clean.jpg" width="136" height="114" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 62×52px</figcaption>
+        <img src="imgs/27651_best.jpg" width="62" height="52" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 67×56px</figcaption>
+        <img src="imgs/27651_worst.jpg" width="67" height="56" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#27696</h3>
+      <p class="q">Read the following program. If the input is $$a=1$$, $$b=2$$, $$c=3$$, then the value of the output $$S$$ is ___.</p><p class="gt">GT: 47</p>
+      <div class="panels"><figure><figcaption>clean · 137×192px</figcaption>
+        <img src="imgs/27696_clean.jpg" width="137" height="192" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 51×72px</figcaption>
+        <img src="imgs/27696_best.jpg" width="51" height="72" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 64×89px</figcaption>
+        <img src="imgs/27696_worst.jpg" width="64" height="89" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#29439</h3>
+      <p class="q">As shown in the figure, it is known that $\vartriangle ABC \sim \vartriangle ACP$, $AB=5$, $AC=2$. The ratio of the perimeters of $\vartriangle ABC$ and $\vartriangle ACP$ is.</p><p class="gt">GT: 5:2</p>
+      <div class="panels"><figure><figcaption>clean · 91×61px</figcaption>
+        <img src="imgs/29439_clean.jpg" width="91" height="61" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 51×34px</figcaption>
+        <img src="imgs/29439_best.jpg" width="51" height="34" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 20×14px</figcaption>
+        <img src="imgs/29439_worst.jpg" width="20" height="14" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#33118</h3>
+      <p class="q">As shown in the figure, the result output by the program after running is ___.</p><p class="gt">GT: 19</p>
+      <div class="panels"><figure><figcaption>clean · 409×499px</figcaption>
+        <img src="imgs/33118_clean.jpg" width="409" height="499" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 136×166px</figcaption>
+        <img src="imgs/33118_best.jpg" width="136" height="166" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 112×136px</figcaption>
+        <img src="imgs/33118_worst.jpg" width="112" height="136" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#35713</h3>
+      <p class="q">Referring to the cladogram provided, determine how many species share four or more common ancestors with the Iguanodon.
+The above problem is with the following images:</p><p class="gt">GT: 6</p>
+      <div class="panels"><figure><figcaption>clean · 321×229px</figcaption>
+        <img src="imgs/35713_clean.jpg" width="321" height="229" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 104×74px</figcaption>
+        <img src="imgs/35713_best.jpg" width="104" height="74" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 148×106px</figcaption>
+        <img src="imgs/35713_worst.jpg" width="148" height="106" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#35741</h3>
+      <p class="q">The below problem is with the following images:
+
+In a given geometric configuration where AB is parallel to CD, and AD and BC intersect at point P, if AB equals 4, CD equals 7, and PD equals 10, what is the length of AP?</p><p class="gt">GT: \frac{40}{7}</p>
+      <div class="panels"><figure><figcaption>clean · 109×78px</figcaption>
+        <img src="imgs/35741_clean.jpg" width="109" height="78" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 36×26px</figcaption>
+        <img src="imgs/35741_best.jpg" width="36" height="26" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 43×31px</figcaption>
+        <img src="imgs/35741_worst.jpg" width="43" height="31" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#36781</h3>
+      <p class="q">The table below shows the properties of certain elements in the second and third periods. Which of the following statements is correct? ( )  
+A. 3. and 5. are in the same period
+B. The stability of gaseous hydrides: 4. $$&gt;$$ 8.
+C. Among the hydration products of the highest valence oxides of the aforementioned eight elements, 5. has the strongest acidity
+D. 1. and 6. can only form one compound</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · 3514×544px</figcaption>
+        <img src="imgs/36781_clean.jpg" width="3514" height="544" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 1228×190px</figcaption>
+        <img src="imgs/36781_best.jpg" width="1228" height="190" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 1806×280px</figcaption>
+        <img src="imgs/36781_worst.jpg" width="1806" height="280" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#38618</h3>
+      <p class="q">The three views of a geometric solid are a square, a rectangle, and a semicircle, with the sizes as shown in the figure. The volume of the geometric solid is ( ) 
+A. $\frac{\pi}{2}$
+B. $\frac{2\pi}{3}$
+C. $\pi$
+D. $2\pi$</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · 160×157px</figcaption>
+        <img src="imgs/38618_clean.jpg" width="160" height="157" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 83×82px</figcaption>
+        <img src="imgs/38618_best.jpg" width="83" height="82" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 44×43px</figcaption>
+        <img src="imgs/38618_worst.jpg" width="44" height="43" loading="lazy"></figure></div>
+    </section><section class="card">
+      <h3>#38698</h3>
+      <p class="q">As shown in the figure, the paper of a regular book is obtained by multiple halvings of the original paper. Rectangle $$ABCD$$ is halved along $$EF$$, and then rectangle $$EFCD$$ is halved along $$MN$$, and so on. If all the resulting rectangles are similar, then $$\dfrac{AD}{AB}$$ equals ( )  
+A. $$0.618$$
+B. $$\dfrac{\sqrt{2}}{2}$$
+C. $$\sqrt{2}$$
+D. $$2$$</p><p class="gt">GT: C</p>
+      <div class="panels"><figure><figcaption>clean · 497×339px</figcaption>
+        <img src="imgs/38698_clean.jpg" width="497" height="339" loading="lazy"></figure><figure><figcaption>best-recipe aug (dsc U(0.3,0.6)+noise, p=0.9) · 259×177px</figcaption>
+        <img src="imgs/38698_best.jpg" width="259" height="177" loading="lazy"></figure><figure><figcaption>worst-recipe aug (dsc U(0.2,0.6) only, p=1.0) · 194×132px</figcaption>
+        <img src="imgs/38698_worst.jpg" width="194" height="132" loading="lazy"></figure></div>
+    </section>
+</body></html>

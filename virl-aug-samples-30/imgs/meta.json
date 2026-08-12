@@ -1,0 +1,512 @@
+[
+ {
+  "idx": 425,
+  "q": "<image>\nWhat percentage of the total votes did Linda receive from the seventh grade, and how many more votes did she receive from the seventh grade compared to the eighth grade?",
+  "gt": "47.40% and 360",
+  "clean": [
+   251,
+   156
+  ],
+  "best": [
+   133,
+   83
+  ],
+  "worst": [
+   85,
+   53
+  ]
+ },
+ {
+  "idx": 1639,
+  "q": "<image>\nIn the given diagram, C and D are two points on the circle O with diameter AB (located on either side of AB), CD = AD, and ∠ABC = 70°. What is the degree measure of ∠BAD?\nChoices:\n(A) 30°\n(B) 35°\n(C) 45°\n(D) 50°",
+  "gt": "B",
+  "clean": [
+   138,
+   117
+  ],
+  "best": [
+   60,
+   51
+  ],
+  "worst": [
+   44,
+   37
+  ]
+ },
+ {
+  "idx": 1739,
+  "q": "<image>\nBy how many times is Jupiter's volume larger than the combined volume of Uranus and Neptune?",
+  "gt": "10.9",
+  "clean": [
+   355,
+   307
+  ],
+  "best": [
+   145,
+   125
+  ],
+  "worst": [
+   181,
+   156
+  ]
+ },
+ {
+  "idx": 1952,
+  "q": "<image>\nDetermine the value of C D if A B = 6, A F = 8, B C = x, C D = y, D E = 2 y - 3, and F E = x + \\frac { 10 } { 3 }.\nChoices:\n(A) 9\n(B) 10\n(C) 12\n(D) 15",
+  "gt": "A",
+  "clean": [
+   346,
+   269
+  ],
+  "best": [
+   346,
+   269
+  ],
+  "worst": [
+   122,
+   95
+  ]
+ },
+ {
+  "idx": 2082,
+  "q": "<image>\nDoes the Maroon line ever go below the Cornflower line?",
+  "gt": "No",
+  "clean": [
+   631,
+   400
+  ],
+  "best": [
+   220,
+   140
+  ],
+  "worst": [
+   299,
+   189
+  ]
+ },
+ {
+  "idx": 5697,
+  "q": "<image>\nThe diagram below shows three identical 1.0 L containers filled with the indicated amounts of gas. The stopcocks connecting the containers are originally closed and the gases are all at 25°C. Assume ideal behavior. Which gas exerts the greatest pressure?\nA. He\nB. Ne\nC. NO\nD. All gases exert the same amount of pressure.",
+  "gt": "A",
+  "clean": [
+   648,
+   171
+  ],
+  "best": [
+   298,
+   79
+  ],
+  "worst": [
+   369,
+   97
+  ]
+ },
+ {
+  "idx": 6140,
+  "q": "<image>\nQuestion: Who won the singing contest?\nChoices:\nA. Ara B. Benito C. Chien D. Dennis",
+  "gt": "D",
+  "clean": [
+   1113,
+   1152
+  ],
+  "best": [
+   442,
+   458
+  ],
+  "worst": [
+   581,
+   601
+  ]
+ },
+ {
+  "idx": 6717,
+  "q": "<image>\nAs shown in the figure, the four corners of the rectangular paper $ABCD$ are folded inward to precisely form a quadrilateral $EFGH$ with no gaps and no overlaps. If $EH=3$ and $EF=4$, what is the length of side $BC$?",
+  "gt": "5",
+  "clean": [
+   393,
+   399
+  ],
+  "best": [
+   226,
+   229
+  ],
+  "worst": [
+   157,
+   159
+  ]
+ },
+ {
+  "idx": 7296,
+  "q": "<image>\nAs shown in the diagram, the perimeter of parallelogram $ABCD$ is $20$. The diagonals $AC$ and $BD$ intersect at point $O$. Point $E$ is the midpoint of $CD$, and $BD = 6$. What is the perimeter of $\\triangle DOE$?",
+  "gt": "8",
+  "clean": [
+   172,
+   96
+  ],
+  "best": [
+   59,
+   33
+  ],
+  "worst": [
+   86,
+   48
+  ]
+ },
+ {
+  "idx": 9144,
+  "q": "<image>\nAs shown in the figure, quadrilateral $ABCD$ is a rhombus, and point $E$ is on the extension line of $AC$, $\\angle ACD = \\angle ABE$. $\\triangle ABC \\sim \\triangle AEB$; when $AD = 4$ and $AC = 3$, what is the length of $AE$?",
+  "gt": "\\frac{16}{3}",
+  "clean": [
+   563,
+   482
+  ],
+  "best": [
+   230,
+   197
+  ],
+  "worst": [
+   283,
+   242
+  ]
+ },
+ {
+  "idx": 10463,
+  "q": "As shown in Figure 1, this is a hexagonal ruler used in woodworking table saws, providing common angle measurements. In the hexagonal ruler diagram in Figure 2, the value of $x$ is ( )\n\n<image><image_1>\n\nFigure 1\n\n<image><image_2>\n\nFigure 2\nA. $135^{\\circ}$\nB. $120^{\\circ}$\nC. $112.5^{\\circ}$\nD. $112^{\\circ}$",
+  "gt": "C",
+  "clean": [
+   308,
+   272
+  ],
+  "best": [
+   107,
+   95
+  ],
+  "worst": [
+   135,
+   119
+  ]
+ },
+ {
+  "idx": 13031,
+  "q": "<image>Which continent is highlighted?\nA. Europe\nB. Antarctica\nC. Africa\nD. South America",
+  "gt": "C",
+  "clean": [
+   704,
+   358
+  ],
+  "best": [
+   328,
+   167
+  ],
+  "worst": [
+   390,
+   198
+  ]
+ },
+ {
+  "idx": 14328,
+  "q": "<image>As shown in the figure, fold triangle ABC along line DE so that point C coincides with point A. Given that AB = 7 and BC = 6, the perimeter of triangle BCD is ___.",
+  "gt": "13",
+  "clean": [
+   127,
+   109
+  ],
+  "best": [
+   51,
+   44
+  ],
+  "worst": [
+   62,
+   53
+  ]
+ },
+ {
+  "idx": 14446,
+  "q": "<image>As shown in the figure, in △ABC, ∠A = 90°, point D is on side AC, DE ∥ BC. If ∠1 = 145°, then the measure of ∠B is ( )\nA. 35°\nB. 25°\nC. 45°\nD. 55°",
+  "gt": "D",
+  "clean": [
+   128,
+   115
+  ],
+  "best": [
+   68,
+   61
+  ],
+  "worst": [
+   69,
+   62
+  ]
+ },
+ {
+  "idx": 14628,
+  "q": "<image>As shown in the figure, starting from ||bc, be bisects ∠abc. If ∠1 = 68°, then the degree measure of ∠cbe is ( ).\nA. 34°\nB. 32°\nC. 22°\nD. 56°",
+  "gt": "A",
+  "clean": [
+   180,
+   120
+  ],
+  "best": [
+   74,
+   49
+  ],
+  "worst": [
+   102,
+   68
+  ]
+ },
+ {
+  "idx": 15247,
+  "q": "<image>In the right triangle ABC, ∠ACB = 90°, D is the midpoint of the hypotenuse AB, AC = 6 cm, and BC = 8 cm. The length of CD is cm.",
+  "gt": "5",
+  "clean": [
+   150,
+   105
+  ],
+  "best": [
+   50,
+   35
+  ],
+  "worst": [
+   44,
+   31
+  ]
+ },
+ {
+  "idx": 16049,
+  "q": "<image>Find the correct molecular name based on the legend.\nA. The given choices are misleading.\nB. Option C in the image\nC. Option B in the image\nD. Option A in the image",
+  "gt": "C",
+  "clean": [
+   800,
+   300
+  ],
+  "best": [
+   259,
+   97
+  ],
+  "worst": [
+   330,
+   124
+  ]
+ },
+ {
+  "idx": 18024,
+  "q": "<image>Two magnets are placed as shown.\n\nHint: Magnets that attract pull together. Magnets that repel push apart.\nWill these magnets attract or repel each other?\nA. repel\nB. attract",
+  "gt": "B",
+  "clean": [
+   447,
+   53
+  ],
+  "best": [
+   261,
+   31
+  ],
+  "worst": [
+   262,
+   31
+  ]
+ },
+ {
+  "idx": 18231,
+  "q": "<image>/nBased on the given images, answer the following question.\n\nIn the Cartesian coordinate system, the parabola \\( y = x^2 + mx \\) intersects the negative half of the x-axis at point A. Point B is located on the positive half of the y-axis, and the symmetric point of A with respect to B, denoted as \\( A' \\), falls on the parabola. A line parallel to the x-axis passes through \\( A' \\) and intersects the parabola at another point C. If the x-coordinate of \\( A' \\) is 1, what is the length of \\( A'C \\)?",
+  "gt": "3",
+  "clean": [
+   460,
+   440
+  ],
+  "best": [
+   460,
+   440
+  ],
+  "worst": [
+   223,
+   213
+  ]
+ },
+ {
+  "idx": 22298,
+  "q": "<image>As shown in the figure, in △ABC, DE∥BC. If the ratio of the area of △ADE to the area of △BDE is 1:2, and DE=4, then the length of BC is ( ).",
+  "gt": "12",
+  "clean": [
+   154,
+   154
+  ],
+  "best": [
+   63,
+   63
+  ],
+  "worst": [
+   35,
+   35
+  ]
+ },
+ {
+  "idx": 27493,
+  "q": "<image>\nAs shown in the figure, quadrilateral $$ABCD$$ is a rhombus, and circle $$⊙O$$ passes through points $$A$$, $$C$$, and $$D$$, intersecting $$BC$$ at point $$E$$. Connect $$AC$$ and $$AE$$. If $$\\angle D=78^{\\circ}$$, then $$\\angle EAC=$$ ___$$^{\\circ}$$.",
+  "gt": "27",
+  "clean": [
+   125,
+   126
+  ],
+  "best": [
+   60,
+   60
+  ],
+  "worst": [
+   28,
+   29
+  ]
+ },
+ {
+  "idx": 27651,
+  "q": "<image>\nAs shown in the figure, in an equilateral triangle $$ABC$$ with side length $$a$$, $$E$$ and $$F$$ are the midpoints of sides $$BC$$ and $$AC$$, respectively. Then |$$\\overrightarrow{EF}|$$ = ___.",
+  "gt": "\\dfrac{a}{2}",
+  "clean": [
+   136,
+   114
+  ],
+  "best": [
+   62,
+   52
+  ],
+  "worst": [
+   67,
+   56
+  ]
+ },
+ {
+  "idx": 27696,
+  "q": "<image>\nRead the following program. If the input is $$a=1$$, $$b=2$$, $$c=3$$, then the value of the output $$S$$ is ___.",
+  "gt": "47",
+  "clean": [
+   137,
+   192
+  ],
+  "best": [
+   51,
+   72
+  ],
+  "worst": [
+   64,
+   89
+  ]
+ },
+ {
+  "idx": 29439,
+  "q": "<image>\nAs shown in the figure, it is known that $\\vartriangle ABC \\sim \\vartriangle ACP$, $AB=5$, $AC=2$. The ratio of the perimeters of $\\vartriangle ABC$ and $\\vartriangle ACP$ is.",
+  "gt": "5:2",
+  "clean": [
+   91,
+   61
+  ],
+  "best": [
+   51,
+   34
+  ],
+  "worst": [
+   20,
+   14
+  ]
+ },
+ {
+  "idx": 33118,
+  "q": "<image>\nAs shown in the figure, the result output by the program after running is ___.",
+  "gt": "19",
+  "clean": [
+   409,
+   499
+  ],
+  "best": [
+   136,
+   166
+  ],
+  "worst": [
+   112,
+   136
+  ]
+ },
+ {
+  "idx": 35713,
+  "q": "Referring to the cladogram provided, determine how many species share four or more common ancestors with the Iguanodon.\nThe above problem is with the following images:\n<image>",
+  "gt": "6",
+  "clean": [
+   321,
+   229
+  ],
+  "best": [
+   104,
+   74
+  ],
+  "worst": [
+   148,
+   106
+  ]
+ },
+ {
+  "idx": 35741,
+  "q": "The below problem is with the following images:\n<image>\nIn a given geometric configuration where AB is parallel to CD, and AD and BC intersect at point P, if AB equals 4, CD equals 7, and PD equals 10, what is the length of AP?",
+  "gt": "\\frac{40}{7}",
+  "clean": [
+   109,
+   78
+  ],
+  "best": [
+   36,
+   26
+  ],
+  "worst": [
+   43,
+   31
+  ]
+ },
+ {
+  "idx": 36781,
+  "q": "<image>\nThe table below shows the properties of certain elements in the second and third periods. Which of the following statements is correct? ( )  \nA. 3. and 5. are in the same period\nB. The stability of gaseous hydrides: 4. $$>$$ 8.\nC. Among the hydration products of the highest valence oxides of the aforementioned eight elements, 5. has the strongest acidity\nD. 1. and 6. can only form one compound",
+  "gt": "C",
+  "clean": [
+   3514,
+   544
+  ],
+  "best": [
+   1228,
+   190
+  ],
+  "worst": [
+   1806,
+   280
+  ]
+ },
+ {
+  "idx": 38618,
+  "q": "<image>\nThe three views of a geometric solid are a square, a rectangle, and a semicircle, with the sizes as shown in the figure. The volume of the geometric solid is ( ) \nA. $\\frac{\\pi}{2}$\nB. $\\frac{2\\pi}{3}$\nC. $\\pi$\nD. $2\\pi$",
+  "gt": "C",
+  "clean": [
+   160,
+   157
+  ],
+  "best": [
+   83,
+   82
+  ],
+  "worst": [
+   44,
+   43
+  ]
+ },
+ {
+  "idx": 38698,
+  "q": "<image>\nAs shown in the figure, the paper of a regular book is obtained by multiple halvings of the original paper. Rectangle $$ABCD$$ is halved along $$EF$$, and then rectangle $$EFCD$$ is halved along $$MN$$, and so on. If all the resulting rectangles are similar, then $$\\dfrac{AD}{AB}$$ equals ( )  \nA. $$0.618$$\nB. $$\\dfrac{\\sqrt{2}}{2}$$\nC. $$\\sqrt{2}$$\nD. $$2$$",
+  "gt": "C",
+  "clean": [
+   497,
+   339
+  ],
+  "best": [
+   259,
+   177
+  ],
+  "worst": [
+   194,
+   132
+  ]
+ }
+]
